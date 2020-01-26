@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <profile name="sbt 1" modules="tranzactio_8488" />
-    <profile name="sbt 2" modules="fire,tranzactio">
+    <profile name="sbt 2" modules="tranzactio">
       <option name="implicitConversions" value="true" />
       <option name="higherKinds" value="true" />
       <option name="existentials" value="true" />
