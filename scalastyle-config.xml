@@ -1,0 +1,152 @@
+<scalastyle>
+    <name>Scalastyle standard configuration</name>
+
+    <check level="warning" class="org.scalastyle.file.FileLengthChecker" enabled="true">
+        <parameters>
+            <parameter name="maxFileLength">800</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.file.FileLineLengthChecker" enabled="true">
+        <parameters>
+            <parameter name="maxLineLength">160</parameter>
+            <parameter name="tabSize">4</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.file.FileTabChecker" enabled="true"/>
+    <!-- org.scalastyle.file.HeaderMatchesChecker -->
+    <!-- org.scalastyle.file.IndentationChecker => Done by the IDE -->
+    <check level="warning" class="org.scalastyle.file.NewLineAtEofChecker" enabled="true"/>
+    <!-- org.scalastyle.file.NoNewLineAtEofChecker -->
+    <!-- org.scalastyle.file.RegexChecker -->
+    <check level="warning" class="org.scalastyle.file.WhitespaceEndOfLineChecker" enabled="true"/>
+    <!-- org.scalastyle.scalariform.BlockImportChecker -->
+    <check level="warning" class="org.scalastyle.scalariform.ClassNamesChecker" enabled="true">
+        <parameters>
+            <parameter name="regex">^[A-Z][A-Za-z0-9]*$</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.ClassTypeParameterChecker" enabled="true">
+        <parameters>
+            <!-- Needs to allow "_" (for higher-kinded types) -->
+            <parameter name="regex">^([A-Z][A-Za-z0-9]*)|_$</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.CovariantEqualsChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.CyclomaticComplexityChecker" enabled="true">
+        <parameters>
+            <parameter name="maximum">12</parameter>
+            <parameter name="countCases">true</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.DeprecatedJavaChecker" enabled="true"/>
+    <!-- org.scalastyle.scalariform.DisallowSpaceAfterTokenChecker -->
+    <!-- org.scalastyle.scalariform.DisallowSpaceBeforeTokenChecker -->
+    <check level="warning" class="org.scalastyle.scalariform.EmptyClassChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.EmptyInterpolatedStringChecker" enabled="true"/>
+    <!-- org.scalastyle.scalariform.EnsureSingleSpaceAfterTokenChecker -->
+    <!-- org.scalastyle.scalariform.EnsureSingleSpaceBeforeTokenChecker -->
+    <check level="warning" class="org.scalastyle.scalariform.EqualsHashCodeChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.FieldNamesChecker" enabled="true">
+        <parameters>
+            <parameter name="regex">^_?[a-z][A-Za-z0-9]*$</parameter>
+            <parameter name="objectFieldRegex">^[A-Za-z][A-Za-z0-9]*$</parameter>
+        </parameters>
+    </check>
+    <check level="warning" enabled="true" class="org.scalastyle.scalariform.ForBraceChecker"/>
+    <check level="warning" class="org.scalastyle.scalariform.IfBraceChecker" enabled="true">
+        <parameters>
+            <parameter name="singleLineAllowed">true</parameter>
+            <parameter name="doubleLineAllowed">true</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.IllegalImportsChecker" enabled="true">
+        <parameters>
+            <parameter name="illegalImports">sun._,java.awt._</parameter>
+        </parameters>
+    </check>
+    <!-- org.scalastyle.scalariform.ImportGroupingChecker -->
+    <check level="warning" class="org.scalastyle.scalariform.ImportOrderChecker" enabled="true"/>
+    <check level="warning" enabled="true" class="org.scalastyle.scalariform.LowercasePatternMatchChecker"/>
+    <check level="warning" class="org.scalastyle.scalariform.MagicNumberChecker" enabled="true">
+        <parameters>
+            <parameter name="ignore">-1,0,1,2,1000,60,42</parameter> <!-- 42 is used in tests -->
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.MethodArgumentNamesChecker" enabled="true">
+        <parameters>
+            <parameter name="regex">^[a-z][A-Za-z0-9]*$</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.MethodLengthChecker" enabled="true">
+        <parameters>
+            <parameter name="maxLength">50</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.MethodNamesChecker" enabled="true">
+        <parameters>
+            <parameter name="regex">^[a-z][A-Za-z0-9]*|[\+\-/\*=:]+$</parameter>
+            <parameter name="ignoreOverride">true</parameter>
+        </parameters>
+    </check>
+    <!-- org.scalastyle.scalariform.MultipleStringLiteralsChecker => Impossible to ignore short repetitions -->
+    <!-- org.scalastyle.scalariform.NamedArgumentChecker => problematic with Java methods -->
+    <check level="warning" class="org.scalastyle.scalariform.NoCloneChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.NoFinalizeChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.NoWhitespaceAfterLeftBracketChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.NoWhitespaceBeforeLeftBracketChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.NoWhitespaceBeforeRightBracketChecker" enabled="true"/>
+    <check level="error" class="org.scalastyle.scalariform.NonASCIICharacterChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.NotImplementedErrorUsage" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.NullChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.NumberOfMethodsInTypeChecker" enabled="true">
+        <parameters>
+            <parameter name="maxMethods">30</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.NumberOfTypesChecker" enabled="true">
+        <parameters>
+            <parameter name="maxTypes">30</parameter>
+        </parameters>
+    </check>
+    <!-- <check level="warning" class="org.scalastyle.scalariform.ObjectNamesChecker" enabled="true">
+        <parameters>
+            <parameter name="regex">^[A-Z][A-Za-z0-9]*$</parameter>
+        </parameters>
+    </check> -->
+    <check level="warning" class="org.scalastyle.scalariform.OverrideJavaChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.PackageNamesChecker" enabled="true">
+        <parameters>
+            <parameter name="regex">^[a-z][A-Za-z0-9]*$</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.PackageObjectNamesChecker" enabled="true">
+        <parameters>
+            <parameter name="regex">^[a-z][A-Za-z0-9]*$</parameter>
+        </parameters>
+    </check>
+    <check level="warning" class="org.scalastyle.scalariform.ParameterNumberChecker" enabled="true">
+        <parameters>
+            <parameter name="maxParameters">8</parameter>
+        </parameters>
+    </check>
+    <!-- org.scalastyle.scalariform.PatternMatchAlignChecker -->
+    <check level="warning" class="org.scalastyle.scalariform.ProcedureDeclarationChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.PublicMethodsHaveTypeChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.RedundantIfChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.ReturnChecker" enabled="true"/>
+    <!-- org.scalastyle.scalariform.ScalaDocChecker -->
+    <check level="warning" class="org.scalastyle.scalariform.SimplifyBooleanExpressionChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.SpaceAfterCommentStartChecker" enabled="false"/>
+    <check level="warning" class="org.scalastyle.scalariform.SpacesAfterPlusChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.SpacesBeforePlusChecker" enabled="true"/>
+    <!-- org.scalastyle.scalariform.StructuralTypeChecker => Done by scalac -->
+    <!-- org.scalastyle.scalariform.TodoCommentChecker -->
+    <!-- org.scalastyle.scalariform.TokenChecker -->
+    <!-- org.scalastyle.scalariform.UnderscoreImportChecker -->
+    <check level="warning" class="org.scalastyle.scalariform.UppercaseLChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.VarFieldChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.VarLocalChecker" enabled="true"/>
+    <check level="warning" class="org.scalastyle.scalariform.WhileChecker" enabled="true"/>
+    <check level="error" class="org.scalastyle.file.XmlLiteralChecker" enabled="true"/>
+
+</scalastyle>
