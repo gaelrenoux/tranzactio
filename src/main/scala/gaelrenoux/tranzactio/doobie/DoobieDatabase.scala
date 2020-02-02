@@ -23,7 +23,7 @@ object DoobieDatabase {
   trait Live extends DbTemplate.LiveBase[Connection] with DoobieDatabase with ConnectionSource {
     self =>
 
-    override val database: Service = new Service {
+    override val database: Service[Any] = new LiveBaseService {
       override def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection] = catBlocker.map { b =>
         val connect = (c: SqlConnection) => Resource.pure[Task, SqlConnection](c)
         val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
