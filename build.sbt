@@ -95,11 +95,12 @@ Test / fork := true
 Test / testForkedParallel := true // run tests in parallel on the forked JVM
 Test / testOptions += Tests.Argument("-oD") // show test duration
 
-Test / sourceDirectories ++=  Seq(
+//testFrameworks += Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+
+/* Adds samples as test sources */
+Test / unmanagedSourceDirectories ++=  Seq(
   new File("src/samples/scala")
 )
-
-//testFrameworks += Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
 /* Makes processes is SBT cancelable without closing SBT */
 Global / cancelable := true
