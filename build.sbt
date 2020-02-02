@@ -72,31 +72,19 @@ resolvers ++= Seq(
 )
 
 val ZioVersion = "1.0.0-RC17"
+val ZioCatsVersion = "2.0.0.0-RC10"
 val ZioMacroVersion = "0.6.0"
 val DoobieVersion = "0.8.6"
 
 libraryDependencies ++= Seq(
   /* ZIO */
   "dev.zio" %% "zio" % ZioVersion,
-  "dev.zio" %% "zio-interop-cats" % "2.0.0.0-RC10",
+  "dev.zio" %% "zio-interop-cats" % ZioCatsVersion,
   "dev.zio" %% "zio-macros-core" % ZioMacroVersion,
   "dev.zio" %% "zio-macros-test" % ZioMacroVersion,
 
   /* Doobie */
-  "org.tpolecat" %% "doobie-core" % DoobieVersion,
-  "org.tpolecat" %% "doobie-postgres" % DoobieVersion,
-
-  /* Logs */
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
-  "ch.qos.logback" % "logback-classic" % "1.2.3",
-
-  /* Configuration */
-  "com.typesafe" % "config" % "1.4.0",
-  "com.github.pureconfig" %% "pureconfig" % "0.12.1",
-
-  /* Test */
-  // "ai.x" %% "diff" % "2.0.1",
-  "org.scalatest" %% "scalatest" % "3.1.0" % "test",
+  "org.tpolecat" %% "doobie-core" % DoobieVersion % "optional",
 
   /* ZIO test */
   "dev.zio" %% "zio-test" % ZioVersion % "test",
