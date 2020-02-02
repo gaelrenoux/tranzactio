@@ -30,7 +30,7 @@ object ConnectionSource {
     def closeConnection(c: Connection): URIO[Any, Unit]
   }
 
-  trait Live extends ConnectionSource with Blocking with Clock {
+  trait Live extends ConnectionSource with Blocking.Live with Clock.Live {
     self =>
 
     val retries: Retries = Retries.Default

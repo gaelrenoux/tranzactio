@@ -8,12 +8,14 @@ import zio.blocking._
 import zio.clock.Clock
 import zio.macros.delegate.Mix
 
+/** Helper trait for all Database modules. */
 trait DbTemplate[Connection] {
   val database: DbTemplate.Service[Any, Connection]
 }
 
 object DbTemplate {
 
+  /** Base, helper trait for all Database services. */
   trait Service[R, Connection] {
 
     def transaction[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, Either[DbException, E], A]
@@ -37,8 +39,8 @@ object DbTemplate {
       transactionOrDie[Any, E, A](zio)(monomixRight[Connection])
   }
 
-
-  trait Base[Connection] extends DbTemplate[Connection] with Blocking with Clock with ConnectionSource {
+  /** Base trait implementing a default transactional mechanism for all database modules. */
+  trait LiveBase[Connection] extends DbTemplate[Connection] with Blocking.Live with Clock.Live with ConnectionSource {
     self =>
 
     import connectionSource._
