@@ -6,24 +6,26 @@ import cats.effect.Resource
 import doobie.free.KleisliInterpreter
 import doobie.util.transactor.{Strategy, Transactor}
 import gaelrenoux.tranzactio.utils._
-import gaelrenoux.tranzactio.{ConnectionSource, DbException, DbTemplate}
+import gaelrenoux.tranzactio.{ConnectionSource, DatabaseApi, DatabaseWithConnectionSource, DbException}
 import javax.sql.DataSource
 import zio._
+import zio.blocking.Blocking
+import zio.clock.Clock
 import zio.interop.catz._
 import zio.macros.delegate.Mix
 
-trait DoobieDatabase extends DbTemplate[Connection] {
+trait DoobieDatabase extends DatabaseApi[Connection] {
   val database: DoobieDatabase.Service[Any]
 }
 
 object DoobieDatabase {
 
-  type Service[R] = DbTemplate.Service[R, Connection]
+  type Service[R] = DatabaseApi.DatabaseServiceApi[R, Connection]
 
-  trait Live extends DbTemplate.LiveBase[Connection] with DoobieDatabase with ConnectionSource {
+  trait Live extends DoobieDatabase with DatabaseWithConnectionSource[Connection] with Blocking.Live with Clock.Live {
     self =>
 
-    override val database: Service[Any] = new LiveBaseService {
+    override val database: Service[Any] = new ServiceWithConnectionSource {
       override def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection] = catBlocker.map { b =>
         val connect = (c: SqlConnection) => Resource.pure[Task, SqlConnection](c)
         val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
@@ -39,7 +41,6 @@ object DoobieDatabase {
     ): ZIO[R1 with DoobieDatabase, Either[DbException, E], A] =
       ZIO.accessM(_.database.transaction[R1, E, A](zio))
   }
-
 
   /** Commodity method */
   def fromDriverManager(driver: String, url: String, user: String, password: String): Database.Live = {

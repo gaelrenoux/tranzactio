@@ -1,22 +1,18 @@
 package gaelrenoux.tranzactio
 
-import java.sql.{Connection => SqlConnection}
-
 import gaelrenoux.tranzactio.utils.monomixRight
-import zio._
-import zio.blocking._
-import zio.clock.Clock
+import zio.ZIO
 import zio.macros.delegate.Mix
 
 /** Common template for all database services. */
-private[tranzactio] trait DbTemplate[Connection] {
-  val database: DbTemplate.Service[Any, Connection]
+trait DatabaseApi[Connection] {
+  val database: DatabaseApi.DatabaseServiceApi[Any, Connection]
 }
 
-private[tranzactio] object DbTemplate {
+object DatabaseApi {
 
   /** Common API for all Database services. */
-  trait Service[R, Connection] {
+  trait DatabaseServiceApi[R, Connection] {
 
     /** Provides that ZIO with a Connection. A transaction will be opened before any actions in the ZIO, and closed
      * after. It will commit only if the ZIO succeeds, and rollback otherwise. Failures in the initial ZIO will be
@@ -48,36 +44,6 @@ private[tranzactio] object DbTemplate {
     def transactionOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R, E, A] =
       transactionOrDie[Any, E, A](zio)(monomixRight[Connection])
   }
-
-  /** Base trait implementing a default transactional mechanism for all database modules. */
-  trait LiveBase[Connection] extends DbTemplate[Connection] with Blocking.Live with Clock.Live with ConnectionSource {
-    self =>
-
-    import connectionSource._
-
-    trait LiveBaseService extends DbTemplate.Service[Any, Connection] {
-
-      def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection]
-
-      override def transaction[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: R1 Mix Connection): ZIO[R1, Either[DbException, E], A] =
-        for {
-          r1 <- ZIO.environment[R1]
-          a <- openConnection.bracket(closeConnection) { c: SqlConnection =>
-            setNoAutoCommit(c)
-              .as(c)
-              .flatMap(connectionFromSql)
-              .map(ev.mix(r1, _))
-              .flatMap(zio.mapError(Right(_)).provide(_))
-              .tapBoth(
-                _ => rollbackConnection(c),
-                _ => commitConnection(c)
-              )
-          }
-        } yield a
-    }
-
-  }
-
 
 }
 
