@@ -1,4 +1,4 @@
-package samples.doobie
+package samples
 
 case class Person(
     givenName: String,

@@ -4,6 +4,7 @@ import java.io.IOException
 
 import gaelrenoux.tranzactio.DbException
 import gaelrenoux.tranzactio.doobie._
+import samples.Person
 import zio.ZIO
 
 object Sample extends zio.App

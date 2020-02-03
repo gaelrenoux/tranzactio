@@ -2,6 +2,7 @@ package samples.doobie
 
 import doobie.implicits._
 import gaelrenoux.tranzactio.doobie._
+import samples.Person
 
 
 trait PersonQueries {

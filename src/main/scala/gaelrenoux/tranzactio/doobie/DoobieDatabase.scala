@@ -18,7 +18,7 @@ trait DoobieDatabase extends DbTemplate[Connection] {
 
 object DoobieDatabase {
 
-  type Service[R] = DbTemplate.Service[R, DoobieConnection]
+  type Service[R] = DbTemplate.Service[R, Connection]
 
   trait Live extends DbTemplate.LiveBase[Connection] with DoobieDatabase with ConnectionSource {
     self =>

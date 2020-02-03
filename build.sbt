@@ -98,7 +98,7 @@ Test / testOptions += Tests.Argument("-oD") // show test duration
 //testFrameworks += Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
 /* Adds samples as test sources */
-Test / unmanagedSourceDirectories ++=  Seq(
+Test / unmanagedSourceDirectories ++= Seq(
   new File("src/samples/scala")
 )
 
