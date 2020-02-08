@@ -36,15 +36,15 @@ object DoobieDatabase {
   }
 
   object > extends DoobieDatabase.Service[DoobieDatabase] {
-    override def transaction[R1, E, A](zio: ZIO[R1 with Connection, E, A])(
+    override def transactionR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(
         implicit ev: R1 Mix Connection
     ): ZIO[R1 with DoobieDatabase, Either[DbException, E], A] =
-      ZIO.accessM(_.database.transaction[R1, E, A](zio))
+      ZIO.accessM(_.database.transactionR[R1, E, A](zio))
 
-    override def autoCommit[R1, E, A](zio: ZIO[R1 with Connection, E, A])(
+    override def autoCommitR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(
         implicit ev: R1 Mix Connection
     ): ZIO[R1 with DoobieDatabase, Either[DbException, E], A] =
-      ZIO.accessM(_.database.autoCommit[R1, E, A](zio))
+      ZIO.accessM(_.database.autoCommitR[R1, E, A](zio))
   }
 
   /** Commodity method */

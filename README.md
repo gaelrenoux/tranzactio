@@ -48,7 +48,7 @@ trait MyApp extends Database with ConnectionSource.FromDatasource {
   override val datasource: DataSource = ??? // typically from a connection pool, like HikariCP
 
   val zio1: ZIO[Connection with console.Console, Exception, List[String]] = ???
-  val result1: ZIO[console.Console, Either[DbException, Exception], List[String]] = database.transaction(zio1)
+  val result1: ZIO[console.Console, Either[DbException, Exception], List[String]] = database.transactionR(zio1)
   // Connection exceptions are Left
 
   val zio2: ZIO[Connection, Exception, List[String]] = ???
@@ -56,7 +56,7 @@ trait MyApp extends Database with ConnectionSource.FromDatasource {
   // Exception is widened, no Either. Also, no environment since zio2 only needed the Connection
 
   val zio3: ZIO[Connection, String, List[String]] = ???
-  val result3: IO[String, List[String]] = database.transactionOrDie(zio3)
+  val result3: IO[String, List[String]] = database.transactionOrDieR(zio3)
   // Connection exceptions are transformed into defects.
 
 }

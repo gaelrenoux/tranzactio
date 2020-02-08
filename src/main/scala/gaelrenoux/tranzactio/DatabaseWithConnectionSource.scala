@@ -18,7 +18,7 @@ private[tranzactio] trait DatabaseWithConnectionSource[Connection]
 
     def connectionFromSql(connection: JavaSqlConnection): ZIO[Any, Nothing, Connection]
 
-    override def transaction[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: R1 Mix Connection): ZIO[R1, Either[DbException, E], A] =
+    override def transactionR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: R1 Mix Connection): ZIO[R1, Either[DbException, E], A] =
       for {
         r1 <- ZIO.environment[R1]
         a <- openConnection.bracket(closeConnection) { c: JavaSqlConnection =>
@@ -34,7 +34,7 @@ private[tranzactio] trait DatabaseWithConnectionSource[Connection]
         }
       } yield a
 
-    override def autoCommit[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: R1 Mix Connection): ZIO[R1, Either[DbException, E], A] =
+    override def autoCommitR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: R1 Mix Connection): ZIO[R1, Either[DbException, E], A] =
       for {
         r1 <- ZIO.environment[R1]
         a <- openConnection.bracket(closeConnection) { c: JavaSqlConnection =>

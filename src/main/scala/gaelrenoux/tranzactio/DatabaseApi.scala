@@ -18,61 +18,61 @@ object DatabaseApi {
      * after. It will commit only if the ZIO succeeds, and rollback otherwise. Failures in the initial ZIO will be
      * wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a failure with the
      * exception wrapped in a Left. */
-    def transaction[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, Either[DbException, E], A]
+    def transactionR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, Either[DbException, E], A]
 
-    /** As `transaction`, for an environment-less ZIO. */
+    /** As `transactionR`, where the only needed environment is the connection. */
     def transaction[E, A](zio: ZIO[Connection, E, A]): ZIO[R, Either[DbException, E], A] =
-      transaction[Any, E, A](zio)(monomixRight[Connection])
+      transactionR[Any, E, A](zio)(monomixRight[Connection])
 
-    /** As `transaction`, but exceptions are simply widened to a common failure type. The resulting failure type is a
+    /** As `transactionR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
      * superclass of both DbException and the error type of the inital ZIO. */
-    def transactionOrWiden[R1, E >: DbException, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
-      transaction[R1, E, A](zio).mapError(_.fold(identity, identity))
+    def transactionOrWidenR[R1, E >: DbException, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
+      transactionR[R1, E, A](zio).mapError(_.fold(identity, identity))
 
-    /** As `transactionOrWiden`, for an environment-less ZIO. */
+    /** As `transactionOrWiden`, where the only needed environment is the connection. */
     def transactionOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R, E, A] =
-      transactionOrWiden[Any, E, A](zio)(monomixRight[Connection])
+      transactionOrWidenR[Any, E, A](zio)(monomixRight[Connection])
 
-    /** As `transaction`, but errors when handling the connections are treated as defects instead of failures. */
-    def transactionOrDie[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
-      transaction[R1, E, A](zio).flatMapError {
+    /** As `transactionR`, but errors when handling the connections are treated as defects instead of failures. */
+    def transactionOrDieR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
+      transactionR[R1, E, A](zio).flatMapError {
         case Right(e) => ZIO.succeed(e)
         case Left(e) => ZIO.die(e)
       }
 
-    /** As `transactionOrDie`, for an environment-less ZIO. */
+    /** As `transactionOrDieR`, where the only needed environment is the connection. */
     def transactionOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R, E, A] =
-      transactionOrDie[Any, E, A](zio)(monomixRight[Connection])
+      transactionOrDieR[Any, E, A](zio)(monomixRight[Connection])
 
 
     /** Provides that ZIO with a Connection. All DB action in the ZIO will be auto-committed. Failures in the initial
      * ZIO will be wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a
      * failure with the exception wrapped in a Left. */
-    def autoCommit[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, Either[DbException, E], A]
+    def autoCommitR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, Either[DbException, E], A]
 
-    /** As `autoCommit`, for an environment-less ZIO. */
+    /** As `autoCommitR`, where the only needed environment is the connection. */
     def autoCommit[E, A](zio: ZIO[Connection, E, A]): ZIO[R, Either[DbException, E], A] =
-      autoCommit[Any, E, A](zio)(monomixRight[Connection])
+      autoCommitR[Any, E, A](zio)(monomixRight[Connection])
 
-    /** As `autoCommit`, but exceptions are simply widened to a common failure type. The resulting failure type is a
+    /** As `autoCommitR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
      * superclass of both DbException and the error type of the inital ZIO. */
-    def autoCommitOrWiden[R1, E >: DbException, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
-      autoCommit[R1, E, A](zio).mapError(_.fold(identity, identity))
+    def autoCommitOrWidenR[R1, E >: DbException, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
+      autoCommitR[R1, E, A](zio).mapError(_.fold(identity, identity))
 
-    /** As `autoCommitOrWiden`, for an environment-less ZIO. */
+    /** As `autoCommitOrWidenR`, where the only needed environment is the connection. */
     def autoCommitOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R, E, A] =
-      autoCommitOrWiden[Any, E, A](zio)(monomixRight[Connection])
+      autoCommitOrWidenR[Any, E, A](zio)(monomixRight[Connection])
 
-    /** As `autoCommit`, but errors when handling the connections are treated as defects instead of failures. */
-    def autoCommitOrDie[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
-      autoCommit[R1, E, A](zio).flatMapError {
+    /** As `autoCommitR`, but errors when handling the connections are treated as defects instead of failures. */
+    def autoCommitOrDieR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: Mix[R1, Connection]): ZIO[R with R1, E, A] =
+      autoCommitR[R1, E, A](zio).flatMapError {
         case Right(e) => ZIO.succeed(e)
         case Left(e) => ZIO.die(e)
       }
 
-    /** As `autoCommitOrDie`, for an environment-less ZIO. */
+    /** As `autoCommitOrDieR`, where the only needed environment is the connection. */
     def autoCommitOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R, E, A] =
-      autoCommitOrDie[Any, E, A](zio)(monomixRight[Connection])
+      autoCommitOrDieR[Any, E, A](zio)(monomixRight[Connection])
   }
 
 }
