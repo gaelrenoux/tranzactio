@@ -21,7 +21,7 @@ object ConnectionSource {
 
     def openConnection: ZIO[Any, Left[DbException, Nothing], Connection]
 
-    def setNoAutoCommit(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit]
+    def setAutoCommit(c: Connection, autoCommit: Boolean): ZIO[Any, Left[DbException, Nothing], Unit]
 
     def commitConnection(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit]
 
@@ -41,8 +41,8 @@ object ConnectionSource {
         getConnection.retry(retries.openConnection)
       }
 
-      def setNoAutoCommit(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit] = wrap {
-        ZIO.effect(c.setAutoCommit(false)).retry(retries.setNoAutoCommit)
+      def setAutoCommit(c: Connection, autoCommit: Boolean): ZIO[Any, Left[DbException, Nothing], Unit] = wrap {
+        ZIO.effect(c.setAutoCommit(autoCommit)).retry(retries.setNoAutoCommit)
       }
 
       def commitConnection(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit] = wrap {

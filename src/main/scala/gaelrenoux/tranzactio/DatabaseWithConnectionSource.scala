@@ -22,7 +22,7 @@ private[tranzactio] trait DatabaseWithConnectionSource[Connection]
       for {
         r1 <- ZIO.environment[R1]
         a <- openConnection.bracket(closeConnection) { c: JavaSqlConnection =>
-          setNoAutoCommit(c)
+          setAutoCommit(c, autoCommit = false)
             .as(c)
             .flatMap(connectionFromSql)
             .map(ev.mix(r1, _))
@@ -31,6 +31,18 @@ private[tranzactio] trait DatabaseWithConnectionSource[Connection]
               _ => rollbackConnection(c),
               _ => commitConnection(c)
             )
+        }
+      } yield a
+
+    override def autoCommit[R1, E, A](zio: ZIO[R1 with Connection, E, A])(implicit ev: R1 Mix Connection): ZIO[R1, Either[DbException, E], A] =
+      for {
+        r1 <- ZIO.environment[R1]
+        a <- openConnection.bracket(closeConnection) { c: JavaSqlConnection =>
+          setAutoCommit(c, autoCommit = true)
+            .as(c)
+            .flatMap(connectionFromSql)
+            .map(ev.mix(r1, _))
+            .flatMap(zio.mapError(Right(_)).provide(_))
         }
       } yield a
   }
