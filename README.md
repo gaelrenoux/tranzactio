@@ -5,16 +5,20 @@ It can also provide a connection in auto-commit mode, without a transaction.
 **Warning**: This is still a very early alpha version. API is still fluid and might change without notice. 
 It's not on any Maven repository, so you'll have to clone it and build it yourself (just do `sbt publishLocal`).
 
-# Setup
+Any constructive criticism, bug report or offer to help is welcome. Just open an issue or a PR.
+
+
+# Getting started
+
+## Sbt setup
 
 In your build.sbt:
 ```sbt
 libraryDependencies += "gaelrenoux" %% "tranzactio" % "0.1-SNAPSHOT"
 ```
 
-# Doobie
 
-## Wrapping a Doobie query
+## Wrapping a query
 ```scala
 import zio._
 import doobie.implicits._
@@ -29,6 +33,7 @@ val list: ZIO[Connection, DbException, List[String]] = tzio {
 Type `Connection` is actually an alias for `DoobieConnection`: you'll need a `DoobieDatabase` to provide it.
 
 Type `TranzactIO[A]` is an alias for `ZIO[Connection, DbException, List[String]]`
+
 
 ## Running the transaction
 
@@ -75,6 +80,17 @@ val integrationTestDb: Database.Live = Database.fromDriverManager(
 )
 // Don't use that for production: connections will be opened and closed or each transaction.
 ```
+
+
+# Why ?
+
+On my applications, I regularly have quite a bunch of business logics around my queries.
+If I want to run that logic within a transaction, I had to wrap it with Doobie's ConnectionIO.
+But I'm already using ZIO as my effect monad! I don't want another one...
+In addition, ConnectionIO misses quite a bit of the operations that ZIO has.
+
+That's where TranzactIO comes from. I wanted a way to use ZIO everywhere, and run the transaction whenever I decided.
+
 
 # What's next
 
