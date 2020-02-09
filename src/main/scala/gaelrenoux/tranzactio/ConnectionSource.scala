@@ -67,14 +67,14 @@ object ConnectionSource {
 
   /** Useful for tests, but shouldn't be used in a live application. Provides a new connection through the DriverManager every time one is needed. */
   trait FromDriverManager extends ConnectionSource.Live {
-    val driver: String
+    val driver: Option[String]
     val url: String
     val user: String
     val password: String
 
     override val connectionSource: Service = new Service {
       override def getConnection: RIO[Blocking, Connection] = effectBlocking {
-        Class.forName(driver)
+        driver.foreach(Class.forName)
         DriverManager.getConnection(url, user, password)
       }
     }

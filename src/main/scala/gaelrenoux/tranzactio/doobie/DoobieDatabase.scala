@@ -51,10 +51,21 @@ object DoobieDatabase {
   def fromDriverManager(driver: String, url: String, user: String, password: String): Database.Live = {
     val params = (driver, url, user, password)
     new DoobieDatabase.Live with ConnectionSource.FromDriverManager {
-      override val driver: String = params._1
+      override val driver: Option[String] = Some(params._1)
       override val url: String = params._2
       override val user: String = params._3
       override val password: String = params._4
+    }
+  }
+
+  /** Commodity method */
+  def fromDriverManager(url: String, user: String, password: String): Database.Live = {
+    val params = (url, user, password)
+    new DoobieDatabase.Live with ConnectionSource.FromDriverManager {
+      override val driver: Option[String] = None
+      override val url: String = params._1
+      override val user: String = params._2
+      override val password: String = params._3
     }
   }
 
