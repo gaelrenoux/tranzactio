@@ -21,7 +21,7 @@ package object utils {
   def monomixRight[A]: Any Mix A = new MonomixRight[A]
 
 
-  val catBlocker: ZIO[Blocking, Nothing, Blocker] = ZIO
+  val catsBlocker: ZIO[Blocking, Nothing, Blocker] = ZIO
     .accessM[Blocking](_.blocking.blockingExecutor)
     .map(exe => Blocker.liftExecutionContext(exe.asEC))
 

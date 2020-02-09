@@ -26,7 +26,7 @@ object DoobieDatabase {
     self =>
 
     override val database: Service[Any] = new ServiceWithConnectionSource {
-      override def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection] = catBlocker.map { b =>
+      override def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection] = catsBlocker.map { b =>
         val connect = (c: SqlConnection) => Resource.pure[Task, SqlConnection](c)
         val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
         val doobieTransactor = Transactor(connection, connect, interp, Strategy.void)
