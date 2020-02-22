@@ -6,7 +6,7 @@ import cats.effect.Resource
 import doobie.free.KleisliInterpreter
 import doobie.util.transactor.{Strategy, Transactor}
 import gaelrenoux.tranzactio.utils._
-import gaelrenoux.tranzactio.{ConnectionSource, DatabaseApi, DatabaseWithConnectionSource, DbException}
+import gaelrenoux.tranzactio._
 import javax.sql.DataSource
 import zio._
 import zio.blocking.Blocking
@@ -14,6 +14,7 @@ import zio.clock.Clock
 import zio.interop.catz._
 import zio.macros.delegate.Mix
 
+/** A Database wrapping Doobie. Factory method are on the companion objects. */
 trait DoobieDatabase extends DatabaseApi[Connection] {
   val database: DoobieDatabase.Service[Any]
 }
@@ -48,30 +49,25 @@ object DoobieDatabase {
   }
 
   /** Commodity method */
-  def fromDriverManager(driver: String, url: String, user: String, password: String): Database.Live = {
-    val params = (driver, url, user, password)
+  def fromDriverManager(
+      url: String, user: String, password: String,
+      driver: Option[String] = None, retries: Retries = Retries.Default
+  ): Database.Live = {
+    val (u, usr, pwd, d, r) = (url, user, password, driver, retries)
     new DoobieDatabase.Live with ConnectionSource.FromDriverManager {
-      override val driver: Option[String] = Some(params._1)
-      override val url: String = params._2
-      override val user: String = params._3
-      override val password: String = params._4
+      override val retries: Retries = r
+      override val driver: Option[String] = d
+      override val url: String = u
+      override val user: String = usr
+      override val password: String = pwd
     }
   }
 
   /** Commodity method */
-  def fromDriverManager(url: String, user: String, password: String): Database.Live = {
-    val params = (url, user, password)
-    new DoobieDatabase.Live with ConnectionSource.FromDriverManager {
-      override val driver: Option[String] = None
-      override val url: String = params._1
-      override val user: String = params._2
-      override val password: String = params._3
-    }
-  }
-
-  /** Commodity method */
-  def fromDatasource(ds: DataSource): Database.Live = {
+  def fromDatasource(datasource: DataSource, retries: Retries = Retries.Default): Database.Live = {
+    val (ds, r) = (datasource, retries)
     new DoobieDatabase.Live with ConnectionSource.FromDatasource {
+      override val retries: Retries = r
       override val datasource: DataSource = ds
     }
   }

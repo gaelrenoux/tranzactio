@@ -11,7 +11,7 @@ object Sample extends zio.App
   with PersonQueries.Live {
 
   val db: Database.Service[Any] =
-    Database.fromDriverManager("org.postgresql.Driver", "jdbc:postgresql://localhost:54320/", "login", "password").database
+    Database.fromDriverManager("jdbc:postgresql://localhost:54320/", "login", "password").database
 
   def getPerson(): ZIO[Any, IOException, Person] = ZIO.succeed(Person("Willow", "Rosenberg"))
 
