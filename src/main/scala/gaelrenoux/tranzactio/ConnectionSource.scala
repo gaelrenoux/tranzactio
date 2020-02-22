@@ -67,7 +67,7 @@ object ConnectionSource {
 
   /** Useful for tests, but shouldn't be used in a live application. Provides a new connection through the DriverManager every time one is needed. */
   trait FromDriverManager extends ConnectionSource.Live {
-    val driver: Option[String]
+    val driver: Option[String] = None
     val url: String
     val user: String
     val password: String
