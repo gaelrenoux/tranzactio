@@ -17,8 +17,6 @@ object ConnectionSource {
   trait Service[R] {
     def getConnection: RIO[Blocking, Connection]
 
-    val retries: Retries = Retries.Default
-
     def openConnection: ZIO[Any, Left[DbException, Nothing], Connection]
 
     def setAutoCommit(c: Connection, autoCommit: Boolean): ZIO[Any, Left[DbException, Nothing], Unit]
@@ -36,6 +34,7 @@ object ConnectionSource {
     val retries: Retries = Retries.Default
 
     trait Service extends ConnectionSource.Service[Any] {
+      // TODO handle error reporting even when retrying
 
       def openConnection: ZIO[Any, Left[DbException, Nothing], Connection] = wrap {
         getConnection.retry(retries.openConnection)
