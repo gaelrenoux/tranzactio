@@ -15,7 +15,6 @@ package object utils {
     override def mix(a: Any, b: A): A = b
   }
 
-
   def monomixLeft[A]: A Mix Any = new MonomixLeft[A]
 
   def monomixRight[A]: Any Mix A = new MonomixRight[A]

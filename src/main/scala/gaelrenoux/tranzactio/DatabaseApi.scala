@@ -4,7 +4,7 @@ import gaelrenoux.tranzactio.utils.monomixRight
 import zio.ZIO
 import zio.macros.delegate.Mix
 
-/** Common template for all database services. */
+/** Common API for all Database traits. */
 trait DatabaseApi[Connection] {
   val database: DatabaseApi.DatabaseServiceApi[Any, Connection]
 }

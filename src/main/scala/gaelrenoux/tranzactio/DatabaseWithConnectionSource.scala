@@ -14,6 +14,7 @@ private[tranzactio] trait DatabaseWithConnectionSource[Connection]
 
   import connectionSource._
 
+  /** Base service in the template. */
   trait ServiceWithConnectionSource extends DatabaseApi.DatabaseServiceApi[Any, Connection] {
 
     def connectionFromSql(connection: JavaSqlConnection): ZIO[Any, Nothing, Connection]

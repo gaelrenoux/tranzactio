@@ -2,6 +2,7 @@ package gaelrenoux.tranzactio
 
 import zio.ZIO
 
+/** TranzactIO module for Doobie. */
 package object doobie extends Module {
   override type Database = DoobieDatabase
   override type Connection = DoobieConnection
