@@ -15,7 +15,7 @@ case class Retries(
   )
 
   object Retries {
-    val Default: Retries = all(Schedule.exponential(100.milliseconds) && Schedule.elapsed.whileOutput(_ < 1.minute))
+    val Default: Retries = all(Schedule.exponential(100.milliseconds) && Schedule.elapsed.whileOutput(_ < 10.seconds))
 
     def all(s: Schedule[Clock, Any, Any]): Retries = Retries(s, s, s, s, s)
   }
