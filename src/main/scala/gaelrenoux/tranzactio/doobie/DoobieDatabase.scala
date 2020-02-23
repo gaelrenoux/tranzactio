@@ -5,8 +5,8 @@ import java.sql.{Connection => SqlConnection}
 import cats.effect.Resource
 import doobie.free.KleisliInterpreter
 import doobie.util.transactor.{Strategy, Transactor}
-import gaelrenoux.tranzactio.utils._
 import gaelrenoux.tranzactio._
+import gaelrenoux.tranzactio.utils._
 import javax.sql.DataSource
 import zio._
 import zio.blocking.Blocking
@@ -51,11 +51,11 @@ object DoobieDatabase {
   /** Commodity method */
   def fromDriverManager(
       url: String, user: String, password: String,
-      driver: Option[String] = None, retries: Retries = Retries.Default
+      driver: Option[String] = None, errorStrategies: ErrorStrategies = ErrorStrategies.Default
   ): Database.Live = {
-    val (u, usr, pwd, d, r) = (url, user, password, driver, retries)
+    val (u, usr, pwd, d, es) = (url, user, password, driver, errorStrategies)
     new DoobieDatabase.Live with ConnectionSource.FromDriverManager {
-      override val retries: Retries = r
+      override val errorStrategies: ErrorStrategies = es
       override val driver: Option[String] = d
       override val url: String = u
       override val user: String = usr
@@ -64,10 +64,11 @@ object DoobieDatabase {
   }
 
   /** Commodity method */
-  def fromDatasource(datasource: DataSource, retries: Retries = Retries.Default): Database.Live = {
-    val (ds, r) = (datasource, retries)
+  def fromDatasource(datasource: DataSource, errorStrategies: ErrorStrategies = ErrorStrategies.Default
+  ): Database.Live = {
+    val (ds, es) = (datasource, errorStrategies)
     new DoobieDatabase.Live with ConnectionSource.FromDatasource {
-      override val retries: Retries = r
+      override val errorStrategies: ErrorStrategies = es
       override val datasource: DataSource = ds
     }
   }

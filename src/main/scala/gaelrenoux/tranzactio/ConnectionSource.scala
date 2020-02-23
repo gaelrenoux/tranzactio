@@ -5,7 +5,7 @@ import java.sql.{Connection, DriverManager}
 import javax.sql.DataSource
 import zio.blocking._
 import zio.clock.Clock
-import zio.{RIO, URIO, ZIO}
+import zio.{RIO, ZIO}
 
 /** A module able to provide connections. They typically come from a connection pool. */
 trait ConnectionSource {
@@ -19,50 +19,50 @@ object ConnectionSource {
      * to be provided by the concrete instance. */
     def getConnection: RIO[Blocking, Connection]
 
-    def openConnection: ZIO[Any, Left[DbException, Nothing], Connection]
+    def openConnection: ZIO[Any, DbException, Connection]
 
-    def setAutoCommit(c: Connection, autoCommit: Boolean): ZIO[Any, Left[DbException, Nothing], Unit]
+    def setAutoCommit(c: Connection, autoCommit: Boolean): ZIO[Any, DbException, Unit]
 
-    def commitConnection(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit]
+    def commitConnection(c: Connection): ZIO[Any, DbException, Unit]
 
-    def rollbackConnection(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit]
+    def rollbackConnection(c: Connection): ZIO[Any, DbException, Unit]
 
-    def closeConnection(c: Connection): URIO[Any, Unit]
+    def closeConnection(c: Connection): ZIO[Any, DbException, Unit]
   }
 
   /** ConnectionSource with standard behavior. Children class need to implement `getConnection`. */
   trait Live extends ConnectionSource with Blocking.Live with Clock.Live {
     self =>
 
-    val retries: Retries = Retries.Default
+    val errorStrategies: ErrorStrategies = ErrorStrategies.Default
 
     trait Service extends ConnectionSource.Service[Any] {
       // TODO handle error reporting when retrying
 
-      def openConnection: ZIO[Any, Left[DbException, Nothing], Connection] = wrap {
-        getConnection.retry(retries.openConnection)
+      def openConnection: ZIO[Any, DbException, Connection] = wrap(errorStrategies.openConnection) {
+        getConnection.mapError(e => DbException.Wrapped(e))
       }
 
-      def setAutoCommit(c: Connection, autoCommit: Boolean): ZIO[Any, Left[DbException, Nothing], Unit] = wrap {
-        ZIO.effect(c.setAutoCommit(autoCommit)).retry(retries.setNoAutoCommit)
+      def setAutoCommit(c: Connection, autoCommit: Boolean): ZIO[Any, DbException, Unit] = wrap(errorStrategies.setAutoCommit) {
+        effectBlocking(c.setAutoCommit(autoCommit))
       }
 
-      def commitConnection(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit] = wrap {
-        effectBlocking(c.commit()).retry(retries.commitConnection)
+      def commitConnection(c: Connection): ZIO[Any, DbException, Unit] = wrap(errorStrategies.commitConnection) {
+        effectBlocking(c.commit())
       }
 
-      def rollbackConnection(c: Connection): ZIO[Any, Left[DbException, Nothing], Unit] = wrap {
-        effectBlocking(c.rollback()).retry(retries.rollbackConnection)
+      def rollbackConnection(c: Connection): ZIO[Any, DbException, Unit] = wrap(errorStrategies.rollbackConnection) {
+        effectBlocking(c.rollback())
       }
 
-      def closeConnection(c: Connection): URIO[Any, Unit] =
+      /** Cannot fail */
+      def closeConnection(c: Connection): ZIO[Any, DbException, Unit] = wrap(errorStrategies.closeConnection) {
         effectBlocking(c.close())
-          .retry(retries.closeConnection)
-          .orDie
-          .provide(self)
+      }
 
-      private def wrap[A](z: ZIO[Blocking with Clock, Throwable, A]): ZIO[Any, Left[DbException, Nothing], A] =
-        z.mapError(e => Left(DbException(e))).provide(self)
+      private def wrap[R, A](es: ErrorStrategy)(z: ZIO[Blocking, Throwable, A]) = es {
+        z.mapError(e => DbException.Wrapped(e))
+      }.provide(self)
     }
 
   }

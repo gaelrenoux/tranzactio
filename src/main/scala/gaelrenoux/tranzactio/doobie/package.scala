@@ -11,6 +11,6 @@ package object doobie extends Module {
   val Database: DoobieDatabase.type = DoobieDatabase
   val Connection: DoobieConnection.type = DoobieConnection
 
-  override def tzio[A](q: Query[A]): TranzactIO[A] = ZIO.accessM[DoobieConnection](_.apply(q)).mapError(DbException)
+  override def tzio[A](q: Query[A]): TranzactIO[A] = ZIO.accessM[DoobieConnection](_.apply(q)).mapError(DbException.Wrapped)
 
 }
