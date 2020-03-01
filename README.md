@@ -94,6 +94,9 @@ That's where TranzactIO comes from. I wanted a way to use ZIO everywhere, and ru
 
 # What's next
 
+## API cleanup
+As mentioned above, I'm still figuring out what's the best API for that library. I'm pretty happy with how it is right now, but I feel like there's still room for improvement.
+
 ## More wrappers
 I want to add wrappers around more database access libraries. I'm looking into Quill right now, I'll probably take a look at Anorm at some point as well.
 
