@@ -21,6 +21,8 @@ libraryDependencies += "io.github.gaelrenoux" %% "tranzactio" % "0.1-SNAPSHOT"
 
 ## Wrapping a query
 
+Use `tzio` to wrap Doobie's monad:
+
 ```scala
 import zio._
 import doobie.implicits._
@@ -28,16 +30,18 @@ import io.github.gaelrenoux.tranzactio._
 import io.github.gaelrenoux.tranzactio.doobie._
 
 val list: ZIO[Connection, DbException, List[String]] = tzio {
-    sql"""SELECT name FROM users""".query[String].to[List]
+    sql"SELECT name FROM users".query[String].to[List]
 }
 ```
 
 Type `Connection` is actually an alias for `DoobieConnection`: you'll need a `DoobieDatabase` to provide it.
 
-Type `TranzactIO[A]` is an alias for `ZIO[Connection, DbException, List[String]]`
+Type `TranzactIO[A]` is an alias for `ZIO[Connection, DbException, A]`
 
 
 ## Running the transaction
+
+Use the Database module to provide the connection. You'll have to provide the connection source.
 
 ```scala
 import zio._
@@ -74,20 +78,16 @@ import javax.sql.DataSource
 val ds: DataSource = ???
 val db: Database.Live = Database.fromDatasource(ds)
 
+// Don't use fromDriverManager for production: connections will be opened and closed or each transaction.
 val integrationTestDb: Database.Live = Database.fromDriverManager(
     "org.postgresql.Driver",
     "jdbc:postgresql://localhost:54320/",
     "login",
     "password"
 )
-// Don't use that for production: connections will be opened and closed or each transaction.
 ```
 
-
-## Sample project
-
-Check in `src/main/samples`.
-
+Check in `src/main/samples` for more samples.
 
 
 # Why ?
