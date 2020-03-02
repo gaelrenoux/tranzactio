@@ -1,4 +1,4 @@
-package gaelrenoux.tranzactio.doobie
+package io.github.gaelrenoux.tranzactio.doobie
 
 import doobie.util.transactor.Transactor
 import zio.Task

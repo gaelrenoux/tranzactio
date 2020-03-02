@@ -1,7 +1,7 @@
 package samples.doobie
 
-import gaelrenoux.tranzactio.doobie._
-import gaelrenoux.tranzactio.{DbException, ErrorStrategies}
+import io.github.gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategies}
 import samples.Person
 import zio.console.Console
 import zio.macros.delegate.Mix

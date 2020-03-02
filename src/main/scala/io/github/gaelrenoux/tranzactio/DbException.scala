@@ -1,4 +1,4 @@
-package gaelrenoux.tranzactio
+package io.github.gaelrenoux.tranzactio
 
 import zio.duration.Duration
 

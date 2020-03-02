@@ -1,6 +1,6 @@
-package gaelrenoux.tranzactio
+package io.github.gaelrenoux.tranzactio
 
-import gaelrenoux.tranzactio.utils.monomixRight
+import io.github.gaelrenoux.tranzactio.utils.monomixRight
 import zio.ZIO
 import zio.macros.delegate.Mix
 

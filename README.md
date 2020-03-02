@@ -15,7 +15,7 @@ Any constructive criticism, bug report or offer to help is welcome. Just open an
 
 In your build.sbt:
 ```sbt
-libraryDependencies += "gaelrenoux" %% "tranzactio" % "0.1-SNAPSHOT"
+libraryDependencies += "io.github.gaelrenoux" %% "tranzactio" % "0.1-SNAPSHOT"
 ```
 
 
@@ -24,8 +24,8 @@ libraryDependencies += "gaelrenoux" %% "tranzactio" % "0.1-SNAPSHOT"
 ```scala
 import zio._
 import doobie.implicits._
-import gaelrenoux.tranzactio._
-import gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio._
+import io.github.gaelrenoux.tranzactio.doobie._
 
 val list: ZIO[Connection, DbException, List[String]] = tzio {
     sql"""SELECT name FROM users""".query[String].to[List]
@@ -41,8 +41,8 @@ Type `TranzactIO[A]` is an alias for `ZIO[Connection, DbException, List[String]]
 
 ```scala
 import zio._
-import gaelrenoux.tranzactio._
-import gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio._
+import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
 
 trait MyApp extends Database with ConnectionSource.FromDatasource {
@@ -67,8 +67,8 @@ trait MyApp extends Database with ConnectionSource.FromDatasource {
 To get the database module directly, there are also a few commodity methods:
 ```scala
 import zio.ZIO
-import gaelrenoux.tranzactio._
-import gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio._
+import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
 
 val ds: DataSource = ???

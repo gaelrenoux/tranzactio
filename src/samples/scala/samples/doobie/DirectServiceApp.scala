@@ -1,9 +1,7 @@
 package samples.doobie
 
-import java.io.IOException
-
-import gaelrenoux.tranzactio.{DbException, ErrorStrategies, ErrorStrategy}
-import gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio._
+import io.github.gaelrenoux.tranzactio.doobie._
 import samples.Person
 import zio.ZIO
 

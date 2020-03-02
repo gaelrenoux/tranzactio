@@ -1,6 +1,6 @@
 import sbt.Keys._
 
-organization := "gaelrenoux"
+organization := "io.github.gaelrenoux"
 name := "tranzactio"
 version := "0.1-SNAPSHOT"
 

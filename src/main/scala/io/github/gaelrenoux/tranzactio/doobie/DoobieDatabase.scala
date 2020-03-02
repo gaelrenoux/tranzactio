@@ -1,12 +1,13 @@
-package gaelrenoux.tranzactio.doobie
+package io.github.gaelrenoux.tranzactio.doobie
 
 import java.sql.{Connection => SqlConnection}
 
 import cats.effect.Resource
 import doobie.free.KleisliInterpreter
 import doobie.util.transactor.{Strategy, Transactor}
-import gaelrenoux.tranzactio._
-import gaelrenoux.tranzactio.utils._
+import io.github.gaelrenoux.tranzactio.DatabaseApi.DatabaseServiceApi
+import io.github.gaelrenoux.tranzactio._
+import io.github.gaelrenoux.tranzactio.utils._
 import javax.sql.DataSource
 import zio._
 import zio.blocking.Blocking
@@ -21,7 +22,7 @@ trait DoobieDatabase extends DatabaseApi[Connection] {
 
 object DoobieDatabase {
 
-  type Service[R] = DatabaseApi.DatabaseServiceApi[R, Connection]
+  type Service[R] = DatabaseServiceApi[R, Connection]
 
   trait Live extends DoobieDatabase with DatabaseWithConnectionSource[Connection] with Blocking.Live with Clock.Live {
     self =>
