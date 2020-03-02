@@ -13,7 +13,22 @@ case class ErrorStrategies(
     commitConnection: ErrorStrategy,
     rollbackConnection: ErrorStrategy,
     closeConnection: ErrorStrategy
-)
+) {
+
+  def all(f: ErrorStrategy => ErrorStrategy): ErrorStrategies = ErrorStrategies(
+    openConnection = f(openConnection),
+    setAutoCommit = f(setAutoCommit),
+    commitConnection = f(commitConnection),
+    rollbackConnection = f(rollbackConnection),
+    closeConnection = f(closeConnection)
+  )
+
+  def noTimeout: ErrorStrategies = all(_.noTimeout)
+
+  def noRetry: ErrorStrategies = all(_.noRetry)
+
+  def withTimeout(t: Duration): ErrorStrategies = all(_.withTimeout(t))
+}
 
 object ErrorStrategies {
   val Default: ErrorStrategies = all(ErrorStrategy.Default)

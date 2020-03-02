@@ -8,6 +8,7 @@ It's not on any Maven repository, so you'll have to clone it and build it yourse
 Any constructive criticism, bug report or offer to help is welcome. Just open an issue or a PR.
 
 
+
 # Getting started
 
 ## Sbt setup
@@ -19,6 +20,7 @@ libraryDependencies += "gaelrenoux" %% "tranzactio" % "0.1-SNAPSHOT"
 
 
 ## Wrapping a query
+
 ```scala
 import zio._
 import doobie.implicits._
@@ -82,6 +84,12 @@ val integrationTestDb: Database.Live = Database.fromDriverManager(
 ```
 
 
+## Sample project
+
+Check in `src/main/samples`.
+
+
+
 # Why ?
 
 On my applications, I regularly have quite a bunch of business logics around my queries.
@@ -92,12 +100,23 @@ In addition, ConnectionIO misses quite a bit of the operations that ZIO has.
 That's where TranzactIO comes from. I wanted a way to use ZIO everywhere, and run the transaction whenever I decided.
 
 
+
 # What's next
 
+
 ## API cleanup
+
 As mentioned above, I'm still figuring out what's the best API for that library. I'm pretty happy with how it is right now, but I feel like there's still room for improvement.
 
-## More wrappers
-I want to add wrappers around more database access libraries. I'm looking into Quill right now, I'll probably take a look at Anorm at some point as well.
 
-Slick, however, is a problem. I tried it, and given the way transactions are handled in Slick I don't think it's doable until this ticket is fixed: https://github.com/slick/slick/issues/1563
+## Tests and samples
+
+I'll like more tests. And the samples definitely need more work. They should come with a docker container with a DB, so that they're immediatly runnable.
+
+
+## More wrappers
+
+I want to add wrappers around more database access libraries. I'm looking into Quill, I'll probably take a look at Anorm at some point as well.
+
+Slick, however, is a problem. I tried it, and transactions cannot be handled externally using Slick.
+I don't think it's doable until this ticket is fixed: https://github.com/slick/slick/issues/1563
