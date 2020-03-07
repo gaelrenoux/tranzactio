@@ -71,7 +71,7 @@ resolvers ++= Seq(
   Resolver.sonatypeRepo("snapshots")
 )
 
-val ZioVersion = "1.0.0-RC17"
+val ZioVersion = "1.0.0-RC18"
 val ZioCatsVersion = "2.0.0.0-RC10"
 val ZioMacroVersion = "0.6.0"
 val DoobieVersion = "0.8.6"
@@ -80,8 +80,6 @@ libraryDependencies ++= Seq(
   /* ZIO */
   "dev.zio" %% "zio" % ZioVersion,
   "dev.zio" %% "zio-interop-cats" % ZioCatsVersion,
-  "dev.zio" %% "zio-macros-core" % ZioMacroVersion,
-  "dev.zio" %% "zio-macros-test" % ZioMacroVersion,
 
   /* Doobie */
   "org.tpolecat" %% "doobie-core" % DoobieVersion % "optional",

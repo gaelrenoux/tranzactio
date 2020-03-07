@@ -2,77 +2,77 @@ package io.github.gaelrenoux.tranzactio.doobie
 
 import java.sql.{Connection => SqlConnection}
 
-import cats.effect.Resource
-import doobie.free.KleisliInterpreter
-import doobie.util.transactor.{Strategy, Transactor}
-import io.github.gaelrenoux.tranzactio.DatabaseApi.DatabaseServiceApi
 import io.github.gaelrenoux.tranzactio._
-import io.github.gaelrenoux.tranzactio.utils._
 import javax.sql.DataSource
 import zio._
 import zio.blocking.Blocking
 import zio.clock.Clock
-import zio.interop.catz._
-import zio.macros.delegate.Mix
 
-/** A Database wrapping Doobie. Factory method are on the companion objects. */
-trait DoobieDatabase extends DatabaseApi[Connection] {
-  val database: DoobieDatabase.Service[Any]
-}
-
+/** A Database wrapping Doobie. */
 object DoobieDatabase {
 
-  type Service[R] = DatabaseServiceApi[R, Connection]
+  type Service = DatabaseServiceApi[Connection]
 
-  trait Live extends DoobieDatabase with DatabaseWithConnectionSource[Connection] with Blocking.Live with Clock.Live {
-    self =>
-
-    override val database: Service[Any] = new ServiceWithConnectionSource {
-      override def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection] = catsBlocker.map { b =>
-        val connect = (c: SqlConnection) => Resource.pure[Task, SqlConnection](c)
-        val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
-        val doobieTransactor = Transactor(connection, connect, interp, Strategy.void)
-        new DoobieConnection.Live(doobieTransactor)
-      }.provide(self)
+  def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database] =
+    ZLayer.fromFunction { env: ConnectionSource with Blocking =>
+      new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with DoobieDatabase.Service {
+        override def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection] =
+          Connection.fromSqlConnection(connection).provide(env)
+      }
     }
-  }
 
-  object > extends DoobieDatabase.Service[DoobieDatabase] {
-    override def transactionR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(
-        implicit ev: R1 Mix Connection
-    ): ZIO[R1 with DoobieDatabase, Either[DbException, E], A] =
-      ZIO.accessM(_.database.transactionR[R1, E, A](zio))
-
-    override def autoCommitR[R1, E, A](zio: ZIO[R1 with Connection, E, A])(
-        implicit ev: R1 Mix Connection
-    ): ZIO[R1 with DoobieDatabase, Either[DbException, E], A] =
-      ZIO.accessM(_.database.autoCommitR[R1, E, A](zio))
-  }
-
-  /** Commodity method */
   def fromDriverManager(
       url: String, user: String, password: String,
-      driver: Option[String] = None, errorStrategies: ErrorStrategies = ErrorStrategies.Default
-  ): Database.Live = {
-    val (u, usr, pwd, d, es) = (url, user, password, driver, errorStrategies)
-    new DoobieDatabase.Live with ConnectionSource.FromDriverManager {
-      override val errorStrategies: ErrorStrategies = es
-      override val driver: Option[String] = d
-      override val url: String = u
-      override val user: String = usr
-      override val password: String = pwd
-    }
-  }
+      driver: Option[String] = None,
+      errorStrategies: ErrorStrategies = ErrorStrategies.Default
+  ): ZLayer[Blocking with Clock, Nothing, Database] =
+    (ConnectionSource.fromDriverManager(url, user, password, driver, errorStrategies) ++ Blocking.any) >>> fromConnectionSource
 
-  /** Commodity method */
-  def fromDatasource(datasource: DataSource, errorStrategies: ErrorStrategies = ErrorStrategies.Default
-  ): Database.Live = {
-    val (ds, es) = (datasource, errorStrategies)
-    new DoobieDatabase.Live with ConnectionSource.FromDatasource {
-      override val errorStrategies: ErrorStrategies = es
-      override val datasource: DataSource = ds
-    }
-  }
+  def fromDatasource(
+      datasource: DataSource,
+      errorStrategies: ErrorStrategies = ErrorStrategies.Default
+  ): ZLayer[Blocking with Clock, Nothing, Database] =
+    (ConnectionSource.fromDatasource(datasource, errorStrategies) ++ Blocking.any) >>> fromConnectionSource
+
+
+
+  /* Commodity methods */
+
+  def transactionR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Database with R, Either[DbException, E], A] =
+    ZIO.accessM { db: Database => db.get.transactionR[R, E, A](zio) }
+
+  def transaction[E, A](zio: ZIO[Connection, E, A]): ZIO[Database, Either[DbException, E], A] =
+    ZIO.accessM { db: Database => db.get.transaction[E, A](zio) }
+
+  def transactionOrWidenR[R <: Has[_], E >: DbException, A](zio: ZIO[R with Connection, E, A]): ZIO[Database with R, E, A] =
+    ZIO.accessM { db: Database => db.get.transactionOrWidenR[R, E, A](zio) }
+
+  def transactionOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[Database, E, A] =
+    ZIO.accessM { db: Database => db.get.transactionOrWiden[E, A](zio) }
+
+  def transactionOrDieR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Database with R, E, A] =
+    ZIO.accessM { db: Database => db.get.transactionOrDieR[R, E, A](zio) }
+
+  def transactionOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[Database, E, A] =
+    ZIO.accessM { db: Database => db.get.transactionOrDie[E, A](zio) }
+
+  def autoCommitR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Database with R, Either[DbException, E], A] =
+    ZIO.accessM { db: Database => db.get.autoCommitR[R, E, A](zio) }
+
+  def autoCommit[E, A](zio: ZIO[Connection, E, A]): ZIO[Database, Either[DbException, E], A] =
+    ZIO.accessM { db: Database => db.get.autoCommit[E, A](zio) }
+
+  def autoCommitOrWidenR[R <: Has[_], E >: DbException, A](zio: ZIO[R with Connection, E, A]): ZIO[Database with R, E, A] =
+    ZIO.accessM { db: Database => db.get.autoCommitOrWidenR[R, E, A](zio) }
+
+  def autoCommitOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[Database, E, A] =
+    ZIO.accessM { db: Database => db.get.autoCommitOrWiden[E, A](zio) }
+
+  def autoCommitOrDieR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Database with R, E, A] =
+    ZIO.accessM { db: Database => db.get.autoCommitOrDieR[R, E, A](zio) }
+
+  def autoCommitOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[Database, E, A] =
+    ZIO.accessM { db: Database => db.get.autoCommitOrDie[E, A](zio) }
 
 }
 

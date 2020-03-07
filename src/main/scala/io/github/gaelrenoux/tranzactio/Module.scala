@@ -1,15 +1,17 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.ZIO
+import zio.{Has, ZIO}
 
 /** A Module is a wrapper for one specific library (e.g. Doobie). */
 trait Module {
 
-  /** The Database type provides a connection (transactionally or otherwise). It contains configuration on how to connect. */
-  type Database
-
   /** The Connection that needs to be provided by the Database to run any Query. */
   type Connection
+
+  /** The Database service provides a connection (transactionally or otherwise). */
+  type DatabaseService <: DatabaseServiceApi[Connection]
+
+  type Database = Has[DatabaseService]
 
   /** The specific type used in the wrapped library to represent an SQL query. */
   type Query[A]
@@ -19,5 +21,4 @@ trait Module {
 
   /** Wraps a library-specific query into a TranzactIO. */
   def tzio[A](q: Query[A]): TranzactIO[A]
-
 }
