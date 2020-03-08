@@ -9,7 +9,7 @@ trait Module {
   type Connection
 
   /** The Database service provides a connection (transactionally or otherwise). */
-  type DatabaseService <: DatabaseServiceApi[Connection]
+  type DatabaseService <: DatabaseOps.ServiceOps[Connection]
 
   type Database = Has[DatabaseService]
 
@@ -21,4 +21,5 @@ trait Module {
 
   /** Wraps a library-specific query into a TranzactIO. */
   def tzio[A](q: Query[A]): TranzactIO[A]
+
 }

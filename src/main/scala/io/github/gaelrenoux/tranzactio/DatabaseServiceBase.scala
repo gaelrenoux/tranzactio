@@ -6,9 +6,8 @@ import zio.{Has, Tagged, ZIO}
 
 
 /** Template implementing a default transactional mechanism, based on a ConnectionSource. */
-abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](
-    connectionSource: ConnectionSource.Service
-) extends DatabaseServiceApi[Connection] {
+abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSource: ConnectionSource.Service)
+  extends DatabaseOps.ServiceOps[Connection] {
 
   import connectionSource._
 
@@ -46,5 +45,6 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](
           }
       }
     } yield a
+
 }
 
