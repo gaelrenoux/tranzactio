@@ -17,8 +17,8 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
     for {
       r <- ZIO.environment[R]
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JavaSqlConnection =>
-        setAutoCommit(c, autoCommit = false).mapError(Left(_))
-          .as(c)
+        setAutoCommit(c, autoCommit = false)
+          .bimap(Left(_), _ => c)
           .flatMap(connectionFromSql)
           .flatMap { c =>
             val env = r ++ c
@@ -36,8 +36,8 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
     for {
       r <- ZIO.environment[R]
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JavaSqlConnection =>
-        setAutoCommit(c, autoCommit = true).mapError(Left(_))
-          .as(c)
+        setAutoCommit(c, autoCommit = true)
+          .bimap(Left(_), _ => c)
           .flatMap(connectionFromSql)
           .flatMap { c =>
             val env = r ++ c

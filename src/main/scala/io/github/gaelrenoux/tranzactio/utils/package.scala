@@ -6,7 +6,7 @@ import zio.blocking.Blocking
 
 package object utils {
 
-  val catsBlocker: ZIO[Blocking, Nothing, Blocker] = ZIO
+  val ZCatsBlocker: ZIO[Blocking, Nothing, Blocker] = ZIO
     .access[Blocking](_.get[Blocking.Service].blockingExecutor)
     .map(exe => Blocker.liftExecutionContext(exe.asEC))
 

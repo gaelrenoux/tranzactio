@@ -3,7 +3,7 @@ package io.github.gaelrenoux.tranzactio
 import zio.{Has, ZIO}
 
 /** TranzactIO module for Doobie. */
-package object doobie extends Module {
+package object doobie extends Wrapper {
   override type Connection = Has[DoobieConnection.Service]
   override type DatabaseService = DoobieDatabase.Service
   override type Query[A] = _root_.doobie.ConnectionIO[A]

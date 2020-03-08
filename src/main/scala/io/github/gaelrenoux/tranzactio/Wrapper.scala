@@ -2,8 +2,8 @@ package io.github.gaelrenoux.tranzactio
 
 import zio.{Has, ZIO}
 
-/** A Module is a wrapper for one specific library (e.g. Doobie). */
-trait Module {
+/** A specific wrapper package for one specific library (e.g. Doobie). */
+trait Wrapper {
 
   /** The Connection that needs to be provided by the Database to run any Query. */
   type Connection
