@@ -8,6 +8,7 @@ import zio.{Has, UIO, ZIO}
  */
 trait DatabaseOps[Connection, R0] {
 
+  /** How to mix a Has[Unit] in an R0. Needed to express `method` in term of `methodR`. */
   protected def mixHasUnit(r0: R0): R0 with Has[Unit]
 
   /** Provides that ZIO with a Connection. A transaction will be opened before any actions in the ZIO, and closed
@@ -17,24 +18,24 @@ trait DatabaseOps[Connection, R0] {
   def transactionR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, Either[DbException, E], A]
 
   /** As `transactionR`, where the only needed environment is the connection. */
-  def transaction[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, Either[DbException, E], A] =
+  final def transaction[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, Either[DbException, E], A] =
     transactionR[Has[Unit], E, A](zio).provideSome(mixHasUnit)
 
   /** As `transactionR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-  def transactionOrWidenR[R <: Has[_], E >: DbException, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
+  final def transactionOrWidenR[R <: Has[_], E >: DbException, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
     transactionR[R, E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `transactionOrWiden`, where the only needed environment is the connection. */
-  def transactionOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
+  final def transactionOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
     transaction[E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `transactionR`, but errors when handling the connections are treated as defects instead of failures. */
-  def transactionOrDieR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
+  final def transactionOrDieR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
     transactionR[R, E, A](zio).flatMapError(dieOnLeft)
 
   /** As `transactionOrDieR`, where the only needed environment is the connection. */
-  def transactionOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
+  final def transactionOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
     transaction[E, A](zio).flatMapError(dieOnLeft)
 
 
@@ -44,24 +45,24 @@ trait DatabaseOps[Connection, R0] {
   def autoCommitR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, Either[DbException, E], A]
 
   /** As `autoCommitR`, where the only needed environment is the connection. */
-  def autoCommit[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, Either[DbException, E], A] =
+  final def autoCommit[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, Either[DbException, E], A] =
     autoCommitR[Has[Unit], E, A](zio).provideSome(mixHasUnit)
 
   /** As `autoCommitR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-  def autoCommitOrWidenR[R <: Has[_], E >: DbException, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
+  final def autoCommitOrWidenR[R <: Has[_], E >: DbException, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `autoCommitOrWidenR`, where the only needed environment is the connection. */
-  def autoCommitOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
+  final def autoCommitOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
     autoCommit[E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `autoCommitR`, but errors when handling the connections are treated as defects instead of failures. */
-  def autoCommitOrDieR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
+  final def autoCommitOrDieR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).flatMapError(dieOnLeft)
 
   /** As `autoCommitOrDieR`, where the only needed environment is the connection. */
-  def autoCommitOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
+  final def autoCommitOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
     autoCommit[E, A](zio).flatMapError(dieOnLeft)
 
 
@@ -74,10 +75,10 @@ trait DatabaseOps[Connection, R0] {
 object DatabaseOps {
   /** API for a Database service. Has[Unit] is used for the environment, as it has to be a Has, in place of Any. */
   trait ServiceOps[Connection] extends DatabaseOps[Connection, Any] {
-    override protected def mixHasUnit(r0: Any): Any with Has[Unit] = Has(())
+    override protected final def mixHasUnit(r0: Any): Any with Has[Unit] = Has(())
   }
 
   trait ModuleOps[Connection, Dbs <: ServiceOps[Connection]] extends DatabaseOps[Connection, Has[Dbs]] {
-    override protected def mixHasUnit(r0: Has[Dbs]): Has[Dbs] with Has[Unit] = r0 ++ Has(())
+    override protected final def mixHasUnit(r0: Has[Dbs]): Has[Dbs] with Has[Unit] = r0 ++ Has(())
   }
 }

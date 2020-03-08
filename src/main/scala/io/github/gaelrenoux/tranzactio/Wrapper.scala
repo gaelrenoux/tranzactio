@@ -8,10 +8,10 @@ trait Wrapper {
   /** The Connection that needs to be provided by the Database to run any Query. */
   type Connection
 
-  /** The Database service provides a connection (transactionally or otherwise). */
-  type DatabaseService <: DatabaseOps.ServiceOps[Connection]
+  /** The Database provides a connection (transactionally or otherwise). */
+  type Database <: Has[_ <: DatabaseOps.ServiceOps[Connection]]
 
-  type Database = Has[DatabaseService]
+  val Database: DatabaseOps.ModuleOps[Connection, _ <: DatabaseOps.ServiceOps[Connection]]
 
   /** The specific type used in the wrapped library to represent an SQL query. */
   type Query[A]
