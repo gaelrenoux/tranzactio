@@ -2,7 +2,7 @@ import sbt.Keys._
 
 organization := "io.github.gaelrenoux"
 name := "tranzactio"
-version := "0.1-SNAPSHOT"
+version := "0.2-SNAPSHOT"
 
 // update artima supersafe when a version is released (and check xdotai/diff once in a while)
 scalaVersion := "2.13.1"
