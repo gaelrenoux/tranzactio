@@ -28,6 +28,8 @@ case class ErrorStrategies(
   def noRetry: ErrorStrategies = all(_.noRetry)
 
   def withTimeout(t: Duration): ErrorStrategies = all(_.withTimeout(t))
+
+  def withRetryTimeout(t: Duration): ErrorStrategies = all(_.withRetryTimeout(t))
 }
 
 object ErrorStrategies {
@@ -35,6 +37,9 @@ object ErrorStrategies {
 
   /** No retries, and no timeout */
   val Nothing: ErrorStrategies = all(ErrorStrategy.Nothing)
+
+  /** No retries, and a 1s timeout */
+  val Brutal: ErrorStrategies = all(ErrorStrategy.Brutal)
 
   def all(s: ErrorStrategy): ErrorStrategies = ErrorStrategies(s, s, s, s, s)
 }
@@ -57,6 +62,8 @@ case class ErrorStrategy(
 
   def withTimeout(t: Duration): ErrorStrategy = copy(timeout = t)
 
+  def withRetryTimeout(t: Duration): ErrorStrategy = copy(retryTimeout = t)
+
 }
 
 object ErrorStrategy {
@@ -65,5 +72,8 @@ object ErrorStrategy {
 
   val Nothing: ErrorStrategy =
     ErrorStrategy(Schedule.stop, Duration.Infinity, Duration.Infinity)
+
+  val Brutal: ErrorStrategy =
+    ErrorStrategy(Schedule.stop, 1.second, 1.second)
 }
 

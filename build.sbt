@@ -2,7 +2,7 @@ import sbt.Keys._
 
 organization := "io.github.gaelrenoux"
 name := "tranzactio"
-version := "0.1-SNAPSHOT"
+version := "0.2-SNAPSHOT"
 
 // update artima supersafe when a version is released (and check xdotai/diff once in a while)
 scalaVersion := "2.13.1"
@@ -71,24 +71,26 @@ resolvers ++= Seq(
   Resolver.sonatypeRepo("snapshots")
 )
 
-val ZioVersion = "1.0.0-RC17"
-val ZioCatsVersion = "2.0.0.0-RC10"
+val ZioVersion = "1.0.0-RC18-2"
+val ZioCatsVersion = "2.0.0.0-RC11"
 val ZioMacroVersion = "0.6.0"
 val DoobieVersion = "0.8.6"
+val H2Version = "1.4.200"
 
 libraryDependencies ++= Seq(
   /* ZIO */
   "dev.zio" %% "zio" % ZioVersion,
   "dev.zio" %% "zio-interop-cats" % ZioCatsVersion,
-  "dev.zio" %% "zio-macros-core" % ZioMacroVersion,
-  "dev.zio" %% "zio-macros-test" % ZioMacroVersion,
 
   /* Doobie */
   "org.tpolecat" %% "doobie-core" % DoobieVersion % "optional",
 
   /* ZIO test */
   "dev.zio" %% "zio-test" % ZioVersion % "test",
-  "dev.zio" %% "zio-test-sbt" % ZioVersion % "test"
+  "dev.zio" %% "zio-test-sbt" % ZioVersion % "test",
+
+  /* H2 for tests */
+  "com.h2database" % "h2" % H2Version % "test"
 )
 
 Test / fork := true
