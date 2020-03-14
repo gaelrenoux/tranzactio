@@ -71,7 +71,7 @@ resolvers ++= Seq(
   Resolver.sonatypeRepo("snapshots")
 )
 
-val ZioVersion = "1.0.0-RC18"
+val ZioVersion = "1.0.0-RC18-2"
 val ZioCatsVersion = "2.0.0.0-RC11"
 val ZioMacroVersion = "0.6.0"
 val DoobieVersion = "0.8.6"

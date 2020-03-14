@@ -4,8 +4,7 @@ import doobie.implicits._
 import io.github.gaelrenoux.tranzactio.DbException
 import io.github.gaelrenoux.tranzactio.doobie._
 import samples.Person
-import zio.ZLayer.NoDeps
-import zio.{ZIO, ZLayer}
+import zio.{ULayer, ZIO, ZLayer}
 
 object PersonQueries {
 
@@ -17,7 +16,7 @@ object PersonQueries {
     def insert(p: Person): TranzactIO[Unit]
   }
 
-  val live: NoDeps[Nothing, PersonQueries] = ZLayer.succeed(new Service {
+  val live: ULayer[PersonQueries] = ZLayer.succeed(new Service {
 
     val setup: TranzactIO[Unit] = tzio {
       sql"""
