@@ -7,7 +7,8 @@ import zio.console.Console
 import zio.duration._
 import zio.{ZEnv, ZIO, ZLayer, console}
 
-/** A sample app where all modules are linked through ZLayer. */
+/** A sample app where all modules are linked through ZLayer. Should run as is (make sure you have com.h2database:h2 in
+ * your dependencies). */
 object LayeredApp extends zio.App {
 
   type AppEnv = ZEnv with Database with PersonQueries
@@ -29,7 +30,10 @@ object LayeredApp extends zio.App {
   def appLayer(dbConf: DbConf): ZLayer[ZEnv, Nothing, AppEnv] =
     ZEnv.any ++
       PersonQueries.live ++
-      Database.fromDriverManager(dbConf.url, dbConf.username, dbConf.password, errorStrategies = ErrorStrategies.Nothing.withTimeout(10.seconds))
+      Database.fromDriverManager(
+        dbConf.url, dbConf.username, dbConf.password,
+        errorStrategies = ErrorStrategies.RetryForever.withTimeout(10.seconds).withRetryTimeout(1.minute)
+      )
 
   def loadDbConf(): ZIO[Any, Nothing, DbConf] = ZIO.succeed(DbConf("jdbc:h2:mem:test", "sa", "sa"))
 

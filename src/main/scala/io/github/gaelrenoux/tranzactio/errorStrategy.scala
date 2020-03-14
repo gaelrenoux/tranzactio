@@ -27,19 +27,25 @@ case class ErrorStrategies(
 
   def noRetry: ErrorStrategies = all(_.noRetry)
 
+  /** Adds a timeout on all individual operations (open, commit, rollback, etc.). After the timeout expires, a retry
+   * may be attempted. */
   def withTimeout(t: Duration): ErrorStrategies = all(_.withTimeout(t))
 
+  /** Timeout on the retrying of all individual operations. When reached, the operation will fail (no more retries). */
   def withRetryTimeout(t: Duration): ErrorStrategies = all(_.withRetryTimeout(t))
 }
 
 object ErrorStrategies {
-  val Default: ErrorStrategies = all(ErrorStrategy.Default)
-
   /** No retries, and no timeout */
   val Nothing: ErrorStrategies = all(ErrorStrategy.Nothing)
 
-  /** No retries, and a 1s timeout */
+  /** No retries, and a 1s timeout. Good as a default for a starting app, as it won't hide potential problems. You'll
+   * probably need a more lenient configuration for Production, though. */
   val Brutal: ErrorStrategies = all(ErrorStrategy.Brutal)
+
+  /** Retry forever, with exponential delay (but never more than 10 seconds), no timeout. Good starting point for your
+   * Production app, although you should add timeouts. */
+  val RetryForever: ErrorStrategies = all(ErrorStrategy.RetryForever)
 
   def all(s: ErrorStrategy): ErrorStrategies = ErrorStrategies(s, s, s, s, s)
 }
@@ -67,13 +73,14 @@ case class ErrorStrategy(
 }
 
 object ErrorStrategy {
-  val Default: ErrorStrategy =
-    ErrorStrategy(Schedule.exponential(10.milliseconds) || Schedule.spaced(1.second), 10.seconds, 1.minute)
 
   val Nothing: ErrorStrategy =
     ErrorStrategy(Schedule.stop, Duration.Infinity, Duration.Infinity)
 
   val Brutal: ErrorStrategy =
     ErrorStrategy(Schedule.stop, 1.second, 1.second)
+
+  val RetryForever: ErrorStrategy =
+    ErrorStrategy(Schedule.exponential(10.milliseconds) || Schedule.spaced(10.seconds), Duration.Infinity, Duration.Infinity)
 }
 

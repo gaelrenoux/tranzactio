@@ -59,11 +59,11 @@ package object doobie extends Wrapper {
 
     /** Commodity method: creates a Database Layer which includes its own ConnectionSource based on a DriverManager. You
      * should probably not use this method in production, as a new connection is created each time it is required. You
-     * should use a connection pool, and create the Database Layer using fromDatasource. */
+     * should use a connection pool, and create the Database Layer using `fromDatasource`. */
     final def fromDriverManager(
         url: String, user: String, password: String,
         driver: Option[String] = None,
-        errorStrategies: ErrorStrategies = ErrorStrategies.Default
+        errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
     ): ZLayer[Blocking with Clock, Nothing, Database] =
       (ConnectionSource.fromDriverManager(url, user, password, driver, errorStrategies) ++ Blocking.any) >>> fromConnectionSource
 
@@ -71,7 +71,7 @@ package object doobie extends Wrapper {
      * connection pool implementations should be able to provide you a DataSource. */
     final def fromDatasource(
         datasource: DataSource,
-        errorStrategies: ErrorStrategies = ErrorStrategies.Default
+        errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
     ): ZLayer[Blocking with Clock, Nothing, Database] =
       (ConnectionSource.fromDatasource(datasource, errorStrategies) ++ Blocking.any) >>> fromConnectionSource
 

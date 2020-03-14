@@ -25,7 +25,7 @@ object ConnectionSource {
   /** ConnectionSource with standard behavior. Children class need to implement `getConnection`. */
   abstract class ServiceBase(
       env: Blocking with Clock,
-      val errorStrategies: ErrorStrategies = ErrorStrategies.Default
+      val errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
   ) extends ConnectionSource.Service {
 
     /** Main function: how to obtain a connection. Needs to be provided. */
@@ -65,7 +65,7 @@ object ConnectionSource {
   def fromDriverManager(
       url: String, user: String, password: String,
       driver: Option[String] = None,
-      errorStrategies: ErrorStrategies = ErrorStrategies.Default
+      errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
   ): ZLayer[Blocking with Clock, Nothing, ConnectionSource] =
     ZLayer.fromFunction { env: Blocking with Clock =>
       new ServiceBase(env, errorStrategies) {
@@ -79,7 +79,7 @@ object ConnectionSource {
   /** ConnectionSource layer from a DataSource. Any connection pool you use should be able to provide one. */
   def fromDatasource(
       datasource: DataSource,
-      errorStrategies: ErrorStrategies = ErrorStrategies.Default
+      errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
   ): ZLayer[Blocking with Clock, Nothing, ConnectionSource] =
     ZLayer.fromFunction { env: Blocking with Clock =>
       new ServiceBase(env, errorStrategies) {
