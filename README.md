@@ -2,8 +2,7 @@ TranzactIO is a wrapper around some Scala database access library (only Doobie f
 When you're done chaining ZIOs and want to execute the transaction, use TranzactIO's Database module to provide a connection for your ZIO.
 It can also provide a connection in auto-commit mode, without a transaction.
 
-**Warning**: This is still a very early alpha version. API is still fluid and might change without notice. 
-It's not on any Maven repository, so you'll have to clone it and build it yourself (just do `sbt publishLocal`).
+**Warning**: This is still a very early alpha version. API is still fluid and might change between minor versions.
 
 Any constructive criticism, bug report or offer to help is welcome. Just open an issue or a PR.
 
@@ -13,9 +12,11 @@ Any constructive criticism, bug report or offer to help is welcome. Just open an
 
 ## Sbt setup
 
+TranzactIO is available on the Sonatype Central Repository.
+
 In your build.sbt:
 ```sbt
-libraryDependencies += "io.github.gaelrenoux" %% "tranzactio" % "0.1-SNAPSHOT"
+libraryDependencies += "io.github.gaelrenoux" %% "tranzactio" % "0.2.0"
 ```
 
 
@@ -34,9 +35,11 @@ val list: ZIO[Connection, DbException, List[String]] = tzio {
 }
 ```
 
-Type `Connection` is actually an alias for `DoobieConnection`: you'll need a `DoobieDatabase` to provide it.
+Type `Connection` is **not** Java's `java.sql.Connection`. It is the type associated to a ZIO module specific to the
+library you're wrapping around (Doobie here). You'll need the associated `Database` module to provide a `Connection`.
 
-Type `TranzactIO[A]` is an alias for `ZIO[Connection, DbException, A]`
+Type `TranzactIO[A]` is an alias for `ZIO[Connection, DbException, A]` (`DbException` is generic and not linked to a
+specific library).
 
 
 ## Running the transaction
@@ -44,50 +47,64 @@ Type `TranzactIO[A]` is an alias for `ZIO[Connection, DbException, A]`
 Use the Database module to provide the connection. You'll have to provide the connection source.
 
 ```scala
-import zio._
 import io.github.gaelrenoux.tranzactio._
 import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
+import zio._
+import zio.blocking.Blocking
+import zio.clock.Clock
+import zio.console.Console
+import zio.duration._
 
-trait MyApp extends Database with ConnectionSource.FromDatasource {
+object MyApp {
 
-  override val datasource: DataSource = ??? // typically from a connection pool, like HikariCP
+  val datasource: DataSource = ??? // typically from a connection pool, like HikariCP
+
+  val dbLayer: ZLayer[Blocking with Clock, Nothing, Database] = Database.fromDatasource(datasource)
 
   val zio1: ZIO[Connection with console.Console, Exception, List[String]] = ???
-  val result1: ZIO[console.Console, Either[DbException, Exception], List[String]] = database.transactionR(zio1)
+  val result1: ZIO[Database with Console, Either[DbException, Exception], List[String]] = Database.transactionR(zio1)
   // Connection exceptions are Left
 
   val zio2: ZIO[Connection, Exception, List[String]] = ???
-  val result2: IO[Exception, List[String]] = database.transactionOrWiden(zio2)
-  // Exception is widened, no Either. Also, no environment since zio2 only needed the Connection
+  val result2: ZIO[Database, Exception, List[String]] = Database.transactionOrWiden(zio2)
+  // Exception is widened, no Either.
+  // transactionOrWiden instead on transactionOrWidenR since there is no additional environment (apart from the Connection)
 
   val zio3: ZIO[Connection, String, List[String]] = ???
-  val result3: IO[String, List[String]] = database.transactionOrDieR(zio3)
+  val result3: ZIO[Database, String, List[String]] = Database.autoCommitOrDieR(zio3)
   // Connection exceptions are transformed into defects.
-
+  // Also, no transaction here, we are using auto-commit mode
 }
 ```
 
-To get the database module directly, there are also a few commodity methods:
-```scala
-import zio.ZIO
-import io.github.gaelrenoux.tranzactio._
-import io.github.gaelrenoux.tranzactio.doobie._
-import javax.sql.DataSource
-
-val ds: DataSource = ???
-val db: Database.Live = Database.fromDatasource(ds)
-
-// Don't use fromDriverManager for production: connections will be opened and closed or each transaction.
-val integrationTestDb: Database.Live = Database.fromDriverManager(
-    "org.postgresql.Driver",
-    "jdbc:postgresql://localhost:54320/",
-    "login",
-    "password"
-)
-```
+You'll notice that all methods exists in two variants, with or without the final `R`. The final `R` denotes cases where
+there is additional environment requirements on the query ZIO, not just a `Connection`.
 
 Check in `src/main/samples` for more samples.
+
+
+## Error handling
+
+TranzactIO does no error handling on the queries themselves − since you have direct access to the ZIO instance
+representing that query, it's up to you to add timeouts or retries, handle errors, etc. However, you do not have direct
+access to the effects relating to connection management (opening and closing, committing and rollbacking), and therefore
+cannot handle directly the assocated errors (connection errors).
+
+To set up the retries and timeouts on connection errors, you can pass an `ErrorStrategies` instance when creating the
+`Database` layer. It defines the error strategy on every operation done by the `Database` module.
+
+In addition, there exists a number of commodity methods on `Database` to let you chose how connection errors that passed
+the should be handled in the resulting ZIO instance, while preserving possible errors in the initial ZIO (query errors):
+- With `transaction[R]`, the error is an `Either`: `Right` wraps an query error, and `Left` wraps a connection error.
+- With `transactionOrDie[R]`, connection errors are considered as defects, and do not appear in the type signature.
+- With `transactionOrWiden[R]`, the query error type will be widened to encompass `DbException`, and connection errors
+will appear as normal ZIO errors. This is especially useful if your query error type is already `DbException` or a
+parent type for `DbException` (like `Exception` in the example above).
+
+The same commodity variants exist for `autoCommit`.
+ 
+ 
 
 
 # Why ?
