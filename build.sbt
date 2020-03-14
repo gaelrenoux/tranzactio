@@ -2,10 +2,19 @@ import sbt.Keys._
 
 organization := "io.github.gaelrenoux"
 name := "tranzactio"
-version := "0.2-SNAPSHOT"
+licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+description := "ZIO wrapper for Scala DB libraries (e.g. Doobie)"
 
-// update artima supersafe when a version is released (and check xdotai/diff once in a while)
 scalaVersion := "2.13.1"
+
+
+
+// Publishing information
+import xerial.sbt.Sonatype._
+sonatypeProjectHosting := Some(GitHubHosting("gaelrenoux", "tranzactio", "gael.renoux@gmail.com"))
+publishTo := sonatypePublishTo.value
+
+
 
 scalacOptions ++= Seq(
   "-Ymacro-annotations",
@@ -65,6 +74,7 @@ scalacOptions ++= Seq(
 )
 
 
+
 resolvers ++= Seq(
   "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",
   "Secured Central Repository" at "https://repo1.maven.org/maven2",
@@ -92,6 +102,8 @@ libraryDependencies ++= Seq(
   /* H2 for tests */
   "com.h2database" % "h2" % H2Version % "test"
 )
+
+
 
 Test / fork := true
 Test / testForkedParallel := true // run tests in parallel on the forked JVM
