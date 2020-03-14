@@ -1,0 +1,5 @@
+language: scala
+jobs:
+  include:
+    - stage: test
+      script: sbt test
