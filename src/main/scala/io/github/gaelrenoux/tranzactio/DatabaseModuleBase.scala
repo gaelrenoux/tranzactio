@@ -2,6 +2,7 @@ package io.github.gaelrenoux.tranzactio
 
 import zio.{Has, Tagged, ZIO}
 
+/** Template implementing the commodity methods for a Db module. */
 abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Connection] : Tagged]
   extends DatabaseOps.ModuleOps[Connection, Dbs] {
 

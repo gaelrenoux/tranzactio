@@ -68,7 +68,7 @@ package object doobie extends Wrapper {
       (ConnectionSource.fromDriverManager(url, user, password, driver, errorStrategies) ++ Blocking.any) >>> fromConnectionSource
 
     /** Commodity method: creates a Database Layer which includes its own ConnectionSource based on a DataSource. Most
-     * connection pool implementations should be able to provide you with a DataSource. */
+     * connection pool implementations should be able to provide you a DataSource. */
     final def fromDatasource(
         datasource: DataSource,
         errorStrategies: ErrorStrategies = ErrorStrategies.Default

@@ -7,7 +7,7 @@ import zio.blocking._
 import zio.clock.Clock
 import zio.{RIO, ZIO, ZLayer}
 
-/** A module able to provide connections. They typically come from a connection pool. */
+/** A module able to provide and manage connections. They typically come from a connection pool. */
 object ConnectionSource {
 
   trait Service {
@@ -60,6 +60,8 @@ object ConnectionSource {
 
   }
 
+  /** ConnectionSource layer from a Java DriverManager. Do not use in production, as it creates a new connection every
+   * time one is needed. Use a connection pool and `fromDatasource` instead. */
   def fromDriverManager(
       url: String, user: String, password: String,
       driver: Option[String] = None,
@@ -74,6 +76,7 @@ object ConnectionSource {
       }
     }
 
+  /** ConnectionSource layer from a DataSource. Any connection pool you use should be able to provide one. */
   def fromDatasource(
       datasource: DataSource,
       errorStrategies: ErrorStrategies = ErrorStrategies.Default

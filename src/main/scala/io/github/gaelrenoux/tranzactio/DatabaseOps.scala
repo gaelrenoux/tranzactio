@@ -78,6 +78,7 @@ object DatabaseOps {
     override protected final def mixHasUnit(r0: Any): Any with Has[Unit] = Has(())
   }
 
+  /** API for commodity methods needing a Database. */
   trait ModuleOps[Connection, Dbs <: ServiceOps[Connection]] extends DatabaseOps[Connection, Has[Dbs]] {
     override protected final def mixHasUnit(r0: Has[Dbs]): Has[Dbs] with Has[Unit] = r0 ++ Has(())
   }
