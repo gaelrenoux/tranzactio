@@ -39,6 +39,7 @@ object LayeredApp extends zio.App {
 
   case class DbConf(url: String, username: String, password: String)
 
+  /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {
     val queries: ZIO[Connection with AppEnv, DbException, List[Person]] = for {
       _ <- console.putStrLn("Creating the table")
