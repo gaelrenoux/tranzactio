@@ -98,6 +98,7 @@ libraryDependencies ++= Seq(
   /* ZIO test */
   "dev.zio" %% "zio-test" % ZioVersion % "test",
   "dev.zio" %% "zio-test-sbt" % ZioVersion % "test",
+  "dev.zio" %% "zio-test-magnolia" % ZioVersion % "test",
 
   /* H2 for tests */
   "com.h2database" % "h2" % H2Version % "test"
@@ -109,7 +110,7 @@ Test / fork := true
 Test / testForkedParallel := true // run tests in parallel on the forked JVM
 Test / testOptions += Tests.Argument("-oD") // show test duration
 
-//testFrameworks += Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
 /* Adds samples as test sources */
 Test / unmanagedSourceDirectories ++= Seq(

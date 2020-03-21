@@ -3,7 +3,6 @@ package samples.doobie
 import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategies}
 import samples.Person
-import zio.console.Console
 import zio.duration._
 import zio.{ZEnv, ZIO, ZLayer, console}
 
@@ -21,7 +20,7 @@ object LayeredApp extends zio.App {
       appEnv = appLayer(conf)
       _ <- console.putStrLn("Calling the app")
       trio <- myApp().provideLayer(appEnv)
-      _ <- ZIO.accessM[Console](_.get[Console.Service].putStrLn(trio.toString))
+      _ <- console.putStrLn(trio.mkString(", "))
     } yield 0
 
     prog.orDie
