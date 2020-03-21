@@ -34,7 +34,7 @@ object LayeredApp extends zio.App {
         errorStrategies = ErrorStrategies.RetryForever.withTimeout(10.seconds).withRetryTimeout(1.minute)
       )
 
-  def loadDbConf(): ZIO[Any, Nothing, DbConf] = ZIO.succeed(DbConf("jdbc:h2:mem:test", "sa", "sa"))
+  def loadDbConf(): ZIO[Any, Nothing, DbConf] = ZIO.succeed(DbConf("jdbc:h2:mem:samble-app;DB_CLOSE_DELAY=10", "sa", "sa"))
 
   case class DbConf(url: String, username: String, password: String)
 

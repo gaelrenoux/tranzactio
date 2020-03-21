@@ -8,7 +8,7 @@ import zio.test.{DefaultRunnableSpec, ZSpec, _}
 /** Run all samples as ZIO tests */
 object SamplesSpec extends DefaultRunnableSpec {
 
-  override def spec: ZSpec[_root_.zio.test.environment.TestEnvironment, Any] = suite("SamplesSpec") {
+  override def spec: ZSpec[TestEnvironment, Any] = suite("SamplesSpec")(
 
     testM("Doobie LayeredApp prints its progress then the trio") {
       for {
@@ -25,6 +25,6 @@ object SamplesSpec extends DefaultRunnableSpec {
       )))
     }
 
-  }
+  )
 
 }

@@ -14,6 +14,8 @@ object PersonQueries {
     val list: TranzactIO[List[Person]]
 
     def insert(p: Person): TranzactIO[Unit]
+
+    val failing: TranzactIO[Unit]
   }
 
   val live: ULayer[PersonQueries] = ZLayer.succeed(new Service {
@@ -35,13 +37,20 @@ object PersonQueries {
       sql"""INSERT INTO person (given_name, family_name) VALUES (${p.givenName}, ${p.familyName})"""
         .update.run.map(_ => ())
     }
+
+    val failing: TranzactIO[Unit] = tzio {
+      sql"""INSERT INTO nonexisting (stuff) VALUES (1)"""
+        .update.run.map(_ => ())
+    }
   })
+
+  def setup: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.accessM(_.get.setup)
 
   val list: ZIO[PersonQueries with Connection, DbException, List[Person]] = ZIO.accessM(_.get.list)
 
   def insert(p: Person): ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.accessM(_.get.insert(p))
 
-  def setup: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.accessM(_.get.setup)
+  val failing: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.accessM(_.get.failing)
 
 }
 
