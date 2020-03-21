@@ -51,7 +51,7 @@ object LayeredApp extends zio.App {
       trio <- PersonQueries.list
     } yield trio
 
-    Database.transactionOrWidenR[AppEnv, DbException, List[Person]](queries)
+    Database.transactionOrWidenR[AppEnv](queries)
   }
 
 }

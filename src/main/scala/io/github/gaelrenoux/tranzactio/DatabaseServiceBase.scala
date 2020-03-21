@@ -13,7 +13,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
 
   def connectionFromSql(connection: JavaSqlConnection): ZIO[Any, Nothing, Connection]
 
-  override def transactionR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] = {
+  private[tranzactio] override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] = {
     for {
       r <- ZIO.environment[R]
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JavaSqlConnection =>
@@ -32,7 +32,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
     } yield a
   }
 
-  override def autoCommitR[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] =
+  private[tranzactio] override def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] =
     for {
       r <- ZIO.environment[R]
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JavaSqlConnection =>

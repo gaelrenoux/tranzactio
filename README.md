@@ -54,7 +54,6 @@ import zio._
 import zio.blocking.Blocking
 import zio.clock.Clock
 import zio.console.Console
-import zio.duration._
 
 object MyApp {
 
@@ -62,8 +61,8 @@ object MyApp {
 
   val dbLayer: ZLayer[Blocking with Clock, Nothing, Database] = Database.fromDatasource(datasource)
 
-  val zio1: ZIO[Connection with console.Console, Exception, List[String]] = ???
-  val result1: ZIO[Database with Console, Either[DbException, Exception], List[String]] = Database.transactionR(zio1)
+  val zio1: ZIO[Connection with Console, Exception, List[String]] = ???
+  val result1: ZIO[Database with Console, Either[DbException, Exception], List[String]] = Database.transactionR[Console](zio1)
   // Connection exceptions are Left
 
   val zio2: ZIO[Connection, Exception, List[String]] = ???
@@ -72,24 +71,27 @@ object MyApp {
   // transactionOrWiden instead on transactionOrWidenR since there is no additional environment (apart from the Connection)
 
   val zio3: ZIO[Connection, String, List[String]] = ???
-  val result3: ZIO[Database, String, List[String]] = Database.autoCommitOrDieR(zio3)
+  val result3: ZIO[Database, String, List[String]] = Database.autoCommitOrDie(zio3)
   // Connection exceptions are transformed into defects.
   // Also, no transaction here, we are using auto-commit mode
 }
 ```
 
 You'll notice that all methods exists in two variants, with or without the final `R`. The final `R` denotes cases where
-there is additional environment requirements on the query ZIO, not just a `Connection`.
+there is additional environment requirements on the query ZIO, not just a `Connection`. When using an `R` method, you
+need to specify the additional environment as type parameter (Scala's compiler is not smart enough to infer it correctly
+on its own).
 
 Check in `src/main/samples` for more samples.
 
 
 ## Error handling
 
-TranzactIO does no error handling on the queries themselves − since you have direct access to the ZIO instance
-representing that query, it's up to you to add timeouts or retries, handle errors, etc. However, you do not have direct
-access to the effects relating to connection management (opening and closing, committing and rollbacking), and therefore
-cannot handle directly the assocated errors (connection errors).
+TranzactIO has no specific error handling for errors that happens when running the queries (query errors).
+Since you have direct access to the ZIO instance representing that query, it's up to you to add timeouts or retries,
+handle errors, etc.
+However, you do not have direct access to the effects relating to connection management (opening and closing, committing
+ and rollbacking), and therefore cannot handle directly the associated errors (connection errors).
 
 To set up the retries and timeouts on connection errors, you can pass an `ErrorStrategies` instance when creating the
 `Database` layer. It defines the error strategy on every operation done by the `Database` module.
@@ -128,7 +130,7 @@ As mentioned above, I'm still figuring out what's the best API for that library.
 
 ## Tests and samples
 
-I'll like more tests. And the samples definitely need more work. They should come with a docker container with a DB, so that they're immediatly runnable.
+I'll like more tests.
 
 
 ## More wrappers
