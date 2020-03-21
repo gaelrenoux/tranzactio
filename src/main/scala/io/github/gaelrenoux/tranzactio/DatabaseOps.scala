@@ -35,7 +35,7 @@ trait DatabaseOps[Connection, R0] {
     transactionR[R, E, A](zio).flatMapError(dieOnLeft)
 
   /** As `transactionOrDieR`, where the only needed environment is the connection. */
-  final def transactionOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
+  final def transactionOrDie[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
     transaction[E, A](zio).flatMapError(dieOnLeft)
 
 
@@ -62,7 +62,7 @@ trait DatabaseOps[Connection, R0] {
     autoCommitR[R, E, A](zio).flatMapError(dieOnLeft)
 
   /** As `autoCommitOrDieR`, where the only needed environment is the connection. */
-  final def autoCommitOrDie[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
+  final def autoCommitOrDie[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
     autoCommit[E, A](zio).flatMapError(dieOnLeft)
 
 
@@ -73,6 +73,7 @@ trait DatabaseOps[Connection, R0] {
 }
 
 object DatabaseOps {
+
   /** API for a Database service. Has[Unit] is used for the environment, as it has to be a Has, in place of Any. */
   trait ServiceOps[Connection] extends DatabaseOps[Connection, Any] {
     override protected final def mixHasUnit(r0: Any): Any with Has[Unit] = Has(())
@@ -82,4 +83,5 @@ object DatabaseOps {
   trait ModuleOps[Connection, Dbs <: ServiceOps[Connection]] extends DatabaseOps[Connection, Has[Dbs]] {
     override protected final def mixHasUnit(r0: Has[Dbs]): Has[Dbs] with Has[Unit] = r0 ++ Has(())
   }
+
 }
