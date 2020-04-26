@@ -4,21 +4,20 @@ import java.util.UUID
 
 import io.github.gaelrenoux.tranzactio._
 import io.github.gaelrenoux.tranzactio.integration.ITSpec.ITEnv
-import samples.doobie.PersonQueries
 import zio.duration._
 import zio.test._
 import zio.test.environment.{TestEnvironment, testEnvironment}
 import zio.{Tagged, ZLayer, _}
 
-abstract class ITSpec[Db <: Has[_] : Tagged] extends RunnableSpec[ITEnv[Db], Any] {
-  type Spec = ZSpec[ITEnv[Db], Any]
+abstract class ITSpec[Db <: Has[_] : Tagged, PersonQueries  <: Has[_] : Tagged] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
+  type Spec = ZSpec[ITEnv[Db, PersonQueries], Any]
 
-  override def aspects: List[TestAspect[Nothing, ITEnv[Db], Nothing, Any]] = List(TestAspect.timeoutWarning(5.seconds))
+  override def aspects: List[TestAspect[Nothing, ITEnv[Db, PersonQueries], Nothing, Any]] = List(TestAspect.timeoutWarning(5.seconds))
 
-  override def runner: TestRunner[ITEnv[Db], Any] = TestRunner(TestExecutor.default(itLayer))
+  override def runner: TestRunner[ITEnv[Db, PersonQueries], Any] = TestRunner(TestExecutor.default(itLayer))
 
-  private lazy val itLayer: ULayer[ITEnv[Db]] =
-    testEnvironment ++ PersonQueries.live ++ (testEnvironment >>> (ZEnv.any ++ csLayer) >>> dbLayer)
+  private lazy val itLayer: ULayer[ITEnv[Db, PersonQueries]] =
+    testEnvironment ++ personQueriesLive ++ (testEnvironment >>> (ZEnv.any ++ csLayer) >>> dbLayer)
 
   /** Generates the ConnectionSource layer.
    *
@@ -38,8 +37,11 @@ abstract class ITSpec[Db <: Has[_] : Tagged] extends RunnableSpec[ITEnv[Db], Any
 
   /** Generate the DB layer for that test, based on a connection source */
   val dbLayer: ZLayer[ConnectionSource with ZEnv, Nothing, Db]
+
+  /** Provides the PersonQueries */
+  val personQueriesLive: ULayer[PersonQueries]
 }
 
 object ITSpec {
-  type ITEnv[Db <: Has[_]] = PersonQueries with Db with TestEnvironment
+  type ITEnv[Db <: Has[_], PersonQueries <: Has[_]] = PersonQueries with Db with TestEnvironment
 }

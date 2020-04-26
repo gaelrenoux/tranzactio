@@ -10,7 +10,9 @@ scalaVersion := "2.13.1"
 
 
 // Publishing information
+
 import xerial.sbt.Sonatype._
+
 sonatypeProjectHosting := Some(GitHubHosting("gaelrenoux", "tranzactio", "gael.renoux@gmail.com"))
 publishTo := sonatypePublishTo.value
 
@@ -85,6 +87,7 @@ val ZioVersion = "1.0.0-RC18-2"
 val ZioCatsVersion = "2.0.0.0-RC11"
 val ZioMacroVersion = "0.6.0"
 val DoobieVersion = "0.8.6"
+val AnormVersion = "2.6.5"
 val H2Version = "1.4.200"
 
 libraryDependencies ++= Seq(
@@ -94,6 +97,7 @@ libraryDependencies ++= Seq(
 
   /* Doobie */
   "org.tpolecat" %% "doobie-core" % DoobieVersion % "optional",
+  "org.playframework.anorm" %% "anorm" % AnormVersion % "optional",
 
   /* ZIO test */
   "dev.zio" %% "zio-test" % ZioVersion % "test",
