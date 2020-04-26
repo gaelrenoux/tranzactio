@@ -52,7 +52,7 @@ package object doobie extends Wrapper {
     final def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database] =
       ZLayer.fromFunction { env: ConnectionSource with Blocking =>
         new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
-          override final def connectionFromSql(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
+          override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
             Connection.fromJdbcConnection(connection).provide(env)
         }
       }

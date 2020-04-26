@@ -11,7 +11,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
 
   import connectionSource._
 
-  def connectionFromSql(connection: JdbcConnection): ZIO[Any, Nothing, Connection]
+  def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection]
 
   private[tranzactio] override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] = {
     for {
@@ -19,7 +19,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
         setAutoCommit(c, autoCommit = false)
           .bimap(Left(_), _ => c)
-          .flatMap(connectionFromSql)
+          .flatMap(connectionFromJdbc)
           .flatMap { c =>
             val env = r ++ c
             zio.mapError(Right(_)).provide(env)
@@ -38,7 +38,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
         setAutoCommit(c, autoCommit = true)
           .bimap(Left(_), _ => c)
-          .flatMap(connectionFromSql)
+          .flatMap(connectionFromJdbc)
           .flatMap { c =>
             val env = r ++ c
             zio.mapError(Right(_)).provide(env)
