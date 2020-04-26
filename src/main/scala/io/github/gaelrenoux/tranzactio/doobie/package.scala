@@ -6,9 +6,7 @@ import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
 import io.github.gaelrenoux.tranzactio.utils.ZCatsBlocker
-import javax.sql.DataSource
 import zio.blocking.Blocking
-import zio.clock.Clock
 import zio.interop.catz._
 import zio.{Has, Task, ZIO, ZLayer}
 
@@ -46,36 +44,22 @@ package object doobie extends Wrapper {
 
   /** Database for the Doobie wrapper */
   object Database extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
+    self =>
 
     type Service = DatabaseOps.ServiceOps[Connection]
+
+    /** How to provide a Connection for the module, given a JDBC connection and some environment. */
+    def connectionFromJdbc(env: ConnectionSource with Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
+      Connection.fromJdbcConnection(connection).provide(env)
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
     final def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database] =
       ZLayer.fromFunction { env: ConnectionSource with Blocking =>
         new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
           override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
-            Connection.fromJdbcConnection(connection).provide(env)
+            self.connectionFromJdbc(env, connection)
         }
       }
-
-    /** Commodity method: creates a Database Layer which includes its own ConnectionSource based on a DriverManager. You
-     * should probably not use this method in production, as a new connection is created each time it is required. You
-     * should use a connection pool, and create the Database Layer using `fromDatasource`. */
-    final def fromDriverManager(
-        url: String, user: String, password: String,
-        driver: Option[String] = None,
-        errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
-    ): ZLayer[Blocking with Clock, Nothing, Database] =
-      (ConnectionSource.fromDriverManager(url, user, password, driver, errorStrategies) ++ Blocking.any) >>> fromConnectionSource
-
-    /** Commodity method: creates a Database Layer which includes its own ConnectionSource based on a DataSource. Most
-     * connection pool implementations should be able to provide you a DataSource. */
-    final def fromDatasource(
-        datasource: DataSource,
-        errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
-    ): ZLayer[Blocking with Clock, Nothing, Database] =
-      (ConnectionSource.fromDatasource(datasource, errorStrategies) ++ Blocking.any) >>> fromConnectionSource
-
   }
 
 
