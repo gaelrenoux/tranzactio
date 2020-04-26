@@ -1,5 +1,16 @@
+[TravisCI-Link]: https://travis-ci.org/gaelrenoux/tranzactio
+[TravisCI-Badge]: https://travis-ci.org/gaelrenoux/tranzactio.svg?branch=master
+[SonatypeReleases-Link]: https://oss.sonatype.org/content/repositories/releases/io/github/gaelrenoux/tranzactio_2.13/
+[SonatypeReleases-Badge]: https://img.shields.io/nexus/r/https/oss.sonatype.org/io.github.gaelrenoux/tranzactio_2.13.svg
+
+# TranzactIO
+
+[![Build Status][TravisCI-Badge]][TravisCI-Link]
+[![Releases][SonatypeReleases-Badge]][SonatypeReleases-Link]
+
+
 TranzactIO is a wrapper around some Scala database access libraries (Doobie and Anorm, for now). 
-It replaces the library's IO monad by a `ZIO[Connection, E, A]`, or offers it if the library didn't have an IO monad to start with.
+It replaces the library's IO monad by a `ZIO[Connection, E, A]`, or provides one if the library didn't have an IO monad to start with.
 When you're done chaining ZIOs and want to execute the transaction, use TranzactIO's Database module to provide a connection for your ZIO.
 It can also provide a connection in auto-commit mode, without a transaction.
 
@@ -17,8 +28,6 @@ In your build.sbt:
 ```sbt
 libraryDependencies += "io.github.gaelrenoux" %% "tranzactio" % version
 ```
-
-Last stable version is 0.2.0.
 
 
 ## Wrapping a query
