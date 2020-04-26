@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => SqlConnection}
+import java.sql.{Connection => JdbcConnection}
 
 import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
@@ -34,8 +34,8 @@ package object doobie extends Wrapper {
     }
 
     /** Creates a LiveConnection from a java.sql.Connection, constructing the Doobie transactor. */
-    final def fromSqlConnection(connection: SqlConnection): ZIO[Blocking, Nothing, Connection] = ZCatsBlocker.map { b =>
-      val connect = (c: SqlConnection) => Resource.pure[Task, SqlConnection](c)
+    final def fromJdbcConnection(connection: JdbcConnection): ZIO[Blocking, Nothing, Connection] = ZCatsBlocker.map { b =>
+      val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
       val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
       val doobieTransactor = Transactor(connection, connect, interp, Strategy.void)
       new Connection.ServiceLive(doobieTransactor)
@@ -52,8 +52,8 @@ package object doobie extends Wrapper {
     final def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database] =
       ZLayer.fromFunction { env: ConnectionSource with Blocking =>
         new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
-          override final def connectionFromSql(connection: SqlConnection): ZIO[Any, Nothing, Connection] =
-            Connection.fromSqlConnection(connection).provide(env)
+          override final def connectionFromSql(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
+            Connection.fromJdbcConnection(connection).provide(env)
         }
       }
 

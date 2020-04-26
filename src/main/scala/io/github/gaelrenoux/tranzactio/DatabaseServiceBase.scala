@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => JavaSqlConnection}
+import java.sql.{Connection => JdbcConnection}
 
 import zio.{Has, Tagged, ZIO}
 
@@ -11,12 +11,12 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
 
   import connectionSource._
 
-  def connectionFromSql(connection: JavaSqlConnection): ZIO[Any, Nothing, Connection]
+  def connectionFromSql(connection: JdbcConnection): ZIO[Any, Nothing, Connection]
 
   private[tranzactio] override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] = {
     for {
       r <- ZIO.environment[R]
-      a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JavaSqlConnection =>
+      a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
         setAutoCommit(c, autoCommit = false)
           .bimap(Left(_), _ => c)
           .flatMap(connectionFromSql)
@@ -35,7 +35,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSour
   private[tranzactio] override def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] =
     for {
       r <- ZIO.environment[R]
-      a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JavaSqlConnection =>
+      a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
         setAutoCommit(c, autoCommit = true)
           .bimap(Left(_), _ => c)
           .flatMap(connectionFromSql)
