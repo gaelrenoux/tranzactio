@@ -10,7 +10,7 @@
 
 
 TranzactIO is a wrapper around some Scala database access libraries (Doobie and Anorm, for now). 
-It replaces the library's IO monad by a `ZIO[Connection, E, A]`, or offers it if the library didn't have an IO monad to start with.
+It replaces the library's IO monad by a `ZIO[Connection, E, A]`, or provides one if the library didn't have an IO monad to start with.
 When you're done chaining ZIOs and want to execute the transaction, use TranzactIO's Database module to provide a connection for your ZIO.
 It can also provide a connection in auto-commit mode, without a transaction.
 
