@@ -70,7 +70,6 @@ object ConnectionSource {
     ZLayer.fromFunction { env: Blocking with Clock =>
       new ServiceBase(env, errorStrategies) {
         override def getConnection: RIO[Blocking, Connection] = effectBlocking {
-          println(s"Requiring connection on: [$url] in ${getClass.getClassLoader}")
           driver.foreach(Class.forName)
           DriverManager.getConnection(url, user, password)
         }
