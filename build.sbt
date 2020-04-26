@@ -84,7 +84,7 @@ resolvers ++= Seq(
 )
 
 val ZioVersion = "1.0.0-RC18-2"
-val ZioCatsVersion = "2.0.0.0-RC11"
+val ZioCatsVersion = "2.0.0.0-RC12"
 val ZioMacroVersion = "0.6.0"
 val DoobieVersion = "0.8.6"
 val AnormVersion = "2.6.5"
