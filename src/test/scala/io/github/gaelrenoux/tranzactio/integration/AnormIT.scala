@@ -22,71 +22,78 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
   val connectionCountQuery: TranzactIO[Int] = tzio(implicit c => SQL(connectionCountSql).as(SqlParser.int(1).single))
 
   def spec: Spec = suite("Anorm Integration Tests")(
-
-    testM("data committed on transaction success") {
-      for {
-        _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
-        _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy))
-        persons <- Database.transactionR[PersonQueries](PersonQueries.list)
-      } yield assert(persons)(equalTo(List(buffy)))
-    },
-
-    testM("connection closed on transaction success") {
-      for {
-        _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
-        _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy))
-        connectionCount <- Database.transaction(connectionCountQuery)
-      } yield assert(connectionCount)(equalTo(1)) // only the current connection
-    },
-
-    testM("data rollbacked on transaction failure") {
-      for {
-        _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
-        _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
-        persons <- Database.transactionR[PersonQueries](PersonQueries.list)
-      } yield assert(persons)(equalTo(Nil))
-    },
-
-    testM("connection closed on transaction failure") {
-      for {
-        _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
-        _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
-        connectionCount <- Database.transaction(connectionCountQuery)
-      } yield assert(connectionCount)(equalTo(1)) // only the current connection
-    },
-
-    testM("data committed on autoCommit success") {
-      for {
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy))
-        persons <- Database.autoCommitR[PersonQueries](PersonQueries.list)
-      } yield assert(persons)(equalTo(List(buffy)))
-    },
-
-    testM("connection closed on autoCommit success") {
-      for {
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy))
-        connectionCount <- Database.autoCommit(connectionCountQuery)
-      } yield assert(connectionCount)(equalTo(1)) // only the current connection
-    },
-
-    testM("data rollbacked on autoCommit failure") {
-      for {
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
-        persons <- Database.autoCommitR[PersonQueries](PersonQueries.list)
-      } yield assert(persons)(equalTo(List(buffy)))
-    },
-
-    testM("connection closed on autoCommit failure") {
-      for {
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
-        _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy))
-        connectionCount <- Database.autoCommit(connectionCountQuery)
-      } yield assert(connectionCount)(equalTo(1)) // only the current connection
-    }
-
+    testDataCommittedOnTransactionSuccess,
+    testConnectionClosedOnTransactionSuccess,
+    testDataRollbackedOnTransactionFailure,
+    testConnectionClosedOnTransactionFailure,
+    testDataCommittedOnAutoCommitSuccess,
+    testConnectionClosedOnAutoCommitSuccess,
+    testDataRollbackedOnAutoCommitFailure,
+    testConnectionClosedOnAutoCommitFailure
   )
+
+  private val testDataCommittedOnTransactionSuccess = testM("data committed on transaction success") {
+    for {
+      _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
+      _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy))
+      persons <- Database.transactionR[PersonQueries](PersonQueries.list)
+    } yield assert(persons)(equalTo(List(buffy)))
+  }
+
+  private val testConnectionClosedOnTransactionSuccess = testM("connection closed on transaction success") {
+    for {
+      _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
+      _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy))
+      connectionCount <- Database.transaction(connectionCountQuery)
+    } yield assert(connectionCount)(equalTo(1)) // only the current connection
+  }
+
+  private val testDataRollbackedOnTransactionFailure = testM("data rollbacked on transaction failure") {
+    for {
+      _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
+      _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      persons <- Database.transactionR[PersonQueries](PersonQueries.list)
+    } yield assert(persons)(equalTo(Nil))
+  }
+
+  private val testConnectionClosedOnTransactionFailure = testM("connection closed on transaction failure") {
+    for {
+      _ <- Database.transactionR[PersonQueries](PersonQueries.setup)
+      _ <- Database.transactionR[PersonQueries](PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      connectionCount <- Database.transaction(connectionCountQuery)
+    } yield assert(connectionCount)(equalTo(1)) // only the current connection
+  }
+
+  private val testDataCommittedOnAutoCommitSuccess = testM("data committed on autoCommit success") {
+    for {
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy))
+      persons <- Database.autoCommitR[PersonQueries](PersonQueries.list)
+    } yield assert(persons)(equalTo(List(buffy)))
+  }
+
+  private val testConnectionClosedOnAutoCommitSuccess = testM("connection closed on autoCommit success") {
+    for {
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy))
+      connectionCount <- Database.autoCommit(connectionCountQuery)
+    } yield assert(connectionCount)(equalTo(1)) // only the current connection
+  }
+
+  private val testDataRollbackedOnAutoCommitFailure = testM("data rollbacked on autoCommit failure") {
+    for {
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      persons <- Database.autoCommitR[PersonQueries](PersonQueries.list)
+    } yield assert(persons)(equalTo(List(buffy)))
+  }
+
+  private val testConnectionClosedOnAutoCommitFailure = testM("connection closed on autoCommit failure") {
+    for {
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.setup)
+      _ <- Database.autoCommitR[PersonQueries](PersonQueries.insert(buffy))
+      connectionCount <- Database.autoCommit(connectionCountQuery)
+    } yield assert(connectionCount)(equalTo(1)) // only the current connection
+  }
 
 }
