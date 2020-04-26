@@ -11,7 +11,7 @@
             <option value="$PROJECT_DIR$/project" />
           </set>
         </option>
-        <option name="sbtVersion" value="1.3.4" />
+        <option name="sbtVersion" value="1.3.10" />
         <option name="useQualifiedModuleNames" value="true" />
       </SbtProjectSettings>
     </option>
