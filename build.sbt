@@ -77,12 +77,6 @@ scalacOptions ++= Seq(
 
 
 
-resolvers ++= Seq(
-  "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",
-  "Secured Central Repository" at "https://repo1.maven.org/maven2",
-  Resolver.sonatypeRepo("snapshots")
-)
-
 val ZioVersion = "1.0.0-RC18-2"
 val ZioCatsVersion = "2.0.0.0-RC12"
 val ZioMacroVersion = "0.6.0"
