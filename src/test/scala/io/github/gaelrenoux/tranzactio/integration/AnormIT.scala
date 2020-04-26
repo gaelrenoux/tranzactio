@@ -1,17 +1,17 @@
 package io.github.gaelrenoux.tranzactio.integration
 
-import doobie.util.fragment.Fragment
+import anorm._
 import io.github.gaelrenoux.tranzactio.ConnectionSource
-import io.github.gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio.anorm._
 import samples.Person
-import samples.doobie.PersonQueries
-import zio.{ULayer, ZLayer}
+import samples.anorm.PersonQueries
 import zio.blocking.Blocking
 import zio.test.Assertion._
 import zio.test._
+import zio.{ULayer, ZLayer}
 
 /** Integration tests for Doobie */
-object DoobieIT extends ITSpec[Database, PersonQueries] {
+object AnormIT extends ITSpec[Database, PersonQueries] {
 
   override val dbLayer: ZLayer[ConnectionSource with Blocking, Nothing, Database] = Database.fromConnectionSource
 
@@ -19,9 +19,9 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
 
   val buffy: Person = Person("Buffy", "Summers")
 
-  val connectionCountQuery: TranzactIO[Int] = tzio(Fragment.const(connectionCountSql).query[Int].unique)
+  val connectionCountQuery: TranzactIO[Int] = tzio(implicit c => SQL(connectionCountSql).as(SqlParser.int(1).single))
 
-  def spec: Spec = suite("Doobie Integration Tests")(
+  def spec: Spec = suite("Anorm Integration Tests")(
 
     testM("data committed on transaction success") {
       for {

@@ -2,47 +2,23 @@ package io.github.gaelrenoux.tranzactio
 
 import java.sql.{Connection => JdbcConnection}
 
-import _root_.doobie.free.KleisliInterpreter
-import _root_.doobie.util.transactor.{Strategy, Transactor}
-import cats.effect.Resource
-import io.github.gaelrenoux.tranzactio.utils.ZCatsBlocker
 import javax.sql.DataSource
-import zio.blocking.Blocking
+import zio.blocking.{Blocking, effectBlocking}
 import zio.clock.Clock
-import zio.interop.catz._
-import zio.{Has, Task, ZIO, ZLayer}
+import zio.{Has, ZIO, ZLayer}
 
 
-/** TranzactIO module for Doobie. */
-package object doobie extends Wrapper {
-  override final type Connection = Has[Connection.Service]
+/** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to
+ * provide the wrapper around the synchronous Anorm method. */
+package object anorm extends Wrapper {
+  override final type Connection = Has[JdbcConnection] with Blocking
   override final type Database = Has[Database.Service]
-  override final type Query[A] = _root_.doobie.ConnectionIO[A]
+  override final type Query[A] = JdbcConnection => A
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
-    ZIO.accessM[Connection](_.get.run(q)).mapError(DbException.Wrapped)
-
-  /** Connection for the Doobie wrapper */
-  object Connection {
-
-    trait Service {
-      def run[A](q: Query[A]): Task[A]
-    }
-
-    /** LiveConnection: based on a Doobie transactor. */
-    class ServiceLive private[doobie](transactor: Transactor[Task]) extends Connection.Service {
-      final def run[A](q: Query[A]): Task[A] = transactor.trans.apply(q)
-    }
-
-    /** Creates a LiveConnection from a java.sql.Connection, constructing the Doobie transactor. */
-    final def fromJdbcConnection(connection: JdbcConnection): ZIO[Blocking, Nothing, Connection] = ZCatsBlocker.map { b =>
-      val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
-      val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
-      val doobieTransactor = Transactor(connection, connect, interp, Strategy.void)
-      new Connection.ServiceLive(doobieTransactor)
-    }.map(Has(_))
-
-  }
+    ZIO.accessM[Connection] { c =>
+      effectBlocking(q(c.get))
+    }.mapError(DbException.Wrapped)
 
   /** Database for the Doobie wrapper */
   object Database extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
@@ -54,7 +30,7 @@ package object doobie extends Wrapper {
       ZLayer.fromFunction { env: ConnectionSource with Blocking =>
         new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
           override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
-            Connection.fromJdbcConnection(connection).provide(env)
+            ZIO.succeed(Has(connection) ++ env)
         }
       }
 
