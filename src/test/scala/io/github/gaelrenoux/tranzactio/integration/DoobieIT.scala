@@ -21,7 +21,7 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
 
   val connectionCountQuery: TranzactIO[Int] = tzio(Fragment.const(connectionCountSql).query[Int].unique)
 
-  def spec: Spec = suite("Anorm Integration Tests")(
+  def spec: Spec = suite("Doobie Integration Tests")(
     testDataCommittedOnTransactionSuccess,
     testConnectionClosedOnTransactionSuccess,
     testDataRollbackedOnTransactionFailure,
