@@ -2,11 +2,11 @@ package io.github.gaelrenoux.tranzactio
 
 import java.sql.{Connection => JdbcConnection}
 
-import zio.{Has, Tagged, ZIO}
+import zio.{Has, Tag, ZIO}
 
 
 /** Template implementing a default transactional mechanism, based on a ConnectionSource. */
-abstract class DatabaseServiceBase[Connection <: Has[_] : Tagged](connectionSource: ConnectionSource.Service)
+abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource: ConnectionSource.Service)
   extends DatabaseOps.ServiceOps[Connection] {
 
   import connectionSource._

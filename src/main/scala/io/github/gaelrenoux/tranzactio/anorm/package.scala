@@ -15,7 +15,7 @@ package object anorm extends Wrapper {
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
     ZIO.accessM[Connection] { c =>
-      effectBlocking(q(c.get))
+      effectBlocking(q(c.get[JdbcConnection]))
     }.mapError(DbException.Wrapped)
 
   /** Database for the Doobie wrapper */
