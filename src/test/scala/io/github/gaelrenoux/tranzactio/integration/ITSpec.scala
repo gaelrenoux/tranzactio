@@ -9,7 +9,7 @@ import zio.test._
 import zio.test.environment.{TestEnvironment, testEnvironment}
 import zio.{Tag, ZLayer, _}
 
-abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries  <: Has[_] : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
+abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries <: Has[_] : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
   type Spec = ZSpec[ITEnv[Db, PersonQueries], Any]
 
   override def aspects: List[TestAspect[Nothing, ITEnv[Db, PersonQueries], Nothing, Any]] = List(TestAspect.timeoutWarning(5.seconds))
@@ -17,8 +17,8 @@ abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries  <: Has[_] : Tag] extend
   override def runner: TestRunner[ITEnv[Db, PersonQueries], Any] = TestRunner(TestExecutor.default(itLayer))
 
   private lazy val itLayer: ULayer[ITEnv[Db, PersonQueries]] = {
-    val connectionSourceLayer = testEnvironment >>> csLayer
-    val db = (connectionSourceLayer ++ testEnvironment) >>> dbLayer
+    val connectionSource = testEnvironment >>> csLayer
+    val db = (connectionSource ++ testEnvironment) >>> dbLayer
     testEnvironment ++ personQueriesLive ++ db
   }
 
