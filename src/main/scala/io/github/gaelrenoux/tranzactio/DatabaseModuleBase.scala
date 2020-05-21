@@ -3,17 +3,17 @@ package io.github.gaelrenoux.tranzactio
 import javax.sql.DataSource
 import zio.blocking.Blocking
 import zio.clock.Clock
-import zio.{Has, Tagged, ZIO, ZLayer}
+import zio.{Has, Tag, ZIO, ZLayer}
 
 /** Template implementing the commodity methods for a Db module. */
-abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Connection] : Tagged]
+abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Connection] : Tag]
   extends DatabaseOps.ModuleOps[Connection, Dbs] {
 
   type Database = Has[Dbs]
 
   private[tranzactio]
-  override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Has[_ <: Dbs] with R, Either[DbException, E], A] = {
-    ZIO.accessM { db: Has[_ <: Dbs] =>
+  override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Has[Dbs] with R, Either[DbException, E], A] = {
+    ZIO.accessM { db: Has[Dbs] =>
       db.get[Dbs].transactionRFull[R, E, A](zio).provideSome[R] { r =>
         val env = r ++ Has(()) // needed for the compiler
         env
@@ -22,8 +22,8 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   }
 
   private[tranzactio]
-  override def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Has[_ <: Dbs] with R, Either[DbException, E], A] = {
-    ZIO.accessM { db: Has[_ <: Dbs] =>
+  override def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Has[Dbs] with R, Either[DbException, E], A] = {
+    ZIO.accessM { db: Has[Dbs] =>
       db.get[Dbs].autoCommitRFull[R, E, A](zio).provideSome[R] { r =>
         val env = r ++ Has(()) // needed for the compiler
         env

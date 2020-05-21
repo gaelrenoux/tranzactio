@@ -7,17 +7,20 @@ import io.github.gaelrenoux.tranzactio.integration.ITSpec.ITEnv
 import zio.duration._
 import zio.test._
 import zio.test.environment.{TestEnvironment, testEnvironment}
-import zio.{Tagged, ZLayer, _}
+import zio.{Tag, ZLayer, _}
 
-abstract class ITSpec[Db <: Has[_] : Tagged, PersonQueries  <: Has[_] : Tagged] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
+abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries  <: Has[_] : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
   type Spec = ZSpec[ITEnv[Db, PersonQueries], Any]
 
   override def aspects: List[TestAspect[Nothing, ITEnv[Db, PersonQueries], Nothing, Any]] = List(TestAspect.timeoutWarning(5.seconds))
 
   override def runner: TestRunner[ITEnv[Db, PersonQueries], Any] = TestRunner(TestExecutor.default(itLayer))
 
-  private lazy val itLayer: ULayer[ITEnv[Db, PersonQueries]] =
-    testEnvironment ++ personQueriesLive ++ (testEnvironment >>> (ZEnv.any ++ csLayer) >>> dbLayer)
+  private lazy val itLayer: ULayer[ITEnv[Db, PersonQueries]] = {
+    val connectionSourceLayer = testEnvironment >>> csLayer
+    val db = (connectionSourceLayer ++ testEnvironment) >>> dbLayer
+    testEnvironment ++ personQueriesLive ++ db
+  }
 
   /** Generates the ConnectionSource layer.
    *
