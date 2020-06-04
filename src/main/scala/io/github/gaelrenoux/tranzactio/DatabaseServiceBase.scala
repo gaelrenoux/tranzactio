@@ -13,7 +13,10 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource:
 
   def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection]
 
-  private[tranzactio] override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] = {
+  private[tranzactio] override def transactionRFull[R <: Has[_], E, A](
+      zio: ZIO[R with Connection, E, A],
+      commitOnFailure: Boolean = false
+  ): ZIO[R, Either[DbException, E], A] = {
     for {
       r <- ZIO.environment[R]
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
@@ -25,7 +28,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource:
             zio.mapError(Right(_)).provide(env)
           }
           .tapBoth(
-            _ => rollbackConnection(c).mapError(Left(_)),
+            _ => if (commitOnFailure) commitConnection(c).mapError(Left(_)) else rollbackConnection(c).mapError(Left(_)),
             _ => commitConnection(c).mapError(Left(_))
           )
       }

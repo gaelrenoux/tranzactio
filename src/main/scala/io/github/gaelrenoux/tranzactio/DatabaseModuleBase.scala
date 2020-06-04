@@ -12,9 +12,12 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   type Database = Has[Dbs]
 
   private[tranzactio]
-  override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[Has[Dbs] with R, Either[DbException, E], A] = {
+  override def transactionRFull[R <: Has[_], E, A](
+      zio: ZIO[R with Connection, E, A],
+      commitOnFailure: Boolean = false
+  ): ZIO[Has[Dbs] with R, Either[DbException, E], A] = {
     ZIO.accessM { db: Has[Dbs] =>
-      db.get[Dbs].transactionRFull[R, E, A](zio).provideSome[R] { r =>
+      db.get[Dbs].transactionRFull[R, E, A](zio, commitOnFailure).provideSome[R] { r =>
         val env = r ++ Has(()) // needed for the compiler
         env
       }
