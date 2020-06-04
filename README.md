@@ -133,6 +133,9 @@ val withDbEx: ZIO[Database, DbException, Long] = Database.transactionOrWiden(zio
 val zioEx: ZIO[Connection, java.io.IOException, Long] = ???
 val withEx: ZIO[Database, Exception, Long] = Database.transactionOrWiden(zioEx)
 
+// You can also commit even on a failure (only rollbacking on a defect). Useful if you're using the failure channel for short-circuiting!
+val commitOnFailure: ZIO[Database, String, Long] = Database.transactionOrDie(zio, commitOnFailure = true)
+
 // And if you're actually not interested in a transaction, you can just auto-commit all queries.
 val zioAutoCommit: ZIO[Database, String, Long] = Database.autoCommitOrDie(zio)
 ```
@@ -231,6 +234,10 @@ val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDieR[ZEnv](zi
 // assuming E extends Exception:
 val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWidenR[ZEnv](zio) 
 ```
+
+Finally, all the `transaction` methods take an optional argument `commitOnFailure` (defaults to `false`).
+If `true`, the transaction will be commited on a failure (the `E` part in `ZIO[R, E, A]`), and will still be rollbacked on a defect.
+Obviously, this argument does not exist on the `autoCommit` methods.
 
 
 
