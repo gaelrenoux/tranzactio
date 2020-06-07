@@ -14,43 +14,75 @@ trait DatabaseOpsCompileTest {
 
   val serviceChecks: Unit = {
 
-    /* transaction */
+    /* transactionR */
     val _: ZIO[Environment, Either[DbException, String], Int] =
       serviceOperations.transactionR[Environment](z[Connection with Environment, String])
+    val _: ZIO[Environment, Either[DbException, String], Int] =
+      serviceOperations.transactionR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+
+    /* transaction */
     val _: ZIO[Any, Either[DbException, String], Int] =
       serviceOperations.transaction(z[Connection, String])
+    val _: ZIO[Any, Either[DbException, String], Int] =
+      serviceOperations.transaction(z[Connection, String], commitOnFailure = true)
 
+    /* transactionOrWidenR */
     val _: ZIO[Environment, Exception, Int] =
       serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
     val _: ZIO[Environment, DbException, Int] =
       serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException])
+    val _: ZIO[Environment, Exception, Int] =
+      serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException], commitOnFailure = true)
+    val _: ZIO[Environment, DbException, Int] =
+      serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException], commitOnFailure = true)
+
+    /* transactionOrWiden */
     val _: ZIO[Any, Exception, Int] =
       serviceOperations.transactionOrWiden(z[Connection, IllegalArgumentException])
     val _: ZIO[Any, DbException, Int] =
       serviceOperations.transactionOrWiden(z[Connection, DbException])
+    val _: ZIO[Any, Exception, Int] =
+      serviceOperations.transactionOrWiden(z[Connection, IllegalArgumentException], commitOnFailure = true)
+    val _: ZIO[Any, DbException, Int] =
+      serviceOperations.transactionOrWiden(z[Connection, DbException], commitOnFailure = true)
 
+    /* transactionOrDieR */
     val _: ZIO[Environment, String, Int] =
       serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String])
+    val _: ZIO[Environment, String, Int] =
+      serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+
+    /* transactionOrDie */
     val _: ZIO[Any, String, Int] =
       serviceOperations.transactionOrDie(z[Connection, String])
+    val _: ZIO[Any, String, Int] =
+      serviceOperations.transactionOrDie(z[Connection, String], commitOnFailure = true)
 
-    /* auto-commit */
+    /* autoCommitR */
     val _: ZIO[Environment, Either[DbException, String], Int] =
       serviceOperations.autoCommitR[Environment](z[Connection with Environment, String])
+
+    /* autoCommit */
     val _: ZIO[Any, Either[DbException, String], Int] =
       serviceOperations.autoCommit(z[Connection, String])
 
+    /* autoCommitOrWidenR */
     val _: ZIO[Environment, Exception, Int] =
       serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
     val _: ZIO[Environment, DbException, Int] =
       serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, DbException])
+
+    /* autoCommitOrWiden */
     val _: ZIO[Any, Exception, Int] =
       serviceOperations.autoCommitOrWiden(z[Connection, IllegalArgumentException])
     val _: ZIO[Any, DbException, Int] =
       serviceOperations.autoCommitOrWiden(z[Connection, DbException])
 
+    /* autoCommitOrDieR */
     val _: ZIO[Environment, String, Int] =
       serviceOperations.autoCommitOrDieR[Environment](z[Connection with Environment, String])
+
+    /* autoCommitOrDie */
     val _: ZIO[Any, String, Int] =
       serviceOperations.autoCommitOrDie(z[Connection, String])
   }

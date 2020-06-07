@@ -2,8 +2,6 @@ package io.github.gaelrenoux.tranzactio
 
 import zio.{Has, UIO, ZIO}
 
-// TODO: Needs partial application for the environment, especially when applied on the service level
-
 /** Operations for a Database, based on a few atomic operations. Can be used both by the actual DB service, or by the DB
  * component where a Database is required in the resulting ZIO.
  * @tparam R0 Environment needed to run the operations.
@@ -16,7 +14,10 @@ trait DatabaseOps[Connection, R0] {
   protected def mixHasUnit(r0: R0): R0 with Has[Unit]
 
   /** Method that should be implemented by subclasses, to provide the connection. Full (not partial) application. */
-  private[tranzactio] def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, Either[DbException, E], A]
+  private[tranzactio] def transactionRFull[R <: Has[_], E, A](
+      zio: ZIO[R with Connection, E, A],
+      commitOnFailure: Boolean = false
+  ): ZIO[R with R0, Either[DbException, E], A]
 
   /** Provides that ZIO with a Connection. A transaction will be opened before any actions in the ZIO, and closed
    * after. It will commit only if the ZIO succeeds, and rollback otherwise. Failures in the initial ZIO will be
@@ -26,8 +27,8 @@ trait DatabaseOps[Connection, R0] {
     new TransactionRPartiallyApplied[R, Connection, R0](this)
 
   /** As `transactionR`, where the only needed environment is the connection. */
-  final def transaction[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, Either[DbException, E], A] =
-    transactionRFull[Has[Unit], E, A](zio).provideSome(mixHasUnit)
+  final def transaction[E, A](zio: ZIO[Connection, E, A], commitOnFailure: Boolean = false): ZIO[R0, Either[DbException, E], A] =
+    transactionRFull[Has[Unit], E, A](zio, commitOnFailure).provideSome(mixHasUnit)
 
   /** As `transactionR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
@@ -35,16 +36,16 @@ trait DatabaseOps[Connection, R0] {
     new TransactionOrWidenRPartiallyApplied[R, Connection, R0](this)
 
   /** As `transactionOrWiden`, where the only needed environment is the connection. */
-  final def transactionOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
-    transaction[E, A](zio).mapError(_.fold(identity, identity))
+  final def transactionOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A], commitOnFailure: Boolean = false): ZIO[R0, E, A] =
+    transaction[E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
 
   /** As `transactionR`, but errors when handling the connections are treated as defects instead of failures. */
   final def transactionOrDieR[R <: Has[_]]: TransactionOrDieRPartiallyApplied[R, Connection, R0] =
     new TransactionOrDieRPartiallyApplied[R, Connection, R0](this)
 
   /** As `transactionOrDieR`, where the only needed environment is the connection. */
-  final def transactionOrDie[E, A](zio: ZIO[Connection, E, A]): ZIO[R0, E, A] =
-    transaction[E, A](zio).flatMapError(dieOnLeft)
+  final def transactionOrDie[E, A](zio: ZIO[Connection, E, A], commitOnFailure: Boolean = false): ZIO[R0, E, A] =
+    transaction[E, A](zio, commitOnFailure).flatMapError(dieOnLeft)
 
 
   /** Method that should be implemented by subclasses, to provide the connection. Full (not partial) application. */
@@ -62,7 +63,7 @@ trait DatabaseOps[Connection, R0] {
 
   /** As `autoCommitR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-    final def autoCommitOrWidenR[R <: Has[_]]: AutoCommitOrWidenRPartiallyApplied[R, Connection, R0] =
+  final def autoCommitOrWidenR[R <: Has[_]]: AutoCommitOrWidenRPartiallyApplied[R, Connection, R0] =
     new AutoCommitOrWidenRPartiallyApplied[R, Connection, R0](this)
 
   /** As `autoCommitOrWidenR`, where the only needed environment is the connection. */
@@ -92,18 +93,18 @@ object DatabaseOps {
   }
 
   private[tranzactio] final class TransactionRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, Either[DbException, E], A] =
-      parent.transactionRFull[R, E, A](zio)
+    def apply[E, A](zio: ZIO[R with Connection, E, A], commitOnFailure: Boolean = false): ZIO[R with R0, Either[DbException, E], A] =
+      parent.transactionRFull[R, E, A](zio, commitOnFailure)
   }
 
   private[tranzactio] final class TransactionOrWidenRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E >: DbException, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
-      parent.transactionRFull[R, E, A](zio).mapError(_.fold(identity, identity))
+    def apply[E >: DbException, A](zio: ZIO[R with Connection, E, A], commitOnFailure: Boolean = false): ZIO[R with R0, E, A] =
+      parent.transactionRFull[R, E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
   }
 
   private[tranzactio] final class TransactionOrDieRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E, A](zio: ZIO[R with Connection, E, A]): ZIO[R with R0, E, A] =
-      parent.transactionRFull[R, E, A](zio).flatMapError(dieOnLeft)
+    def apply[E, A](zio: ZIO[R with Connection, E, A], commitOnFailure: Boolean = false): ZIO[R with R0, E, A] =
+      parent.transactionRFull[R, E, A](zio, commitOnFailure).flatMapError(dieOnLeft)
   }
 
   private[tranzactio] final class AutoCommitRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
