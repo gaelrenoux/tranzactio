@@ -57,8 +57,6 @@ case class ErrorStrategies(
 
 object ErrorStrategies {
 
-  val Parent: ErrorStrategiesParent.type = ErrorStrategiesParent
-
   /** No retries, and no timeout */
   val Nothing: ErrorStrategies = all(ErrorStrategy.Nothing)
 
@@ -69,6 +67,9 @@ object ErrorStrategies {
   /** Retry forever, with exponential delay (but never more than 10 seconds), no timeout. Good starting point for your
    * Production app, although you should add timeouts. */
   val RetryForever: ErrorStrategies = all(ErrorStrategy.RetryForever)
+
+  /** No concrete strategies. Uses the parent module's strategies. */
+  val Parent: ErrorStrategiesParent.type = ErrorStrategiesParent // Must be defined after Brutal, as ErrorStrategiesParent uses it
 
   object Implicits {
     implicit val Parent: ErrorStrategiesParent.type = ErrorStrategies.Parent
