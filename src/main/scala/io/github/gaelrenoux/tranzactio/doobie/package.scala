@@ -16,6 +16,7 @@ package object doobie extends Wrapper {
   override final type Connection = Has[Transactor[Task]]
   override final type Database = Has[Database.Service]
   override final type Query[A] = _root_.doobie.ConnectionIO[A]
+  override final type TranzactIO[A] = ZIO[Connection, DbException, A]
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
     ZIO.accessM[Connection] { c =>
