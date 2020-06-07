@@ -17,7 +17,6 @@
         <parameter value="-Wdead-code" />
         <parameter value="-Wextra-implicit" />
         <parameter value="-Wnumeric-widen" />
-        <parameter value="-Woctal-literal" />
         <parameter value="-Wunused:explicits" />
         <parameter value="-Wunused:implicits" />
         <parameter value="-Wunused:imports" />

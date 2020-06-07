@@ -5,7 +5,7 @@ name := "tranzactio"
 licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 description := "ZIO wrapper for Scala DB libraries (e.g. Doobie)"
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.13.2"
 
 
 
@@ -40,7 +40,7 @@ scalacOptions ++= Seq(
   "-Wextra-implicit", // Warn when more than one implicit parameter section is defined.
   // "-Wmacros:before", // Enable lint warnings on macro expansions. Default: before, help to list choices.
   "-Wnumeric-widen", // Warn when numerics are widened.
-  "-Woctal-literal", // Warn on obsolete octal syntax.
+  // "-Woctal-literal", // Warn on obsolete octal syntax. // false positive on 0 since Scala 2.13.2
   // "-Wself-implicit", // this detects to much (see https://github.com/scala/bug/issues/10760 for original justification)
   "-Wunused:explicits", // Warn if an explicit parameter is unused.
   "-Wunused:implicits", // Warn if an implicit parameter is unused.
