@@ -146,25 +146,21 @@ val zioAutoCommit: ZIO[Database, String, Long] = Database.autoCommitOrDie(zio)
 
 The resulting ZIO requires a `Database` as an environment, that will be provided through a `ZLayer`.
 
-The `Database` object lets you construct from a `DataSource` a `ZLayer` for `Database`. Nost connection pool implementations (like HikariCP) provide a `DataSource` representation.
-You can also get a `ZLayer` directly from the DB url and credentials, using Java's DriverManager, but that's not recommended outside of a test environment.
+The `Database` object lets you construct a `ZLayer` which requires a `javax.sql.DataSource`.
+Your connection pool implementation (like HikariCP) should provide a `DataSource` representation.
+Alternatively (e.g. in a test environment), you can create a `DataSource` manually.
+Do you have a use case where you can't get a DataSource? Notify me by creating an issue!
 
 Again, the code for Anorm is identical, except it has a different import: `io.github.gaelrenoux.tranzactio.anorm._` instead of `io.github.gaelrenoux.tranzactio.doobie._`.
 
 ```scala
-import io.github.gaelrenoux.tranzactio._
 import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
 import zio._
 import zio.blocking.Blocking
 import zio.clock.Clock
 
-// You can get a Database ZLayer directly from the Java DriverManager for testing.
-val dbLayerFromUrl: ZLayer[Blocking with Clock, Nothing, Database] = Database.fromDriverManager("jdbc:h2:mem:samble-anorm-app;DB_CLOSE_DELAY=10", "sa", "sa")
-
-// Get a Datasource from the connection pool, then create the layer. If the Datasource is a layer itself, just check ZIO's documentation on how to chain layers.
-val datasource: DataSource = ???
-val dbLayerFromDatasource: ZLayer[Blocking with Clock, Nothing, Database] = Database.fromDatasource(datasource)
+val dbLayer: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] = Database.fromDatasource
 ```
 
 
@@ -176,7 +172,7 @@ Find more in `src/main/samples`, or look below for some details.
 
 
 
-## More information
+## Detailed documentation
 
 ### Version compatibility
 
@@ -194,7 +190,8 @@ The table below indicates for each version of TranzactIO, the versions of ZIO or
 
 ### Error definitions
 
-We'll talk a bit about errors, so here are two definitions. TranzactIO identifies two categories of errors relating to the DB: query errors, and connection errors:
+We'll talk a bit about errors in the next sections, so here are two definitions.
+In TranzactIO, we recognize two categories of errors relating to the DB: query errors, and connection errors:
 
 **Query errors** happen when you run a specific query.
 They can be timeouts, SQL syntax errors, constraint errors, etc.
@@ -235,9 +232,11 @@ val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDieR[ZEnv](zi
 val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWidenR[ZEnv](zio) 
 ```
 
-Finally, all the `transaction` methods take an optional argument `commitOnFailure` (defaults to `false`).
+All the `transaction` methods take an optional argument `commitOnFailure` (defaults to `false`).
 If `true`, the transaction will be commited on a failure (the `E` part in `ZIO[R, E, A]`), and will still be rollbacked on a defect.
 Obviously, this argument does not exist on the `autoCommit` methods.
+
+Finally, all those methods take an optional implicit argument of type `ErrorStrategies`. See **Error handling** below for details.
 
 
 
@@ -246,22 +245,35 @@ Obviously, this argument does not exist on the `autoCommit` methods.
 #### Error handling
 
 TranzactIO has no specific error handling for query errors.
-Since you, as the developer, have direct access to the ZIO instance, it's up to you to add timeouts or retries, recover from errors, etc.
-However, you do not have access to the connection errors, which are hidden in the `Database` module. 
+Since you, as the developer, have direct access to the ZIO instance representing the query (or aggregation of queries), it's up to you to add timeouts or retries, recover from errors, etc.
+However, you do not have access to the connection errors, which are hidden in the `Database` module.
 
-To set up the error handling on connection errors, you need to pass an `ErrorStrategies` instance when creating the `Database` layer.
-It defines the error strategy on every operation done by the `Database` module.
+The error handling on connection errors is set up through an `ErrorStrategies` instance. There are two mechanism to provide it:
+- You can pass an `ErrorStrategies` instance as an implicit parameter when calling the `Database` methods. If no implicit value is provided, the default is `ErrorStrategies.Default`, which defers to the next mechanism.
+- When declaring the `Database` layer, you can have an `ErrorStrategies` instance as an input to the layer.
 
 ```scala
-val dbLayerFromDatasource: ZLayer[Blocking with Clock, Nothing, Database] =
-    Database.fromDatasource(datasource, ErrorStrategies.RetryForever)
+import io.github.gaelrenoux.tranzactio._
+import io.github.gaelrenoux.tranzactio.doobie._
+import javax.sql.DataSource
+import zio._
+import zio.blocking.Blocking
+import zio.clock.Clock
+
+implicit val es: ErrorStrategies = ErrorStrategies.RetryForever
+Database.transaction(???) // es is passed implicitly
+
+val dbLayerFromDatasource: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, Database]  =
+    Database.fromDatasourceAndErrorStrategies
 ```
 
-If none is provided, the default is `ErrorStrategies.Brutal`. It is an unforgiving setting, with no retry and 1s timeout on all operations.
-Check on `ErrorStrategies` the available possibilities.
-A typical configuration for production would be to start with `ErrorStrategies.RetryForever` and add timeouts, using the `withTimeout` and `withRetryTimeout` methods. 
+The `ErrorStrategies` companinon objects define a few default values.
+A typical configuration for production would be to start with `ErrorStrategies.RetryForever` and add timeouts, using the `withTimeout` and `withRetryTimeout` methods, using values defined in a configuration layer.
 
 You can also construct manually an `ErrorStrategies` instance, setting different policies for each action (opening connections, committing, rollbacking, etc.)
+
+If no instance is provided as an implicit and no instance is defined on the layer, the default is `ErrorStrategies.Brutal`.
+It is an unforgiving setting, with no retry and 1s timeout on all operations, which makes it great when testing.
 
 
 
@@ -272,7 +284,10 @@ You can also construct manually an `ErrorStrategies` instance, setting different
 ### Evolve the API
 
 The API is pretty final by now on the main points (like the use of `tzio` and `Database` methods).
-However, the part regarding the construction of layers might change depending on ZIO's changes on them.
+
+I've just changed the way the layers are defined, and how the ErrorStrategies are passed. I think it's much more usable now, and it shouldn't change too much any more (maybe some renaming).
+
+Obviously, I'll also follow the new versions of ZIO, so some changes might happen due to changes in ZIO.
 
 
 
