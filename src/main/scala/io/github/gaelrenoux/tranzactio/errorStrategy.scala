@@ -47,6 +47,12 @@ object ErrorStrategies {
    * Production app, although you should add timeouts. */
   val RetryForever: ErrorStrategies = all(ErrorStrategy.RetryForever)
 
+  object Implicits {
+    implicit val Nothing: ErrorStrategies = ErrorStrategies.Nothing
+    implicit val Brutal: ErrorStrategies = ErrorStrategies.Brutal
+    implicit val RetryForever: ErrorStrategies = ErrorStrategies.RetryForever
+  }
+
   def all(s: ErrorStrategy): ErrorStrategies = ErrorStrategies(s, s, s, s, s)
 }
 

@@ -16,7 +16,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource:
   private[tranzactio] override def transactionRFull[R <: Has[_], E, A](
       zio: ZIO[R with Connection, E, A],
       commitOnFailure: Boolean = false
-  ): ZIO[R, Either[DbException, E], A] = {
+  )(implicit errorStrategies: ErrorStrategies): ZIO[R, Either[DbException, E], A] =
     for {
       r <- ZIO.environment[R]
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
@@ -33,9 +33,10 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource:
           )
       }
     } yield a
-  }
 
-  private[tranzactio] override def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A]): ZIO[R, Either[DbException, E], A] =
+  private[tranzactio] override def autoCommitRFull[R <: Has[_], E, A](
+      zio: ZIO[R with Connection, E, A]
+  )(implicit errorStrategies: ErrorStrategies): ZIO[R, Either[DbException, E], A] =
     for {
       r <- ZIO.environment[R]
       a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>

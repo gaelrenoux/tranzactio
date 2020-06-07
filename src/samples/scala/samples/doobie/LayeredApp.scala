@@ -9,16 +9,15 @@ import zio._
 /** A sample app where all modules are linked through ZLayer. Should run as is (make sure you have com.h2database:h2 in
  * your dependencies). */
 object LayeredApp extends zio.App {
-  private val dbRecovery = ErrorStrategies.RetryForever.withTimeout(10.seconds).withRetryTimeout(1.minute)
 
   private val zenv = ZEnv.any
   private val conf = Conf.live("samble-doobie-app")
   private val datasource = (conf ++ zenv) >>> ConnectionPool.live
-  private val database = (datasource ++ zenv) >>> Database.fromDatasource(dbRecovery)
+  private val database = (datasource ++ zenv) >>> Database.fromDatasource
   private val personQueries = PersonQueries.live
 
-  type AppEnv = ZEnv with Database with PersonQueries
-  private val appEnv = zenv ++ database ++ personQueries
+  type AppEnv = ZEnv with Database with PersonQueries with Conf
+  private val appEnv = zenv ++ conf ++ database ++ personQueries
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] = {
     val prog = for {
@@ -43,7 +42,10 @@ object LayeredApp extends zio.App {
       trio <- PersonQueries.list
     } yield trio
 
-    Database.transactionOrWidenR[AppEnv](queries)
+    ZIO.accessM[AppEnv] { env =>
+      implicit val errorRecovery: ErrorStrategies = env.get[Conf.Root].dbRecovery
+      Database.transactionOrWidenR[AppEnv](queries)
+    }
   }
 
 }

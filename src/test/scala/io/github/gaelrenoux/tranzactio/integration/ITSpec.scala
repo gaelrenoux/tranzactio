@@ -15,6 +15,8 @@ import zio.{Tag, ZLayer, _}
 abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries <: Has[_] : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
   type Spec = ZSpec[ITEnv[Db, PersonQueries], Any]
 
+  implicit val errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
+
   override def aspects: List[TestAspect[Nothing, ITEnv[Db, PersonQueries], Nothing, Any]] = List(TestAspect.timeoutWarning(5.seconds))
 
   override def runner: TestRunner[ITEnv[Db, PersonQueries], Any] = TestRunner(TestExecutor.default(itLayer))
@@ -26,7 +28,7 @@ abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries <: Has[_] : Tag] extends
   }.orDie
 
   private lazy val csLayer: ZLayer[ZEnv, Throwable, ConnectionSource] =
-    (ZEnv.any ++ dsLayer) >>> ConnectionSource.fromDatasource(errorStrategies = ErrorStrategies.Brutal)
+    (ZEnv.any ++ dsLayer) >>> ConnectionSource.live
 
   /** Generates the DataSource layer.
    *
