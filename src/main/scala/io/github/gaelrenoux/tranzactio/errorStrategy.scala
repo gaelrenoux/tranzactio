@@ -7,13 +7,31 @@ import zio.{Schedule, ZIO}
 
 /** How to handle issues in the various operations of the database. Note that this only applies to the operation
  * performed when handling the connection, and not the execution of the requests! */
+sealed trait ErrorStrategiesRef {
+  def orElse(es: ErrorStrategiesRef): ErrorStrategiesRef
+
+  val orElseDefault: ErrorStrategies
+}
+
+/** Refer to the parent module, up to the default value in Tranzactio (which is Brutal). */
+case object ErrorStrategiesParent extends ErrorStrategiesRef {
+  override def orElse(es: ErrorStrategiesRef): ErrorStrategiesRef = es
+
+  override val orElseDefault: ErrorStrategies = ErrorStrategies.Brutal
+}
+
+/** Full implementation: an ErrorStrategy for each operation. */
 case class ErrorStrategies(
     openConnection: ErrorStrategy,
     setAutoCommit: ErrorStrategy,
     commitConnection: ErrorStrategy,
     rollbackConnection: ErrorStrategy,
     closeConnection: ErrorStrategy
-) {
+) extends ErrorStrategiesRef {
+
+  override def orElse(es: ErrorStrategiesRef): ErrorStrategies = this
+
+  override val orElseDefault: ErrorStrategies = this
 
   def all(f: ErrorStrategy => ErrorStrategy): ErrorStrategies = ErrorStrategies(
     openConnection = f(openConnection),
@@ -36,6 +54,9 @@ case class ErrorStrategies(
 }
 
 object ErrorStrategies {
+
+  val Parent: ErrorStrategiesParent.type = ErrorStrategiesParent
+
   /** No retries, and no timeout */
   val Nothing: ErrorStrategies = all(ErrorStrategy.Nothing)
 
@@ -48,6 +69,7 @@ object ErrorStrategies {
   val RetryForever: ErrorStrategies = all(ErrorStrategy.RetryForever)
 
   object Implicits {
+    implicit val Parent: ErrorStrategiesParent.type = ErrorStrategies.Parent
     implicit val Nothing: ErrorStrategies = ErrorStrategies.Nothing
     implicit val Brutal: ErrorStrategies = ErrorStrategies.Brutal
     implicit val RetryForever: ErrorStrategies = ErrorStrategies.RetryForever

@@ -1,8 +1,8 @@
 package samples
 
 import io.github.gaelrenoux.tranzactio.ErrorStrategies
-import zio.{Has, Layer, ZLayer}
 import zio.duration._
+import zio.{Has, Layer, ZLayer}
 
 object Conf {
 

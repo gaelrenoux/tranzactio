@@ -11,20 +11,21 @@ import zio.{Has, RIO, ZIO, ZLayer}
 object ConnectionSource {
 
   trait Service {
-    def openConnection(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Connection]
+    def openConnection(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Connection]
 
-    def setAutoCommit(c: Connection, autoCommit: Boolean)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit]
+    def setAutoCommit(c: Connection, autoCommit: Boolean)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit]
 
-    def commitConnection(c: Connection)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit]
+    def commitConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit]
 
-    def rollbackConnection(c: Connection)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit]
+    def rollbackConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit]
 
-    def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit]
+    def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit]
   }
 
   /** ConnectionSource with standard behavior. Children class need to implement `getConnection`. */
   abstract class ServiceBase(
-      env: Blocking with Clock
+      env: Blocking with Clock,
+      val defaultErrorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent
   ) extends ConnectionSource.Service {
 
     /** Main function: how to obtain a connection. Needs to be provided. */
@@ -32,29 +33,32 @@ object ConnectionSource {
 
     // TODO handle error reporting when retrying
 
-    def openConnection(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Connection] =
-      wrap(errorStrategies.openConnection) {
+    private def bottomErrorStrategy(implicit errorStrategies: ErrorStrategiesRef) =
+      errorStrategies.orElse(defaultErrorStrategies).orElseDefault
+
+    def openConnection(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Connection] =
+      wrap(bottomErrorStrategy.openConnection) {
         getConnection.mapError(e => DbException.Wrapped(e))
       }
 
-    def setAutoCommit(c: Connection, autoCommit: Boolean)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit] =
-      wrap(errorStrategies.setAutoCommit) {
+    def setAutoCommit(c: Connection, autoCommit: Boolean)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit] =
+      wrap(bottomErrorStrategy.setAutoCommit) {
         effectBlocking(c.setAutoCommit(autoCommit))
       }
 
-    def commitConnection(c: Connection)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit] =
-      wrap(errorStrategies.commitConnection) {
+    def commitConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit] =
+      wrap(bottomErrorStrategy.commitConnection) {
         effectBlocking(c.commit())
       }
 
-    def rollbackConnection(c: Connection)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit] =
-      wrap(errorStrategies.rollbackConnection) {
+    def rollbackConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit] =
+      wrap(bottomErrorStrategy.rollbackConnection) {
         effectBlocking(c.rollback())
       }
 
     /** Cannot fail */
-    def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategies): ZIO[Any, DbException, Unit] =
-      wrap(errorStrategies.closeConnection) {
+    def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Any, DbException, Unit] =
+      wrap(bottomErrorStrategy.closeConnection) {
         effectBlocking(c.close())
       }
 
@@ -66,8 +70,9 @@ object ConnectionSource {
 
   /** Service based on a DataSource. */
   private class DatasourceService(
-      env: Has[DataSource] with Blocking with Clock
-  ) extends ServiceBase(env) {
+      env: Has[DataSource] with Blocking with Clock,
+      defaultErrorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent
+  ) extends ServiceBase(env, defaultErrorStrategies) {
     private val ds = env.get[DataSource]
 
     override def getConnection: RIO[Blocking, Connection] = effectBlocking {
@@ -77,10 +82,15 @@ object ConnectionSource {
 
   val any: ZLayer[DataSource, Nothing, DataSource] = ZLayer.requires[DataSource]
 
-  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource. */
-  val live: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
+  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource.
+   * When no implicit ErrorStrategies is available, the default ErrorStrategies will be used.
+   */
+  val fromDatasource: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
     ZIO.access[Has[DataSource] with Blocking with Clock](new DatasourceService(_)).toLayer
 
-  val liveWithErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.access[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock](new DatasourceService(_)).toLayer
+  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource.
+   * When no implicit ErrorStrategies is available, the ErrorStrategies provided in the layer will be used.
+   */
+  val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.access[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock](new DatasourceService(_)).toLayer
 }

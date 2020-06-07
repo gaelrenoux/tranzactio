@@ -1,7 +1,7 @@
 package samples.anorm
 
 import io.github.gaelrenoux.tranzactio.anorm._
-import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategies}
+import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategiesRef}
 import samples.{Conf, ConnectionPool, Person}
 import zio.duration._
 import zio._
@@ -43,7 +43,7 @@ object LayeredApp extends zio.App {
     } yield trio
 
     ZIO.accessM[AppEnv] { env =>
-      implicit val errorRecovery: ErrorStrategies = env.get[Conf.Root].dbRecovery
+      implicit val errorRecovery: ErrorStrategiesRef = env.get[Conf.Root].dbRecovery
       Database.transactionOrWidenR[AppEnv](queries)
     }
   }

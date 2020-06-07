@@ -28,7 +28,7 @@ abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries <: Has[_] : Tag] extends
   }.orDie
 
   private lazy val csLayer: ZLayer[ZEnv, Throwable, ConnectionSource] =
-    (ZEnv.any ++ dsLayer) >>> ConnectionSource.live
+    (ZEnv.any ++ dsLayer) >>> ConnectionSource.fromDatasource
 
   /** Generates the DataSource layer.
    *
@@ -40,9 +40,9 @@ abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries <: Has[_] : Tag] extends
    */
   private val dsLayer: ZLayer[Blocking, Throwable, Has[DataSource]] = blocking.effectBlocking {
     val ds = new JdbcDataSource
-    ds.setURL(s"jdbc:h2:mem:${UUID.randomUUID().toString};DB_CLOSE_DELAY=10");
-    ds.setUser("sa");
-    ds.setPassword("sa");
+    ds.setURL(s"jdbc:h2:mem:${UUID.randomUUID().toString};DB_CLOSE_DELAY=10")
+    ds.setUser("sa")
+    ds.setPassword("sa")
     ds
   }.toLayer
 
