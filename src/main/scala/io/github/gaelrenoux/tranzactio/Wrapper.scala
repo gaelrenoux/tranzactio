@@ -11,7 +11,7 @@ trait Wrapper {
   /** The Database provides a connection (transactionally or otherwise). */
   type Database <: Has[_ <: DatabaseOps.ServiceOps[Connection]]
 
-  val Database: DatabaseOps.ModuleOps[Connection, _ <: DatabaseOps.ServiceOps[Connection]]
+  val Database: DatabaseOps.ModuleOps[Connection, _ <: DatabaseOps.ServiceOps[Connection]] // scalastyle:ignore field.name
 
   /** The specific type used in the wrapped library to represent an SQL query. */
   type Query[A]
