@@ -3,7 +3,6 @@ package samples.anorm
 import io.github.gaelrenoux.tranzactio.anorm._
 import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategiesRef}
 import samples.{Conf, ConnectionPool, Person}
-import zio.duration._
 import zio._
 
 /** A sample app where all modules are linked through ZLayer. Should run as is (make sure you have com.h2database:h2 in
