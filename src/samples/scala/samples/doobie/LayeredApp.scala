@@ -2,41 +2,33 @@ package samples.doobie
 
 import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategies}
-import samples.Person
+import samples.{Conf, ConnectionPool, Person}
 import zio.duration._
-import zio.{ExitCode, ZEnv, ZIO, ZLayer, console}
+import zio._
 
 /** A sample app where all modules are linked through ZLayer. Should run as is (make sure you have com.h2database:h2 in
  * your dependencies). */
 object LayeredApp extends zio.App {
+  private val dbRecovery = ErrorStrategies.RetryForever.withTimeout(10.seconds).withRetryTimeout(1.minute)
+
+  private val zenv = ZEnv.any
+  private val conf = Conf.live("samble-doobie-app")
+  private val datasource = (conf ++ zenv) >>> ConnectionPool.live
+  private val database = (datasource ++ zenv) >>> Database.fromDatasource(dbRecovery)
+  private val personQueries = PersonQueries.live
 
   type AppEnv = ZEnv with Database with PersonQueries
+  private val appEnv = zenv ++ database ++ personQueries
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] = {
     val prog = for {
-      _ <- console.putStrLn("Loading configuration")
-      conf <- loadDbConf()
-      _ <- console.putStrLn("Setting up the env")
-      appEnv = appLayer(conf)
-      _ <- console.putStrLn("Calling the app")
+      _ <- console.putStrLn("Starting the app")
       trio <- myApp().provideLayer(appEnv)
       _ <- console.putStrLn(trio.mkString(", "))
     } yield ExitCode(0)
 
     prog.orDie
   }
-
-  def appLayer(dbConf: DbConf): ZLayer[ZEnv, Nothing, AppEnv] =
-    ZEnv.any ++
-      PersonQueries.live ++
-      Database.fromDriverManager(
-        dbConf.url, dbConf.username, dbConf.password,
-        errorStrategies = ErrorStrategies.RetryForever.withTimeout(10.seconds).withRetryTimeout(1.minute)
-      )
-
-  def loadDbConf(): ZIO[Any, Nothing, DbConf] = ZIO.succeed(DbConf("jdbc:h2:mem:samble-doobie-app;DB_CLOSE_DELAY=10", "sa", "sa"))
-
-  case class DbConf(url: String, username: String, password: String)
 
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {

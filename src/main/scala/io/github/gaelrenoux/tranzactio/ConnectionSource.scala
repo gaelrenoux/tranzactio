@@ -1,11 +1,11 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection, DriverManager}
+import java.sql.Connection
 
 import javax.sql.DataSource
 import zio.blocking._
 import zio.clock.Clock
-import zio.{RIO, ZIO, ZLayer}
+import zio.{Has, RIO, ZIO, ZLayer}
 
 /** A module able to provide and manage connections. They typically come from a connection pool. */
 object ConnectionSource {
@@ -60,33 +60,22 @@ object ConnectionSource {
 
   }
 
-  /** ConnectionSource layer from a Java DriverManager. Do not use in production, as it creates a new connection every
-   * time one is needed. Use a connection pool and `fromDatasource` instead. */
-  def fromDriverManager(
-      url: String, user: String, password: String,
-      driver: Option[String] = None,
+  /** Service based on a DataSource. */
+  private class DatasourceService(
+      env: Has[DataSource] with Blocking with Clock,
       errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
-  ): ZLayer[Blocking with Clock, Nothing, ConnectionSource] =
-    ZLayer.fromFunction { env: Blocking with Clock =>
-      new ServiceBase(env, errorStrategies) {
-        override def getConnection: RIO[Blocking, Connection] = effectBlocking {
-          driver.foreach(Class.forName)
-          DriverManager.getConnection(url, user, password)
-        }
-      }
-    }
+  ) extends ServiceBase(env, errorStrategies) {
+    private val ds = env.get[DataSource]
 
-  /** ConnectionSource layer from a DataSource. Any connection pool you use should be able to provide one. */
-  def fromDatasource(
-      datasource: DataSource,
-      errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
-  ): ZLayer[Blocking with Clock, Nothing, ConnectionSource] =
-    ZLayer.fromFunction { env: Blocking with Clock =>
-      new ServiceBase(env, errorStrategies) {
-        override def getConnection: RIO[Blocking, Connection] = effectBlocking {
-          datasource.getConnection()
-        }
-      }
+    override def getConnection: RIO[Blocking, Connection] = effectBlocking {
+      ds.getConnection()
     }
+  }
+
+  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource. */
+  def fromDatasource(
+      errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
+  ): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.access[Has[DataSource] with Blocking with Clock](new DatasourceService(_, errorStrategies)).toLayer
 
 }

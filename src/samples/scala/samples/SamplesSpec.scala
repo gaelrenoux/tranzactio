@@ -18,9 +18,7 @@ object SamplesSpec extends DefaultRunnableSpec {
         _ <- app.run(Nil)
         output <- TestConsole.output
       } yield assert(output)(equalTo(Vector(
-        "Loading configuration\n",
-        "Setting up the env\n",
-        "Calling the app\n",
+        "Starting the app\n",
         "Creating the table\n",
         "Inserting the trio\n",
         "Reading the trio\n",
