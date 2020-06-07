@@ -11,6 +11,8 @@ sealed trait ErrorStrategiesRef {
   def orElse(es: ErrorStrategiesRef): ErrorStrategiesRef
 
   val orElseDefault: ErrorStrategies
+
+  def ref: ErrorStrategiesRef = this
 }
 
 /** Refer to the parent module, up to the default value in Tranzactio (which is Brutal). */
