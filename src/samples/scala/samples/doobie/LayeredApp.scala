@@ -4,7 +4,7 @@ import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategies}
 import samples.Person
 import zio.duration._
-import zio.{ZEnv, ZIO, ZLayer, console}
+import zio.{ExitCode, ZEnv, ZIO, ZLayer, console}
 
 /** A sample app where all modules are linked through ZLayer. Should run as is (make sure you have com.h2database:h2 in
  * your dependencies). */
@@ -12,7 +12,7 @@ object LayeredApp extends zio.App {
 
   type AppEnv = ZEnv with Database with PersonQueries
 
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] = {
+  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] = {
     val prog = for {
       _ <- console.putStrLn("Loading configuration")
       conf <- loadDbConf()
@@ -21,7 +21,7 @@ object LayeredApp extends zio.App {
       _ <- console.putStrLn("Calling the app")
       trio <- myApp().provideLayer(appEnv)
       _ <- console.putStrLn(trio.mkString(", "))
-    } yield 0
+    } yield ExitCode(0)
 
     prog.orDie
   }
