@@ -9,7 +9,6 @@ trait DatabaseOpsCompileTest {
 
   def z[R, E]: ZIO[R, E, Int] = ZIO.succeed(42)
 
-
   val serviceOperations: DatabaseOps.ServiceOps[Connection]
 
   val serviceChecks: Unit = {
