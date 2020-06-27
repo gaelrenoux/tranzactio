@@ -77,8 +77,8 @@ scalacOptions ++= Seq(
 
 
 
-val ZioVersion = "1.0.0-RC20"
-val ZioCatsVersion = "2.1.3.0-RC15"
+val ZioVersion = "1.0.0-RC21-1"
+val ZioCatsVersion = "2.1.3.0-RC16"
 val DoobieVersion = "0.9.0"
 val AnormVersion = "2.6.5"
 val H2Version = "1.4.200"
