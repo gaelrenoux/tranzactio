@@ -5,7 +5,7 @@ name := "tranzactio"
 licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 description := "ZIO wrapper for Scala DB libraries (e.g. Doobie)"
 
-scalaVersion := "2.13.2"
+scalaVersion := "2.13.3"
 
 
 
@@ -53,7 +53,6 @@ scalacOptions ++= Seq(
   // "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver. // this is fine
   "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
   "-Xlint:inaccessible", // Warn about inaccessible types in method signatures.
-  "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
   "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
   "-Xlint:missing-interpolator", // A string literal appears to be missing an interpolator id.
   "-Xlint:doc-detached", // A Scaladoc comment appears to be detached from its element.
