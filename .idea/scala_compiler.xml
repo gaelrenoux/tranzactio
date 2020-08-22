@@ -26,7 +26,6 @@
         <parameter value="-Wvalue-discard" />
         <parameter value="-Xlint:nullary-unit" />
         <parameter value="-Xlint:inaccessible" />
-        <parameter value="-Xlint:nullary-override" />
         <parameter value="-Xlint:infer-any" />
         <parameter value="-Xlint:missing-interpolator" />
         <parameter value="-Xlint:doc-detached" />
