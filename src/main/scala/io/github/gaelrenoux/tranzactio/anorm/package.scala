@@ -19,7 +19,7 @@ package object anorm extends Wrapper {
       effectBlocking(q(c.get[JdbcConnection]))
     }.mapError(DbException.Wrapped)
 
-  /** Database for the Doobie wrapper */
+  /** Database for the Anorm wrapper */
   object Database extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
     self =>
 
