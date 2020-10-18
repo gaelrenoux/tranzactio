@@ -101,6 +101,32 @@ object ConnectionSource {
     }
   }
 
+  /** Service based on a single connection, which is reused each time. Uses a Semaphore to make sure the connection
+   * can't be used by concurrent operations. */
+  private class SingleConnectionService(
+      connection: Connection,
+      semaphore: Semaphore,
+      env: Blocking with Clock,
+      defaultErrorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent
+  ) extends ServiceBase(env, defaultErrorStrategies) {
+
+    override def getConnection: UIO[Connection] = UIO.succeed(connection)
+
+    override def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef): ZIO[Any, Nothing, Unit] = ZIO.unit
+
+    override def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean)
+      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+      semaphore.withPermit {
+        super.runTransaction(task, commitOnFailure)
+      }
+
+    override def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
+      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+      semaphore.withPermit {
+        super.runAutoCommit(task)
+      }
+  }
+
   val any: ZLayer[DataSource, Nothing, DataSource] = ZLayer.requires[DataSource]
 
   /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource.
@@ -117,4 +143,26 @@ object ConnectionSource {
       val errorStrategies = env.get[ErrorStrategiesRef]
       new DatasourceService(env, errorStrategies)
     }.toLayer
+
+  /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
+   * for the connection to be available (see the Semaphore documentation for details). */
+  val fromConnection: ZLayer[Has[Connection] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.accessM[Has[Connection] with Blocking with Clock] { env =>
+      val connection = env.get[Connection]
+      Semaphore.make(1).map {
+        new SingleConnectionService(connection, _, env)
+      }
+    }.toLayer
+
+  /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
+   * for the connection to be available (see the Semaphore documentation for details). */
+  val fromConnectionAndErrorStrategies: ZLayer[Has[Connection] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.accessM[Has[Connection] with Has[ErrorStrategiesRef] with Blocking with Clock] { env =>
+      val errorStrategies = env.get[ErrorStrategiesRef]
+      val connection = env.get[Connection]
+      Semaphore.make(1).map {
+        new SingleConnectionService(connection, _, env, errorStrategies)
+      }
+    }.toLayer
+
 }

@@ -1,5 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
+import java.sql.{Connection, DriverManager}
 import java.util.UUID
 
 import javax.sql.DataSource
@@ -26,5 +27,12 @@ object JdbcLayers {
   }.toLayer
 
   val datasourceU: ULayer[Has[DataSource]] = testEnvironment >>> datasource.orDie
+
+  /** Generates a layer providing a single connection. Connection will not be closed until you close the JVM... */
+  val connection: ZLayer[Blocking, Throwable, Has[Connection]] = blocking.effectBlocking {
+    DriverManager.getConnection(s"jdbc:h2:mem:${UUID.randomUUID().toString};DB_CLOSE_DELAY=10", "sa", "sa")
+  }.toLayer
+
+  val connectionU: ULayer[Has[Connection]] = testEnvironment >>> connection.orDie
 
 }

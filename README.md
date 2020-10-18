@@ -251,7 +251,7 @@ Finally, all those methods take an optional implicit argument of type `ErrorStra
 
 TranzactIO has no specific error handling for query errors.
 Since you, as the developer, have direct access to the ZIO instance representing the query (or aggregation of queries), it's up to you to add timeouts or retries, recover from errors, etc.
-However, you do not have access to the connection errors, which are hidden in the `Database` module.
+However, you do not have access to the connection errors, which are hidden in the `ConnectionSource` and `Database` modules.
 
 The error handling on connection errors is set up through an `ErrorStrategies` instance. There are two mechanism to provide it:
 - You can pass an `ErrorStrategies` instance as an implicit parameter when calling the `Database` methods. If no implicit value is provided, the default is `ErrorStrategies.Default`, which defers to the next mechanism.
@@ -272,13 +272,24 @@ val dbLayerFromDatasource: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] w
     Database.fromDatasourceAndErrorStrategies
 ```
 
-The `ErrorStrategies` companinon objects define a few default values.
+The `ErrorStrategies` companion objects define a few default values.
 A typical configuration for production would be to start with `ErrorStrategies.RetryForever` and add timeouts, using the `withTimeout` and `withRetryTimeout` methods, using values defined in a configuration layer.
 
 You can also construct manually an `ErrorStrategies` instance, setting different policies for each action (opening connections, committing, rollbacking, etc.)
 
 If no instance is provided as an implicit and no instance is defined on the layer, the default is `ErrorStrategies.Brutal`.
 It is an unforgiving setting, with no retry and 1s timeout on all operations, which makes it great when testing.
+
+
+#### Single-connection-based Database
+
+In some cases, you might want to have a `Database` module representing a single connection. This might be useful for testinq, or if you want to manually manage that connection.
+
+For that purpose, you can use the layer `ConnectionSource.fromConnection`. This layer requires a single JDBC `Connection`, and provides a `ConnectionSource` module.
+You must then use the `Database.fromConnectionSource` layer to get the `Database` module.
+
+Note that this ConnectionSource does not allow for concurrent usage, as that would lead to undetermined results (some operation might close a transaction while a concurrent operation is between queries!).
+The non-concurrent behavior is ensured through a ZIO semaphore.
 
 
 
