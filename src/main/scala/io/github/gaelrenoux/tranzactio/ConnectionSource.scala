@@ -29,7 +29,7 @@ object ConnectionSource {
   ) extends ConnectionSource.Service {
 
     /** Main function: how to obtain a connection. Needs to be provided. */
-    def getConnection: RIO[Blocking, Connection]
+    protected def getConnection: RIO[Blocking, Connection]
 
     // TODO handle error reporting when retrying
 
