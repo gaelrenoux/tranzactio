@@ -92,5 +92,8 @@ object ConnectionSource {
    * When no implicit ErrorStrategies is available, the ErrorStrategies provided in the layer will be used.
    */
   val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.access[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock](new DatasourceService(_)).toLayer
+    ZIO.access[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock] { env =>
+      val errorStrategies = env.get[ErrorStrategiesRef]
+      new DatasourceService(env, errorStrategies)
+    }.toLayer
 }
