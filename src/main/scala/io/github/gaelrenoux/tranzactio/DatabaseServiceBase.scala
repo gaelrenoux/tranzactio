@@ -13,42 +13,22 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource:
 
   def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection]
 
-  private[tranzactio] override def transactionRFull[R <: Has[_], E, A](
-      zio: ZIO[R with Connection, E, A],
-      commitOnFailure: Boolean = false
-  )(implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
-    for {
-      r <- ZIO.environment[R]
-      a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
-        setAutoCommit(c, autoCommit = false)
-          .bimap(Left(_), _ => c)
-          .flatMap(connectionFromJdbc)
-          .flatMap { c =>
-            val env = r ++ c
-            zio.mapError(Right(_)).provide(env)
-          }
-          .tapBoth(
-            _ => if (commitOnFailure) commitConnection(c).mapError(Left(_)) else rollbackConnection(c).mapError(Left(_)),
-            _ => commitConnection(c).mapError(Left(_))
-          )
-      }
-    } yield a
+  private[tranzactio] override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A], commitOnFailure: Boolean = false)
+    (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+    ZIO.accessM[R] { r =>
+      runTransaction({ c: JdbcConnection =>
+        connectionFromJdbc(c).map(r ++ _).flatMap(zio.provide(_))
+      }, commitOnFailure)
+    }
 
-  private[tranzactio] override def autoCommitRFull[R <: Has[_], E, A](
-      zio: ZIO[R with Connection, E, A]
-  )(implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
-    for {
-      r <- ZIO.environment[R]
-      a <- openConnection.mapError(Left(_)).bracket(closeConnection(_).orDie) { c: JdbcConnection =>
-        setAutoCommit(c, autoCommit = true)
-          .bimap(Left(_), _ => c)
-          .flatMap(connectionFromJdbc)
-          .flatMap { c =>
-            val env = r ++ c
-            zio.mapError(Right(_)).provide(env)
-          }
+  private[tranzactio] override def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A])
+    (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] = {
+    ZIO.accessM[R] { r =>
+      runAutoCommit { c: JdbcConnection =>
+        connectionFromJdbc(c).map(r ++ _).flatMap(zio.provide(_))
       }
-    } yield a
+    }
+  }
 
 }
 
