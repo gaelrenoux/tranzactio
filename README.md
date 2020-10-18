@@ -297,13 +297,9 @@ The non-concurrent behavior is ensured through a ZIO semaphore.
 
 ## What's next ?
 
-### Evolve the API
+### Follow ZIO versions
 
-The API is pretty final by now on the main points (like the use of `tzio` and `Database` methods).
-
-I've just changed the way the layers are defined, and how the ErrorStrategies are passed. I think it's much more usable now, and it shouldn't change too much any more (maybe some renaming).
-
-Obviously, I'll also follow the new versions of ZIO, so some changes might happen due to changes in ZIO.
+The API is pretty final by now. Changes should only happen if there is some major change in ZIO.
 
 
 
