@@ -10,7 +10,7 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
   type Env = TestEnvironment with ConnectionSource
   type Spec = ZSpec[Env, Any]
 
-  implicit private val errorStrategies: ErrorStrategies = ErrorStrategies.Brutal
+  implicit private val errorStrategies: ErrorStrategies = ErrorStrategies.Brutal.withTimeout(5.seconds)
 
   override def aspects: List[TestAspect[Nothing, Env, Nothing, Any]] = List(TestAspect.timeout(5.seconds))
 
