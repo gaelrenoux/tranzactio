@@ -25,10 +25,14 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
   )
 
   private val testDisallowConcurrentTasks = testM("disallow concurrent tasks") {
-    def run(ref: Ref[Int]) =
-      ZIO.service[ConnectionSource.Service].flatMap { con =>
-        val op1 = con.runAutoCommit(_ => ref.update(_ + 1).delay(2.seconds))
-        val op2 = con.runAutoCommit(_ => ref.update(_ + 1).delay(2.seconds))
+    def query(trace: Ref[List[String]]) = {
+      trace.update(s"start" :: _) *> ZIO.sleep(5.second) *> trace.update(s"end" :: _)
+    }
+
+    def runParallel(trace: Ref[List[String]]) =
+      ZIO.service[ConnectionSource.Service].flatMap { cSource =>
+        val op1 = cSource.runAutoCommit { _ => query(trace) }
+        val op2 = cSource.runAutoCommit { _ => query(trace) }
         op1.zipPar(op2).mapError {
           case Left(e) => e
           case Right(_) => new RuntimeException("???")
@@ -36,15 +40,12 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
       }
 
     for {
-      check <- Ref.make(0)
-      _ <- run(check).fork
-      _ <- TestClock.adjust(3.seconds)
-      firstValue <- check.get
-      _ <- TestClock.adjust(2.seconds)
-      secondValue <- check.get
-    } yield
-      assert(firstValue)(equalTo(1)) &&
-        assert(secondValue)(equalTo(2))
+      trace <- Ref.make[List[String]](Nil)
+      forked <- runParallel(trace).fork
+      _ <- TestClock.adjust(1.second).repeatWhileM(_ => forked.status.map(!_.isDone))
+      _ <- forked.join
+      result <- trace.get
+    } yield assert(result)(equalTo("end" :: "start" :: "end" :: "start" :: Nil))
   }
 
 }
