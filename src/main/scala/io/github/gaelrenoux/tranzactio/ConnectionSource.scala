@@ -129,19 +129,15 @@ object ConnectionSource {
 
   val any: ZLayer[DataSource, Nothing, DataSource] = ZLayer.requires[DataSource]
 
-  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource.
-   * When no implicit ErrorStrategies is available, the default ErrorStrategies will be used.
-   */
+  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource. */
   val fromDatasource: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
     ZIO.access[Has[DataSource] with Blocking with Clock](new DatasourceService(_, ErrorStrategies.Parent)).toLayer
 
-  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource.
-   * When no implicit ErrorStrategies is available, the ErrorStrategies provided in the layer will be used.
-   */
-  val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.access[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock] { env =>
-      val errorStrategies = env.get[ErrorStrategiesRef]
-      new DatasourceService(env, errorStrategies)
+  /** As `fromDatasource`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
+   * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
+  def fromDatasource(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.access[Has[DataSource] with Blocking with Clock] { env =>
+      new DatasourceService(env, errorStrategiesRef)
     }.toLayer
 
   /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
@@ -154,14 +150,13 @@ object ConnectionSource {
       }
     }.toLayer
 
-  /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
-   * for the connection to be available (see the Semaphore documentation for details). */
-  val fromConnectionAndErrorStrategies: ZLayer[Has[Connection] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.accessM[Has[Connection] with Has[ErrorStrategiesRef] with Blocking with Clock] { env =>
-      val errorStrategies = env.get[ErrorStrategiesRef]
+  /** As `fromConnection`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
+   * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
+  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[Connection] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.accessM[Has[Connection] with Blocking with Clock] { env =>
       val connection = env.get[Connection]
       Semaphore.make(1).map {
-        new SingleConnectionService(connection, _, env, errorStrategies)
+        new SingleConnectionService(connection, _, env, errorStrategiesRef)
       }
     }.toLayer
 
