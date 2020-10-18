@@ -10,7 +10,7 @@ import zio.{Tag, ZLayer, _}
 abstract class ITSpec[Db <: Has[_] : Tag, PersonQueries <: Has[_] : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
   type Spec = ZSpec[ITEnv[Db, PersonQueries], Any]
 
-  implicit val errorStrategies: ErrorStrategies = ErrorStrategies.Brutal.withTimeout(5.seconds)
+  implicit val errorStrategies: ErrorStrategies = ErrorStrategies.Nothing
 
   override def aspects: List[TestAspect[Nothing, ITEnv[Db, PersonQueries], Nothing, Any]] = List(TestAspect.timeout(5.seconds))
 
