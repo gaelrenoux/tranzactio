@@ -12,7 +12,6 @@
       <option name="explainTypeErrors" value="true" />
       <parameters>
         <parameter value="-Ymacro-annotations" />
-        <parameter value="-Werror" />
         <parameter value="-Xcheckinit" />
         <parameter value="-Wdead-code" />
         <parameter value="-Wextra-implicit" />

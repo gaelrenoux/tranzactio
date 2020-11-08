@@ -28,7 +28,6 @@ scalacOptions ++= Seq(
   // "-XX:MaxInlineLevel=18", // see https://github.com/scala/bug/issues/11627#issuecomment-514619316
 
   "-explaintypes", // Explain type errors in more detail.
-  "-Werror", // Fail the compilation if there are any warnings.
 
   "-feature", // Emit warning and location for usages of features that should be imported explicitly.
   "-deprecation", // Emit warning and location for usages of deprecated APIs.
