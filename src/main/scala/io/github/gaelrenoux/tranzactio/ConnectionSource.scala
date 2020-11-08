@@ -107,7 +107,7 @@ object ConnectionSource {
       connection: Connection,
       semaphore: Semaphore,
       env: Blocking with Clock,
-      defaultErrorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent
+      defaultErrorStrategies: ErrorStrategiesRef
   ) extends ServiceBase(env, defaultErrorStrategies) {
 
     override def getConnection: UIO[Connection] = UIO.succeed(connection)
@@ -129,29 +129,42 @@ object ConnectionSource {
 
   val any: ZLayer[DataSource, Nothing, DataSource] = ZLayer.requires[DataSource]
 
-  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource. */
+  /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource.
+   *
+   * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
+   * be used. */
   val fromDatasource: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.access[Has[DataSource] with Blocking with Clock](new DatasourceService(_, ErrorStrategies.Parent)).toLayer
+    fromDatasource(ErrorStrategies.Parent)
 
-  /** As `fromDatasource`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
-   * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
+  /** As `fromDatasource`, but provides a default ErrorStrategiesRef.
+   *
+   * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
+   * will be used. */
   def fromDatasource(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
     ZIO.access[Has[DataSource] with Blocking with Clock] { env =>
       new DatasourceService(env, errorStrategiesRef)
     }.toLayer
 
-  /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
-   * for the connection to be available (see the Semaphore documentation for details). */
-  val fromConnection: ZLayer[Has[Connection] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.accessM[Has[Connection] with Blocking with Clock] { env =>
-      val connection = env.get[Connection]
-      Semaphore.make(1).map {
-        new SingleConnectionService(connection, _, env)
-      }
+  /** Deprecated layer. Use `fromDatasource(ErrorStrategiesRef)` instead. */
+  @deprecated(message = "Use fromDatasource(ErrorStrategiesRef) instead", since = "1.1.0")
+  val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.access[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock] { env =>
+      val errorStrategies = env.get[ErrorStrategiesRef]
+      new DatasourceService(env, errorStrategies)
     }.toLayer
 
-  /** As `fromConnection`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
-   * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
+  /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
+   * for the connection to be available (see the Semaphore documentation for details).
+   *
+   * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
+   * be used. */
+  val fromConnection: ZLayer[Has[Connection] with Blocking with Clock, Nothing, ConnectionSource] =
+    fromConnection(ErrorStrategies.Parent)
+
+  /** As `fromConnection`, but provides a default ErrorStrategiesRef.
+   *
+   * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
+   * will be used. */
   def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[Connection] with Blocking with Clock, Nothing, ConnectionSource] =
     ZIO.accessM[Has[Connection] with Blocking with Clock] { env =>
       val connection = env.get[Connection]

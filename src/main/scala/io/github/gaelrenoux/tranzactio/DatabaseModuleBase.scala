@@ -52,5 +52,11 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   final def fromDatasource(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] =
     (ConnectionSource.fromDatasource(errorStrategiesRef) ++ Blocking.any) >>> fromConnectionSource
 
+  /** Deprecated layer. Use `fromDatasource(ErrorStrategiesRef)` instead. */
+  @deprecated(message = "Use fromDatasource(ErrorStrategiesRef) instead", since = "1.1.0")
+  final val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, Database] =
+    (ConnectionSource.fromDatasourceAndErrorStrategies ++ Blocking.any) >>> fromConnectionSource
+
+
   val any: ZLayer[Database, Nothing, Database] = ZLayer.requires[Database]
 }
