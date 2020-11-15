@@ -193,7 +193,21 @@ The table below indicates for each version of TranzactIO, the versions of ZIO or
 
 
 
-### Error definitions
+### Some definitions
+
+#### Database operations
+
+You will also find reference in the documentation to ***Database operations***.
+Those are the specific operations handled by Tranzactio, that are necessary to interact with a database:
+- ***openConnection***
+- ***setAutoCommit***
+- ***commitConnection***
+- ***rollbackConnection***
+- ***closeConnection***
+
+They correspond to specific methods in the `ConnectionSource` service.
+    
+#### Error categories
 
 We'll talk a bit about errors in the next sections, so here are two definitions.
 In TranzactIO, we recognize two categories of errors relating to the DB: query errors, and connection errors:
@@ -208,13 +222,13 @@ They are always reported as a `DbException`.
 
 
 
-### Database methods
+### Running a query (detailed version)
 
-There are two families of operations on the `Database` class: `transaction` and `autoCommit`. I'll only describe `transaction` here, keep in mind that there's an identical set of operations with `autoCommit` instead.
+There are two families of methods on the `Database` class: `transaction` and `autoCommit`. I'll only describe `transaction` here, keep in mind that there's an identical set of operations with `autoCommit` instead.
 
- When providing the transaction with `Database`, you have three variants of the `transaction` method, which will handle unrecovered connection errors.
-- With `transaction`, the resulting error type is an `Either`: `Right` wraps a query error, and `Left` wraps a connection error. This is the most generic method, leaving you to handle all errors how you see fit.
-- With `transactionOrDie`, connection errors are considered as defects, and do not appear in the type signature.
+ When providing the transaction with `Database`, you have three variants of the `transaction` method, which will handle unrecovered connection errors differently.
+- With `transaction`, the resulting error type is an `Either`: `Right` wraps a query error, and `Left` wraps a connection error. This is the most generic method, leaving you to handle all errors how you see fit.
+- With `transactionOrDie`, connection errors are converted into defects, and do not appear in the type signature.
 - With `transactionOrWiden`, the resulting error type will be the closest supertype of the query error type and `DbException`, and the error in the result may be a query error or a connection error. This is especially useful if your query error type is already `DbException` or directly `Exception`, as in the examples above.
 
 ```scala
@@ -238,50 +252,64 @@ val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWiden
 ```
 
 All the `transaction` methods take an optional argument `commitOnFailure` (defaults to `false`).
-If `true`, the transaction will be commited on a failure (the `E` part in `ZIO[R, E, A]`), and will still be rollbacked on a defect.
+If `true`, the transaction will be committed on a failure (the `E` part in `ZIO[R, E, A]`), and will still be rollbacked on a defect.
 Obviously, this argument does not exist on the `autoCommit` methods.
 
 Finally, all those methods take an optional implicit argument of type `ErrorStrategies`. See **Error handling** below for details.
 
 
 
-### Database module configuration
-
-#### Error handling
+### Handling connection errors (retries and timeouts)
 
 TranzactIO has no specific error handling for query errors.
 Since you, as the developer, have direct access to the ZIO instance representing the query (or aggregation of queries), it's up to you to add timeouts or retries, recover from errors, etc.
 However, you do not have access to the connection errors, which are hidden in the `ConnectionSource` and `Database` modules.
 
-The error handling on connection errors is set up through an `ErrorStrategies` instance. There are two mechanism to provide it:
-- You can pass an `ErrorStrategies` instance as an implicit parameter when calling the `Database` methods. If no implicit value is provided, the default is `ErrorStrategies.Default`, which defers to the next mechanism.
-- When declaring the `Database` layer, you can have an `ErrorStrategies` instance as an input to the layer.
+An important caveat: I strongly recommend that for timeouts, you use the mechanisms on your data source (or database) as you primary mechanism, and only use Tranzactio's timeouts as a backup if needed.
+This is especially important for the `openConnection` operation: you should never have a timeout over this in Tranzactio, as it could lead to connection leek:
+your app believes there was a timeout, but the data source is still going through your request and ends up losing a connection.
+Therefore, timeouts defined at the top-level of error strategies (see below) will not apply to `openConnection`.
+
+The error handling on connection errors is set up through an `ErrorStrategies` instance. The service looks for an ErrorStrategies in three different places:
+- You can pass an `ErrorStrategies` instance as an implicit parameter when calling the `Database` methods. If no implicit value is provided, it will defer to the next mechanism.
+- When declaring the `Database` or `ConnectionSource` layer, you can pass an `ErrorStrategies` as a parameter.
+- If no `ErrorStrategies` is defined either as an implicit parameter or in the layer definition, default is `ErrorStrategies.Nothing`: no retries and no timeouts.
 
 ```scala
-import io.github.gaelrenoux.tranzactio._
-import io.github.gaelrenoux.tranzactio.doobie._
-import javax.sql.DataSource
-import zio._
-import zio.blocking.Blocking
-import zio.clock.Clock
-
-implicit val es: ErrorStrategies = ErrorStrategies.RetryForever
+implicit val es: ErrorStrategies = ErrorStrategies.retryForeverFixed(10.seconds)
 Database.transaction(???) // es is passed implicitly
 
-val dbLayerFromDatasource: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, Database]  =
-    Database.fromDatasourceAndErrorStrategies
+val dbLayerFromDatasource: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] =
+    Database.fromDatasource(es)
 ```
 
-The `ErrorStrategies` companion objects define a few default values.
-A typical configuration for production would be to start with `ErrorStrategies.RetryForever` and add timeouts, using the `withTimeout` and `withRetryTimeout` methods, using values defined in a configuration layer.
+To define an `ErrorStrategies`, you should start from the companion object, then add the retries and timeouts you want to apply.
+Note that the operations are applied in the order you gave them (a timeout defined after a retry will be run over the ZIO containing the retry).
+```scala
+val es: ErrorStrategies = ErrorStrategies.timeout(3.seconds).retryCountExponential(10, 1.second, maxDelay = 10.seconds)
+val es2: ErrorStrategies = ErrorStrategies.timeout(3.seconds).retryForeverFixed(1.second).timeout(1.minute)
+```
 
-You can also construct manually an `ErrorStrategies` instance, setting different policies for each action (opening connections, committing, rollbacking, etc.)
+If you want a specific strategy for some operation, you can set the singular `ErrorStrategy` manually:
+```scala
+val es: ErrorStrategies =
+  ErrorStrategies.timeout(3.seconds).retryCountExponential(10, 1.second, maxDelay = 10.seconds)
+    .copy(closeConnection = ErrorStrategy.retryForeverFixed(1.second)) // no timeout and fixed delay for closeConnection
+```
 
-If no instance is provided as an implicit and no instance is defined on the layer, the default is `ErrorStrategies.Brutal`.
-It is an unforgiving setting, with no retry and 1s timeout on all operations, which makes it great when testing.
+**IMPORTANT**: when defining a general `ErrorStrategies`, the timeout is ***not*** applied to the `openConnection` operation (as mentioned above, or in the `timeout`'s method Scaladoc).
+This is to avoid connection leaks. You can still (but shouldn't) define a timeout on `openConnection` by defining the corresponding `ErrorStrategy` manually.
+```scala
+// THIS IS A BAD IDEA, DON'T DO THIS.
+val es: ErrorStrategies =
+  ErrorStrategies.timeout(3.seconds).retryForeverFixed(1.second)
+    .copy(openConnection = ErrorStrategy.timeout(3.seconds).retryForeverFixed(1.second))
+```
 
 
-#### Single-connection-based Database
+
+
+### Single-connection-based Database
 
 In some cases, you might want to have a `Database` module representing a single connection. This might be useful for testinq, or if you want to manually manage that connection.
 

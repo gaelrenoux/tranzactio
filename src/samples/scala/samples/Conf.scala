@@ -20,7 +20,7 @@ object Conf {
   def live(dbName: String): Layer[Nothing, Has[Root]] = ZLayer.succeed(
     Conf.Root(
       db = DbConf(s"jdbc:h2:mem:$dbName;DB_CLOSE_DELAY=10", "sa", "sa"),
-      dbRecovery = ErrorStrategies.RetryForever.withTimeout(10.seconds).withRetryTimeout(1.minute)
+      dbRecovery = ErrorStrategies.timeout(10.seconds).retryForeverExponential(10.seconds, maxDelay = 10.seconds)
     )
   )
 
