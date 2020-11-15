@@ -140,16 +140,15 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromDatasource(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
+  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
     ZIO.access[Has[DataSource] with Blocking with Clock] { env =>
-      new DatasourceService(env, errorStrategiesRef)
+      new DatasourceService(env, errorStrategies)
     }.toLayer
 
-  /** Deprecated layer. Use `fromDatasource(ErrorStrategiesRef)` instead. */
-  @deprecated(message = "Use fromDatasource(ErrorStrategiesRef) instead", since = "1.1.0")
-  val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.access[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock] { env =>
-      val errorStrategies = env.get[ErrorStrategiesRef]
+  /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
+  val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock, Nothing, ConnectionSource] =
+    ZIO.access[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock] { env =>
+      val errorStrategies = env.get[ErrorStrategies]
       new DatasourceService(env, errorStrategies)
     }.toLayer
 

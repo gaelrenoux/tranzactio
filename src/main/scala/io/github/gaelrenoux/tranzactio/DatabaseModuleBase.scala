@@ -49,12 +49,11 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
 
   /** As `fromDatasource`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
    * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
-  final def fromDatasource(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] =
-    (ConnectionSource.fromDatasource(errorStrategiesRef) ++ Blocking.any) >>> fromConnectionSource
+  final def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] =
+    (ConnectionSource.fromDatasource(errorStrategies) ++ Blocking.any) >>> fromConnectionSource
 
-  /** Deprecated layer. Use `fromDatasource(ErrorStrategiesRef)` instead. */
-  @deprecated(message = "Use fromDatasource(ErrorStrategiesRef) instead", since = "1.1.0")
-  final val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategiesRef] with Blocking with Clock, Nothing, Database] =
+  /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
+  final val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock, Nothing, Database] =
     (ConnectionSource.fromDatasourceAndErrorStrategies ++ Blocking.any) >>> fromConnectionSource
 
 

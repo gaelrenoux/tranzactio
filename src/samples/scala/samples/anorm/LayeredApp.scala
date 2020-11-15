@@ -11,8 +11,9 @@ object LayeredApp extends zio.App {
 
   private val zenv = ZEnv.any
   private val conf = Conf.live("samble-anorm-app")
+  private val dbRecoveryConf = conf >>> ZLayer.fromService { (c: Conf.Root) => c.dbRecovery }
   private val datasource = (conf ++ zenv) >>> ConnectionPool.live
-  private val database = (datasource ++ zenv) >>> Database.fromDatasource
+  private val database = (datasource ++ zenv ++ dbRecoveryConf) >>> Database.fromDatasourceAndErrorStrategies
   private val personQueries = PersonQueries.live
 
   type AppEnv = ZEnv with Database with PersonQueries with Conf
@@ -42,7 +43,8 @@ object LayeredApp extends zio.App {
     } yield trio
 
     ZIO.accessM[AppEnv] { env =>
-      implicit val errorRecovery: ErrorStrategiesRef = env.get[Conf.Root].dbRecovery
+      // if this implicit is not provided, tranwactio will use Conf.Root.dbRecovery instead
+      implicit val errorRecovery: ErrorStrategiesRef = env.get[Conf.Root].alternateDbRecovery
       Database.transactionOrWidenR[AppEnv](queries)
     }
   }
