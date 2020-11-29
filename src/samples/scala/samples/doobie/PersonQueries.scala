@@ -4,6 +4,7 @@ import doobie.implicits._
 import io.github.gaelrenoux.tranzactio.DbException
 import io.github.gaelrenoux.tranzactio.doobie._
 import samples.Person
+import zio.stream.ZStream
 import zio.{ULayer, ZIO, ZLayer}
 
 object PersonQueries {
@@ -12,6 +13,8 @@ object PersonQueries {
     val setup: TranzactIO[Unit]
 
     val list: TranzactIO[List[Person]]
+
+    val listStream: TranzactIOStream[Person]
 
     def insert(p: Person): TranzactIO[Unit]
 
@@ -33,6 +36,10 @@ object PersonQueries {
       sql"""SELECT given_name, family_name FROM person""".query[Person].to[List]
     }
 
+    val listStream: TranzactIOStream[Person] = tzioStream {
+      sql"""SELECT given_name, family_name FROM person""".query[Person].stream
+    }
+
     def insert(p: Person): TranzactIO[Unit] = tzio {
       sql"""INSERT INTO person (given_name, family_name) VALUES (${p.givenName}, ${p.familyName})"""
         .update.run.map(_ => ())
@@ -47,6 +54,8 @@ object PersonQueries {
   def setup: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.accessM(_.get.setup)
 
   val list: ZIO[PersonQueries with Connection, DbException, List[Person]] = ZIO.accessM(_.get.list)
+
+  val listStream: ZStream[PersonQueries with Connection, DbException, Person] = ZStream.accessStream(_.get.listStream)
 
   def insert(p: Person): ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.accessM(_.get.insert(p))
 

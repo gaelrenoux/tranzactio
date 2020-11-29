@@ -9,6 +9,7 @@ object SamplesSpec extends DefaultRunnableSpec {
 
   override def spec: ZSpec[TestEnvironment, Any] = suite("SamplesSpec")(
     testApp("Doobie", doobie.LayeredApp),
+    testApp("Doobie-Streaming", doobie.LayeredAppStreaming),
     testApp("Anorm", anorm.LayeredApp)
   )
 
