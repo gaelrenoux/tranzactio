@@ -84,6 +84,7 @@ val H2Version = "1.4.200"
 libraryDependencies ++= Seq(
   /* ZIO */
   "dev.zio" %% "zio" % ZioVersion,
+  "dev.zio" %% "zio-streams" % ZioVersion,
   "dev.zio" %% "zio-interop-cats" % ZioCatsVersion,
 
   /* Doobie */
