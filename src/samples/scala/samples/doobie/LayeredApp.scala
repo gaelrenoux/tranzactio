@@ -43,7 +43,7 @@ object LayeredApp extends zio.App {
     } yield trio
 
     ZIO.accessM[AppEnv] { env =>
-      // if this implicit is not provided, tranwactio will use Conf.Root.dbRecovery instead
+      // if this implicit is not provided, tranzactio will use Conf.Root.dbRecovery instead
       implicit val errorRecovery: ErrorStrategiesRef = env.get[Conf.Root].alternateDbRecovery
       Database.transactionOrWidenR[AppEnv](queries)
     }
