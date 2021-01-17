@@ -2,6 +2,8 @@ package io.github.gaelrenoux.tranzactio
 
 import java.sql.{Connection => JdbcConnection}
 
+import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
+import izumi.reflect.Tag
 import zio.blocking.{Blocking, effectBlocking}
 import zio.{Has, ZIO, ZLayer}
 
@@ -14,14 +16,20 @@ package object anorm extends Wrapper {
   override final type Query[A] = JdbcConnection => A
   override final type TranzactIO[A] = ZIO[Connection, DbException, A]
 
+  private[tranzactio] val connectionTag = implicitly[Tag[Connection]]
+
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
     ZIO.accessM[Connection] { c =>
       effectBlocking(q(c.get[JdbcConnection]))
     }.mapError(DbException.Wrapped)
 
   /** Database for the Anorm wrapper */
-  object Database extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
+  object Database
+    extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]]
+      with DatabaseModuleTestOps[Connection] {
     self =>
+
+    private[tranzactio] override implicit val connectionTag: Tag[Connection] = anorm.connectionTag
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
     final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
@@ -35,6 +43,7 @@ package object anorm extends Wrapper {
             self.connectionFromJdbc(env, connection)
         }
       }
+
   }
 
 

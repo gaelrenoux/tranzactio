@@ -308,7 +308,6 @@ val es: ErrorStrategies =
 
 
 
-
 ### Single-connection-based Database
 
 In some cases, you might want to have a `Database` module representing a single connection. This might be useful for testinq, or if you want to manually manage that connection.
@@ -318,6 +317,30 @@ You must then use the `Database.fromConnectionSource` layer to get the `Database
 
 Note that this ConnectionSource does not allow for concurrent usage, as that would lead to undetermined results (some operation might close a transaction while a concurrent operation is between queries!).
 The non-concurrent behavior is ensured through a ZIO semaphore.
+
+
+
+### Unit Testing
+
+When unit testing, you typically use `ZIO.succeed` for your queries, instead of an SQL query.
+However, the type signature would still require a Database, which you need to provide.
+`Database.none` exists for this purpose: it satisfies the compiler, but does not provide a usable Database (so don't try to run any actual SQL queries against it).
+```scala
+import zio._
+import doobie.implicits._
+import io.github.gaelrenoux.tranzactio.DbException
+import io.github.gaelrenoux.tranzactio.doobie._
+import zio.blocking.Blocking
+
+val liveQuery: ZIO[Connection, DbException, List[String]] = tzio { sql"SELECT name FROM users".query[String].to[List] }
+val testQuery: ZIO[Connection, DbException, List[String]] = ZIO.succeed(List("Buffy Summers"))
+
+val liveEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(liveQuery)
+val testEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(testQuery)
+
+val willFail: ZIO[Blocking, Any, List[String]] = liveEffect.provideLayer(Database.none) // THIS WILL FAIL
+val testing: ZIO[Blocking, Any, List[String]] = testEffect.provideLayer(Database.none) // This will work
+```
 
 
 

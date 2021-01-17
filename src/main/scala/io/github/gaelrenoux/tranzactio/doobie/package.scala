@@ -5,7 +5,9 @@ import java.sql.{Connection => JdbcConnection}
 import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
+import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
 import io.github.gaelrenoux.tranzactio.utils.ZCatsBlocker
+import izumi.reflect.Tag
 import zio.blocking.Blocking
 import zio.interop.catz._
 import zio.stream.ZStream
@@ -20,6 +22,8 @@ package object doobie extends Wrapper {
   override final type Query[A] = _root_.doobie.ConnectionIO[A]
   override final type TranzactIO[A] = ZIO[Connection, DbException, A]
   final type TranzactIOStream[A] = ZStream[Connection, DbException, A]
+
+  private[tranzactio] val connectionTag = implicitly[Tag[Connection]]
 
   /** Default queue size when converting from FS2 streams. */
   final val DefaultStreamQueueSize = 16
@@ -36,8 +40,12 @@ package object doobie extends Wrapper {
     }.mapError(DbException.Wrapped)
 
   /** Database for the Doobie wrapper */
-  object Database extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
+  object Database
+    extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]]
+      with DatabaseModuleTestOps[Connection] {
     self =>
+
+    private[tranzactio] override implicit val connectionTag: Tag[Connection] = doobie.connectionTag
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
     final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
@@ -56,6 +64,7 @@ package object doobie extends Wrapper {
             self.connectionFromJdbc(env, connection)
         }
       }
+
   }
 
 
