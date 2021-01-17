@@ -39,10 +39,8 @@ package object doobie extends Wrapper {
   object Database extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
     self =>
 
-    type Service = DatabaseOps.ServiceOps[Connection]
-
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    def connectionFromJdbc(env: ConnectionSource with Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
+    final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
       ZCatsBlocker.provide(env).map { b =>
         val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
         val interp = KleisliInterpreter[Task](b).ConnectionInterpreter

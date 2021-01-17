@@ -1,5 +1,7 @@
 package io.github.gaelrenoux.tranzactio
 
+import java.sql.{Connection => JdbcConnection}
+
 import javax.sql.DataSource
 import zio.blocking.Blocking
 import zio.clock.Clock
@@ -10,6 +12,7 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   extends DatabaseOps.ModuleOps[Connection, Dbs] {
 
   type Database = Has[Dbs]
+  type Service = DatabaseOps.ServiceOps[Connection]
 
   private[tranzactio]
   override def transactionRFull[R <: Has[_], E, A](
@@ -38,6 +41,9 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
 
   /** Creates a Database Layer which requires an existing ConnectionSource. */
   def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database]
+
+  /** Creates a Tranzactio Connection, given a JDBC connection and a Blocking. Useful for some utilities. */
+  def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection]
 
   /** Commodity method: creates a Database Layer which includes its own ConnectionSource based on a DataSource. Most
    * connection pool implementations should be able to provide you a DataSource.

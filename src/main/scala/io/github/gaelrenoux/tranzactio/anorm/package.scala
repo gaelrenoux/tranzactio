@@ -23,10 +23,8 @@ package object anorm extends Wrapper {
   object Database extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
     self =>
 
-    type Service = DatabaseOps.ServiceOps[Connection]
-
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    def connectionFromJdbc(env: ConnectionSource with Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
+    final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
       ZIO.succeed(Has(connection) ++ env)
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
