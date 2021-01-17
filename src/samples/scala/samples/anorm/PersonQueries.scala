@@ -44,6 +44,17 @@ object PersonQueries {
     }
   })
 
+  val test: ULayer[PersonQueries] = ZLayer.succeed(new Service {
+
+    val setup: TranzactIO[Boolean] = ZIO.succeed(true)
+
+    val list: TranzactIO[List[Person]] = ZIO.succeed(Nil)
+
+    def insert(p: Person): TranzactIO[Boolean] = ZIO.succeed(true)
+
+    val failing: TranzactIO[Int] = ZIO.fail(DbException.Wrapped(new RuntimeException))
+  })
+
   def setup: ZIO[PersonQueries with Connection, DbException, Boolean] = ZIO.accessM(_.get.setup)
 
   val list: ZIO[PersonQueries with Connection, DbException, List[Person]] = ZIO.accessM(_.get.list)
