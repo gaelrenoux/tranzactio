@@ -49,6 +49,12 @@ trait DatabaseOps[Connection, R0] {
   final def transactionOrDieR[R <: Has[_]]: TransactionOrDieRPartiallyApplied[R, Connection, R0] =
     new TransactionOrDieRPartiallyApplied[R, Connection, R0](this)
 
+  final def transactionOrDieR[R <: Has[_], E ,A](
+      zio: ZIO[Connection with R, E, A],
+      commitOnFailure: Boolean = false
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
+    transactionRFull[R, E, A](zio, commitOnFailure).flatMapError(dieOnLeft)
+
   /** As `transactionOrDieR`, where the only needed environment is the connection. */
   final def transactionOrDie[E, A](
       zio: ZIO[Connection, E, A],
@@ -76,6 +82,11 @@ trait DatabaseOps[Connection, R0] {
    * superclass of both DbException and the error type of the inital ZIO. */
   final def autoCommitOrWidenR[R <: Has[_]]: AutoCommitOrWidenRPartiallyApplied[R, Connection, R0] =
     new AutoCommitOrWidenRPartiallyApplied[R, Connection, R0](this)
+
+  final def autoCommitOrWidenR[R <: Has[_], E >: DbException, A](
+      zio: ZIO[Connection with R, E, A]
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
+    autoCommitRFull[R, E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `autoCommitOrWidenR`, where the only needed environment is the connection. */
   final def autoCommitOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R0, E, A] =

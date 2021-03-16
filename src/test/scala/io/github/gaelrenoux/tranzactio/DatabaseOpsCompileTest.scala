@@ -45,11 +45,21 @@ trait DatabaseOpsCompileTest {
     val _: ZIO[Any, DbException, Int] =
       serviceOperations.transactionOrWiden(z[Connection, DbException], commitOnFailure = true)
 
-    /* transactionOrDieR */
+    /* transactionOrDieR (specifying remainder) */
     val _: ZIO[Environment, String, Int] =
       serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String])
     val _: ZIO[Environment, String, Int] =
       serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+    val _: ZIO[Environment, String, Int] =
+      serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+
+    /* transactionOrDieR (without specifying remainder) */
+    val _: ZIO[Environment, String, Int] =
+      serviceOperations.transactionOrDieR(z[Connection with Environment, String])
+    val _: ZIO[Environment, String, Int] =
+      serviceOperations.transactionOrDieR(z[Connection with Environment, String], commitOnFailure = true)
+    val _: ZIO[Environment, String, Int] =
+      serviceOperations.transactionOrDieR(z[Connection with Environment, String], commitOnFailure = true)
 
     /* transactionOrDie */
     val _: ZIO[Any, String, Int] =
@@ -65,11 +75,17 @@ trait DatabaseOpsCompileTest {
     val _: ZIO[Any, Either[DbException, String], Int] =
       serviceOperations.autoCommit(z[Connection, String])
 
-    /* autoCommitOrWidenR */
+    /* autoCommitOrWidenR (specifying remainder)*/
     val _: ZIO[Environment, Exception, Int] =
       serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
     val _: ZIO[Environment, DbException, Int] =
       serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, DbException])
+
+    /* autoCommitOrWidenR (without specifying remainder)*/
+    val _: ZIO[Environment, Exception, Int] =
+      serviceOperations.autoCommitOrWidenR(z[Connection with Environment, IllegalArgumentException])
+    val c: ZIO[Environment, DbException, Int] =
+      serviceOperations.autoCommitOrWidenR(z[Connection with Environment, DbException])
 
     /* autoCommitOrWiden */
     val _: ZIO[Any, Exception, Int] =
@@ -107,7 +123,7 @@ trait DatabaseOpsCompileTest {
       moduleOperations.transactionOrWiden(z[Connection, DbException])
 
     val _: ZIO[Database with Environment, String, Int] =
-      moduleOperations.transactionOrDieR[Environment](z[Connection with Environment, String])
+      moduleOperations.transactionOrDieR(z[Connection with Environment, String])
     val _: ZIO[Database, String, Int] =
       moduleOperations.transactionOrDie[String, Int](z[Connection, String])
 
