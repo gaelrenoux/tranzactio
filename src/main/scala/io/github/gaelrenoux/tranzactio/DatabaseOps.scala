@@ -23,6 +23,13 @@ trait DatabaseOps[Connection, R0] {
    * after. It will commit only if the ZIO succeeds, and rollback otherwise. Failures in the initial ZIO will be
    * wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a failure with the
    * exception wrapped in a Left. */
+  final def transactionR[R <: Has[_], E, A](
+      zio: ZIO[Connection with R, E, A],
+      commitOnFailure: Boolean = false
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A] =
+    transactionRFull[R, E, A](zio, commitOnFailure)
+
+  @deprecated("Use transactionR without specifying an environment", since = "1.3.0")
   def transactionR[R <: Has[_]]: TransactionRPartiallyApplied[R, Connection, R0] =
     new TransactionRPartiallyApplied[R, Connection, R0](this)
 
@@ -35,6 +42,13 @@ trait DatabaseOps[Connection, R0] {
 
   /** As `transactionR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
+  final def transactionOrWidenR[R <: Has[_], E >: DbException, A](
+      zio: ZIO[Connection with R, E, A],
+      commitOnFailure: Boolean = false
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
+    transactionRFull[R, E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
+
+  @deprecated("Use transactionOrWidenR without specifying an environment", since = "1.3.0")
   final def transactionOrWidenR[R <: Has[_]]: TransactionOrWidenRPartiallyApplied[R, Connection, R0] =
     new TransactionOrWidenRPartiallyApplied[R, Connection, R0](this)
 
@@ -46,14 +60,15 @@ trait DatabaseOps[Connection, R0] {
     transaction[E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
 
   /** As `transactionR`, but errors when handling the connections are treated as defects instead of failures. */
-  final def transactionOrDieR[R <: Has[_]]: TransactionOrDieRPartiallyApplied[R, Connection, R0] =
-    new TransactionOrDieRPartiallyApplied[R, Connection, R0](this)
-
-  final def transactionOrDieR[R <: Has[_], E ,A](
+  final def transactionOrDieR[R <: Has[_], E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     transactionRFull[R, E, A](zio, commitOnFailure).flatMapError(dieOnLeft)
+
+  @deprecated("Use transactionOrDieR without specifying an environment", since = "1.3.0")
+  final def transactionOrDieR[R <: Has[_]]: TransactionOrDieRPartiallyApplied[R, Connection, R0] =
+    new TransactionOrDieRPartiallyApplied[R, Connection, R0](this)
 
   /** As `transactionOrDieR`, where the only needed environment is the connection. */
   final def transactionOrDie[E, A](
@@ -71,6 +86,12 @@ trait DatabaseOps[Connection, R0] {
   /** Provides that ZIO with a Connection. All DB action in the ZIO will be auto-committed. Failures in the initial
    * ZIO will be wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a
    * failure with the exception wrapped in a Left. */
+  final def autoCommitR[R <: Has[_], E, A](
+      zio: ZIO[Connection with R, E, A]
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A] =
+    autoCommitRFull[R, E, A](zio)
+
+  @deprecated("Use autoCommitR without specifying an environment", since = "1.3.0")
   def autoCommitR[R <: Has[_]]: AutoCommitRPartiallyApplied[R, Connection, R0] =
     new AutoCommitRPartiallyApplied[R, Connection, R0](this)
 
@@ -80,19 +101,26 @@ trait DatabaseOps[Connection, R0] {
 
   /** As `autoCommitR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-  final def autoCommitOrWidenR[R <: Has[_]]: AutoCommitOrWidenRPartiallyApplied[R, Connection, R0] =
-    new AutoCommitOrWidenRPartiallyApplied[R, Connection, R0](this)
-
   final def autoCommitOrWidenR[R <: Has[_], E >: DbException, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     autoCommitRFull[R, E, A](zio).mapError(_.fold(identity, identity))
+
+  @deprecated("Use autoCommitOrWidenR without specifying an environment", since = "1.3.0")
+  final def autoCommitOrWidenR[R <: Has[_]]: AutoCommitOrWidenRPartiallyApplied[R, Connection, R0] =
+    new AutoCommitOrWidenRPartiallyApplied[R, Connection, R0](this)
 
   /** As `autoCommitOrWidenR`, where the only needed environment is the connection. */
   final def autoCommitOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R0, E, A] =
     autoCommit[E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `autoCommitR`, but errors when handling the connections are treated as defects instead of failures. */
+  final def autoCommitOrDieR[R <: Has[_], E, A](
+      zio: ZIO[Connection with R, E, A]
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
+    autoCommitRFull[R, E, A](zio).flatMapError(dieOnLeft)
+
+  @deprecated("Use autoCommitOrWidenR without specifying an environment", since = "1.3.0")
   final def autoCommitOrDieR[R <: Has[_]]: AutoCommitOrDieRPartiallyApplied[R, Connection, R0] =
     new AutoCommitOrDieRPartiallyApplied[R, Connection, R0](this)
 
