@@ -11,141 +11,222 @@ trait DatabaseOpsCompileTest {
 
   val serviceOperations: DatabaseOps.ServiceOps[Connection]
 
-  val serviceChecks: Unit = {
+  object ServicesCheck {
 
-    /* transactionR */
-    val _: ZIO[Environment, Either[DbException, String], Int] =
-      serviceOperations.transactionR[Environment](z[Connection with Environment, String])
-    val _: ZIO[Environment, Either[DbException, String], Int] =
-      serviceOperations.transactionR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+    object TransactionR {
+      val a: ZIO[Environment, Either[DbException, String], Int] =
+        serviceOperations.transactionR(z[Connection with Environment, String])
+      val b: ZIO[Environment, Either[DbException, String], Int] =
+        serviceOperations.transactionR(z[Connection with Environment, String], commitOnFailure = true)
 
-    /* transaction */
-    val _: ZIO[Any, Either[DbException, String], Int] =
-      serviceOperations.transaction(z[Connection, String])
-    val _: ZIO[Any, Either[DbException, String], Int] =
-      serviceOperations.transaction(z[Connection, String], commitOnFailure = true)
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Environment, Either[DbException, String], Int] =
+        serviceOperations.transactionR[Environment](z[Connection with Environment, String])
+      @deprecated("", since="1.3.0") val bDeprecated: ZIO[Environment, Either[DbException, String], Int] =
+        serviceOperations.transactionR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+    }
 
-    /* transactionOrWidenR */
-    val _: ZIO[Environment, Exception, Int] =
-      serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
-    val _: ZIO[Environment, DbException, Int] =
-      serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException])
-    val _: ZIO[Environment, Exception, Int] =
-      serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException], commitOnFailure = true)
-    val _: ZIO[Environment, DbException, Int] =
-      serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException], commitOnFailure = true)
+    object Transaction {
+      val a: ZIO[Any, Either[DbException, String], Int] =
+        serviceOperations.transaction(z[Connection, String])
+      val b: ZIO[Any, Either[DbException, String], Int] =
+        serviceOperations.transaction(z[Connection, String], commitOnFailure = true)
+    }
 
-    /* transactionOrWiden */
-    val _: ZIO[Any, Exception, Int] =
-      serviceOperations.transactionOrWiden(z[Connection, IllegalArgumentException])
-    val _: ZIO[Any, DbException, Int] =
-      serviceOperations.transactionOrWiden(z[Connection, DbException])
-    val _: ZIO[Any, Exception, Int] =
-      serviceOperations.transactionOrWiden(z[Connection, IllegalArgumentException], commitOnFailure = true)
-    val _: ZIO[Any, DbException, Int] =
-      serviceOperations.transactionOrWiden(z[Connection, DbException], commitOnFailure = true)
+    object TransactionOrWidenR {
+      val a: ZIO[Environment, Exception, Int] =
+        serviceOperations.transactionOrWidenR(z[Connection with Environment, IllegalArgumentException])
+      val b: ZIO[Environment, DbException, Int] =
+        serviceOperations.transactionOrWidenR(z[Connection with Environment, DbException])
+      val c: ZIO[Environment, Exception, Int] =
+        serviceOperations.transactionOrWidenR(z[Connection with Environment, IllegalArgumentException], commitOnFailure = true)
+      val d: ZIO[Environment, DbException, Int] =
+        serviceOperations.transactionOrWidenR(z[Connection with Environment, DbException], commitOnFailure = true)
 
-    /* transactionOrDieR (specifying remainder) */
-    val _: ZIO[Environment, String, Int] =
-      serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String])
-    val _: ZIO[Environment, String, Int] =
-      serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String], commitOnFailure = true)
-    val _: ZIO[Environment, String, Int] =
-      serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Environment, Exception, Int] =
+        serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
+      @deprecated("", since="1.3.0") val bDeprecated: ZIO[Environment, DbException, Int] =
+        serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException])
+      @deprecated("", since="1.3.0") val cDeprecated: ZIO[Environment, Exception, Int] =
+        serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException], commitOnFailure = true)
+      @deprecated("", since="1.3.0") val dDeprecated: ZIO[Environment, DbException, Int] =
+        serviceOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException], commitOnFailure = true)
+    }
 
-    /* transactionOrDieR (without specifying remainder) */
-    val _: ZIO[Environment, String, Int] =
-      serviceOperations.transactionOrDieR(z[Connection with Environment, String])
-    val _: ZIO[Environment, String, Int] =
-      serviceOperations.transactionOrDieR(z[Connection with Environment, String], commitOnFailure = true)
-    val _: ZIO[Environment, String, Int] =
-      serviceOperations.transactionOrDieR(z[Connection with Environment, String], commitOnFailure = true)
+    object TransactionOrWiden {
+      val a: ZIO[Any, Exception, Int] =
+        serviceOperations.transactionOrWiden(z[Connection, IllegalArgumentException])
+      val b: ZIO[Any, DbException, Int] =
+        serviceOperations.transactionOrWiden(z[Connection, DbException])
+      val c: ZIO[Any, Exception, Int] =
+        serviceOperations.transactionOrWiden(z[Connection, IllegalArgumentException], commitOnFailure = true)
+      val d: ZIO[Any, DbException, Int] =
+        serviceOperations.transactionOrWiden(z[Connection, DbException], commitOnFailure = true)
+    }
 
-    /* transactionOrDie */
-    val _: ZIO[Any, String, Int] =
-      serviceOperations.transactionOrDie(z[Connection, String])
-    val _: ZIO[Any, String, Int] =
-      serviceOperations.transactionOrDie(z[Connection, String], commitOnFailure = true)
+    object TransactionOrDieR {
+      val a: ZIO[Environment, String, Int] =
+        serviceOperations.transactionOrDieR(z[Connection with Environment, String])
+      val b: ZIO[Environment, String, Int] =
+        serviceOperations.transactionOrDieR(z[Connection with Environment, String], commitOnFailure = true)
+      val c: ZIO[Environment, String, Int] =
+        serviceOperations.transactionOrDieR(z[Connection with Environment, String], commitOnFailure = true)
 
-    /* autoCommitR */
-    val _: ZIO[Environment, Either[DbException, String], Int] =
-      serviceOperations.autoCommitR[Environment](z[Connection with Environment, String])
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Environment, String, Int] =
+        serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String])
+      @deprecated("", since="1.3.0") val bDeprecated: ZIO[Environment, String, Int] =
+        serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+      @deprecated("", since="1.3.0") val cDeprecated: ZIO[Environment, String, Int] =
+        serviceOperations.transactionOrDieR[Environment](z[Connection with Environment, String], commitOnFailure = true)
+    }
 
-    /* autoCommit */
-    val _: ZIO[Any, Either[DbException, String], Int] =
-      serviceOperations.autoCommit(z[Connection, String])
+    object TransactionOrDie {
+      val a: ZIO[Any, String, Int] =
+        serviceOperations.transactionOrDie(z[Connection, String])
+      val b: ZIO[Any, String, Int] =
+        serviceOperations.transactionOrDie(z[Connection, String], commitOnFailure = true)
+    }
 
-    /* autoCommitOrWidenR (specifying remainder)*/
-    val _: ZIO[Environment, Exception, Int] =
-      serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
-    val _: ZIO[Environment, DbException, Int] =
-      serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, DbException])
+    object AutoCommitR {
+      val a: ZIO[Environment, Either[DbException, String], Int] =
+        serviceOperations.autoCommitR(z[Connection with Environment, String])
 
-    /* autoCommitOrWidenR (without specifying remainder)*/
-    val _: ZIO[Environment, Exception, Int] =
-      serviceOperations.autoCommitOrWidenR(z[Connection with Environment, IllegalArgumentException])
-    val c: ZIO[Environment, DbException, Int] =
-      serviceOperations.autoCommitOrWidenR(z[Connection with Environment, DbException])
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Environment, Either[DbException, String], Int] =
+        serviceOperations.autoCommitR[Environment](z[Connection with Environment, String])
+    }
 
-    /* autoCommitOrWiden */
-    val _: ZIO[Any, Exception, Int] =
-      serviceOperations.autoCommitOrWiden(z[Connection, IllegalArgumentException])
-    val _: ZIO[Any, DbException, Int] =
-      serviceOperations.autoCommitOrWiden(z[Connection, DbException])
+    object AutoCommit {
+      val a: ZIO[Any, Either[DbException, String], Int] =
+        serviceOperations.autoCommit(z[Connection, String])
+    }
 
-    /* autoCommitOrDieR */
-    val _: ZIO[Environment, String, Int] =
-      serviceOperations.autoCommitOrDieR[Environment](z[Connection with Environment, String])
+    object AutoCommitOrWidenR {
+      val a: ZIO[Environment, Exception, Int] =
+        serviceOperations.autoCommitOrWidenR(z[Connection with Environment, IllegalArgumentException])
+      val b: ZIO[Environment, DbException, Int] =
+        serviceOperations.autoCommitOrWidenR(z[Connection with Environment, DbException])
 
-    /* autoCommitOrDie */
-    val _: ZIO[Any, String, Int] =
-      serviceOperations.autoCommitOrDie(z[Connection, String])
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Environment, Exception, Int] =
+        serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
+      @deprecated("", since="1.3.0") val bDeprecated: ZIO[Environment, DbException, Int] =
+        serviceOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, DbException])
+    }
+
+    object AutoCommitOrWiden {
+      val a: ZIO[Any, Exception, Int] =
+        serviceOperations.autoCommitOrWiden(z[Connection, IllegalArgumentException])
+      val b: ZIO[Any, DbException, Int] =
+        serviceOperations.autoCommitOrWiden(z[Connection, DbException])
+    }
+
+    object AutoCommitOrDieR {
+      val a: ZIO[Environment, String, Int] =
+        serviceOperations.autoCommitOrDieR(z[Connection with Environment, String])
+
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Environment, String, Int] =
+        serviceOperations.autoCommitOrDieR[Environment](z[Connection with Environment, String])
+    }
+
+    object AutoCommitOrDie {
+      val a: ZIO[Any, String, Int] =
+        serviceOperations.autoCommitOrDie(z[Connection, String])
+    }
+
   }
 
 
   val moduleOperations: DatabaseOps.ModuleOps[Connection, DatabaseService]
 
-  val moduleChecks: Unit = {
+  object ModuleCheck {
 
-    /* transaction */
-    val _: ZIO[Database with Environment, Either[DbException, String], Int] =
-      moduleOperations.transactionR[Environment](z[Connection with Environment, String])
-    val _: ZIO[Database, Either[DbException, String], Int] =
-      moduleOperations.transaction(z[Connection, String])
+    object TransactionR {
+      val a: ZIO[Database with Environment, Either[DbException, String], Int] =
+        moduleOperations.transactionR(z[Connection with Environment, String])
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Database with Environment, Either[DbException, String], Int] =
+        moduleOperations.transactionR[Environment](z[Connection with Environment, String])
+    }
 
-    val _: ZIO[Database with Environment, Exception, Int] =
-      moduleOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
-    val _: ZIO[Database with Environment, DbException, Int] =
-      moduleOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException])
-    val _: ZIO[Database, Exception, Int] =
-      moduleOperations.transactionOrWiden(z[Connection, IllegalArgumentException])
-    val _: ZIO[Database, DbException, Int] =
-      moduleOperations.transactionOrWiden(z[Connection, DbException])
+    object Transaction {
+      val a: ZIO[Database, Either[DbException, String], Int] =
+        moduleOperations.transaction(z[Connection, String])
+    }
 
-    val _: ZIO[Database with Environment, String, Int] =
-      moduleOperations.transactionOrDieR(z[Connection with Environment, String])
-    val _: ZIO[Database, String, Int] =
-      moduleOperations.transactionOrDie[String, Int](z[Connection, String])
+    object TransactionOrWidenR {
+      val a: ZIO[Database with Environment, Exception, Int] =
+        moduleOperations.transactionOrWidenR(z[Connection with Environment, IllegalArgumentException])
+      val b: ZIO[Database with Environment, DbException, Int] =
+        moduleOperations.transactionOrWidenR(z[Connection with Environment, DbException])
 
-    /* auto-commit */
-    val _: ZIO[Database with Environment, Either[DbException, String], Int] =
-      moduleOperations.autoCommitR[Environment](z[Connection with Environment, String])
-    val _: ZIO[Database, Either[DbException, String], Int] =
-      moduleOperations.autoCommit(z[Connection, String])
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Database with Environment, Exception, Int] =
+        moduleOperations.transactionOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
+      @deprecated("", since="1.3.0") val bDeprecated: ZIO[Database with Environment, DbException, Int] =
+        moduleOperations.transactionOrWidenR[Environment](z[Connection with Environment, DbException])
+    }
 
-    val _: ZIO[Database with Environment, Exception, Int] =
-      moduleOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
-    val _: ZIO[Database with Environment, DbException, Int] =
-      moduleOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, DbException])
-    val _: ZIO[Database, Exception, Int] =
-      moduleOperations.autoCommitOrWiden[Exception, Int](z[Connection, IllegalArgumentException])
-    val _: ZIO[Database, DbException, Int] =
-      moduleOperations.autoCommitOrWiden[DbException, Int](z[Connection, DbException])
+    object TransactionOrWiden {
+      val a: ZIO[Database, Exception, Int] =
+        moduleOperations.transactionOrWiden(z[Connection, IllegalArgumentException])
+      val b: ZIO[Database, DbException, Int] =
+        moduleOperations.transactionOrWiden(z[Connection, DbException])
+    }
 
-    val _: ZIO[Database with Environment, String, Int] =
-      moduleOperations.autoCommitOrDieR[Environment](z[Connection with Environment, String])
-    val _: ZIO[Database, String, Int] =
-      moduleOperations.autoCommitOrDie[String, Int](z[Connection, String])
+    object TransactionOrDieR {
+      val a: ZIO[Database with Environment, String, Int] =
+        moduleOperations.transactionOrDieR(z[Connection with Environment, String])
+
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Database with Environment, String, Int] =
+        moduleOperations.transactionOrDieR[Environment](z[Connection with Environment, String])
+    }
+
+    object TransactionOrDie {
+      val a: ZIO[Database, String, Int] =
+        moduleOperations.transactionOrDie[String, Int](z[Connection, String])
+    }
+
+    object AutoCommitR {
+      val a: ZIO[Database with Environment, Either[DbException, String], Int] =
+        moduleOperations.autoCommitR(z[Connection with Environment, String])
+
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Database with Environment, Either[DbException, String], Int] =
+        moduleOperations.autoCommitR[Environment](z[Connection with Environment, String])
+    }
+
+    object AutoCommit {
+      val a: ZIO[Database, Either[DbException, String], Int] =
+        moduleOperations.autoCommit(z[Connection, String])
+    }
+
+    object AutoCommitOrWidenR {
+      val a: ZIO[Database with Environment, Exception, Int] =
+        moduleOperations.autoCommitOrWidenR(z[Connection with Environment, IllegalArgumentException])
+      val b: ZIO[Database with Environment, DbException, Int] =
+        moduleOperations.autoCommitOrWidenR(z[Connection with Environment, DbException])
+
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Database with Environment, Exception, Int] =
+        moduleOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, IllegalArgumentException])
+      @deprecated("", since="1.3.0") val bDeprecated: ZIO[Database with Environment, DbException, Int] =
+        moduleOperations.autoCommitOrWidenR[Environment](z[Connection with Environment, DbException])
+    }
+
+    object AutoCommitOrWiden {
+      val a: ZIO[Database, Exception, Int] =
+        moduleOperations.autoCommitOrWiden[Exception, Int](z[Connection, IllegalArgumentException])
+      val b: ZIO[Database, DbException, Int] =
+        moduleOperations.autoCommitOrWiden[DbException, Int](z[Connection, DbException])
+    }
+
+    object AutoCommitOrDieR {
+      val a: ZIO[Database with Environment, String, Int] =
+        moduleOperations.autoCommitOrDieR(z[Connection with Environment, String])
+
+      @deprecated("", since="1.3.0") val aDeprecated: ZIO[Database with Environment, String, Int] =
+        moduleOperations.autoCommitOrDieR[Environment](z[Connection with Environment, String])
+    }
+
+    object AutoCommitOrDie {
+      val a: ZIO[Database, String, Int] =
+        moduleOperations.autoCommitOrDie[String, Int](z[Connection, String])
+    }
+
   }
 
 }
