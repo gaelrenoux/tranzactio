@@ -28,7 +28,7 @@ object SomeTest extends RunnableSpec[TestEnvironment with Database with PersonQu
 
   private val myTest = testM("some test on a method") {
     for {
-      h <- Database.transactionR[PersonQueries](PersonQueries.list)
+      h <- Database.transactionR(PersonQueries.list)
       // do something with that result
     } yield assert(h)(equalTo(Nil))
   }
