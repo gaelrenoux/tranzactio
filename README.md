@@ -25,10 +25,10 @@ Any constructive criticism, bug report or offer to help is welcome. Just open an
 
 ### Why ?
 
-On my applications, I regularly have quite a bunch of business logics around my queries.
-If I want to run that logic within a transaction, I had to wrap it with Doobie's `ConnectionIO`.
+On my applications, I regularly have quite a bunch of business logics around my queries.
+If I want to run that logic within a transaction, I have to wrap it with Doobie's `ConnectionIO`.
 But I'm already using ZIO as my effect monad! I don't want another one...
-In addition, IO monads on DB libraries (like Doobie's `ConnectionIO`) misses quite a bit of the operations that ZIO has.
+In addition, IO monads on DB libraries (like Doobie's `ConnectionIO`) misses quite a bit of the operations that ZIO has.
 
 That's where TranzactIO comes from. I wanted a way to use ZIO everywhere, and run the transaction whenever I decided.
 
@@ -118,9 +118,9 @@ import zio.console.Console
 val zio: ZIO[Connection, String, Long] = ???
 val simple: ZIO[Database, String, Long] = Database.transactionOrDie(zio)
 
-// If you have an additional environment, use the ***R method. The environment type must be specified.
+// If you have an additional environment, use the ***R method.
 val zioEnv: ZIO[Connection with Console, String, Long] = ???
-val withEnv: ZIO[Database with Console, String, Long] = Database.transactionOrDieR[Console](zioEnv)
+val withEnv: ZIO[Database with Console, String, Long] = Database.transactionOrDieR(zioEnv)
 
 // Do you want to handle connection errors yourself? They will appear on the Left side of the Either.
 val withSeparateErrors: ZIO[Database, Either[DbException, String], Long] = Database.transaction(zio)
@@ -189,6 +189,7 @@ The table below indicates for each version of TranzactIO, the versions of ZIO or
 | 1.0.0      | 1.0.0        | 0.9.0        | 2.6.7        |
 | 1.0.1      | 1.0.0        | 0.9.0        | 2.6.7        |
 | 1.1.0      | 1.0.3        | 0.9.2        | 2.6.7        |
+| 1.2.0      | 1.0.3        | 0.9.2        | 2.6.7        |
 | master     | 1.0.3        | 0.9.2        | 2.6.7        |
 
 
@@ -240,15 +241,13 @@ val result3: ZIO[Database, Exception, A] = Database.transactionOrWiden(zio)
 ```
  
 In addition, a frequent case is to have an additional environment on your ZIO monad, e.g.: `ZIO[ZEnv with Connection, E, A]`.
-To handle this case, all methods mentioned above have an additional variant with a final `R`.
- 
-When using an `***R` method, you will need to provide the additional environment type as a type parameter (Scala's compiler is not smart enough to infer it correctly on its own):
+To handle this case, all methods mentioned above have an additional variant with a final `R`:
 ```scala
 val zio: ZIO[ZEnv with Connection, E, A] = ???
-val result1: ZIO[Database with ZEnv, Either[DbException, E], A] = Database.transactionR[ZEnv](zio)
-val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDieR[ZEnv](zio)
+val result1: ZIO[Database with ZEnv, Either[DbException, E], A] = Database.transactionR(zio)
+val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDieR(zio)
 // assuming E extends Exception:
-val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWidenR[ZEnv](zio) 
+val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWidenR(zio)
 ```
 
 All the `transaction` methods take an optional argument `commitOnFailure` (defaults to `false`).

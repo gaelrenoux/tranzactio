@@ -14,25 +14,20 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   type Database = Has[Dbs]
   type Service = DatabaseOps.ServiceOps[Connection]
 
-  private[tranzactio]
-  override def transactionRFull[R <: Has[_], E, A](
-      zio: ZIO[R with Connection, E, A],
+  override def transactionR[R <: Has[_], E, A](
+      zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Has[Dbs] with R, Either[DbException, E], A] = {
     ZIO.accessM { db: Has[Dbs] =>
-      db.get[Dbs].transactionRFull[R, E, A](zio, commitOnFailure).provideSome[R] { r =>
-        val env = r ++ Has(()) // needed for the compiler
-        env
-      }
+      db.get[Dbs].transactionR[R, E, A](zio, commitOnFailure)
     }
   }
 
-  private[tranzactio]
-  override def autoCommitRFull[R <: Has[_], E, A](
-      zio: ZIO[R with Connection, E, A]
+  override def autoCommitR[R <: Has[_], E, A](
+      zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Has[Dbs] with R, Either[DbException, E], A] = {
     ZIO.accessM { db: Has[Dbs] =>
-      db.get[Dbs].autoCommitRFull[R, E, A](zio).provideSome[R] { r =>
+      db.get[Dbs].autoCommitR[R, E, A](zio).provideSome[R] { r =>
         val env = r ++ Has(()) // needed for the compiler
         env
       }

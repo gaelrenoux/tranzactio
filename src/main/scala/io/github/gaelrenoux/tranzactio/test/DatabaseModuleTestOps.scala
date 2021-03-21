@@ -18,7 +18,7 @@ trait DatabaseModuleTestOps[Connection <: Has[_]] extends DatabaseModuleBase[Con
    * so they do not need a Database). Trying to run actual queries against it will fail. */
   lazy val none: ZLayer[Blocking, Nothing, Database] = ZLayer.fromFunction { b: Blocking =>
     new Service {
-      override private[tranzactio] def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A], commitOnFailure: Boolean)
+      override def transactionR[R <: Has[_], E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
         (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
         noConnection(b).flatMap { c =>
           zio.provideSome[R] { r: R =>
@@ -26,7 +26,7 @@ trait DatabaseModuleTestOps[Connection <: Has[_]] extends DatabaseModuleBase[Con
           }.mapError(Right(_))
         }
 
-      override private[tranzactio] def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A])
+      override def autoCommitR[R <: Has[_], E, A](zio: ZIO[Connection with R, E, A])
         (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
         noConnection(b).flatMap { c =>
           zio.provideSome[R] { r: R =>

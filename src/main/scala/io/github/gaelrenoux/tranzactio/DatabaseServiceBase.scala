@@ -13,7 +13,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource:
 
   def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection]
 
-  private[tranzactio] override def transactionRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A], commitOnFailure: Boolean = false)
+  override def transactionR[R <: Has[_], E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean = false)
     (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
     ZIO.accessM[R] { r =>
       runTransaction({ c: JdbcConnection =>
@@ -21,7 +21,7 @@ abstract class DatabaseServiceBase[Connection <: Has[_] : Tag](connectionSource:
       }, commitOnFailure)
     }
 
-  private[tranzactio] override def autoCommitRFull[R <: Has[_], E, A](zio: ZIO[R with Connection, E, A])
+  override def autoCommitR[R <: Has[_], E, A](zio: ZIO[Connection with R, E, A])
     (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] = {
     ZIO.accessM[R] { r =>
       runAutoCommit { c: JdbcConnection =>
