@@ -191,7 +191,8 @@ The table below indicates for each version of TranzactIO, the versions of ZIO or
 | 1.1.0      | 1.0.3        | 0.9.2        | 2.6.7        |
 | 1.2.0      | 1.0.3        | 0.9.2        | 2.6.7        |
 | 1.3.0      | 1.0.5        | 0.9.4        | 2.6.10       |
-| master     | 1.0.3        | 0.9.2        | 2.6.7        |
+| 2.0.0      | 1.0.5        | 0.12.1       | 2.6.10       |
+| master     | 1.0.5        | 0.12.1       | 2.6.10       |
 
 
 
