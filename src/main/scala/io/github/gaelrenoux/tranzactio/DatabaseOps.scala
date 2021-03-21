@@ -25,10 +25,6 @@ trait DatabaseOps[Connection, R0] {
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A]
 
-  @deprecated("Use transactionR without specifying an environment", since = "1.3.0")
-  def transactionR[R <: Has[_]]: TransactionRPartiallyApplied[R, Connection, R0] =
-    new TransactionRPartiallyApplied[R, Connection, R0](this)
-
   /** As `transactionR`, where the only needed environment is the connection. */
   final def transaction[E, A](
       zio: ZIO[Connection, E, A],
@@ -44,10 +40,6 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     transactionR[R, E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
 
-  @deprecated("Use transactionOrWidenR without specifying an environment", since = "1.3.0")
-  final def transactionOrWidenR[R <: Has[_]]: TransactionOrWidenRPartiallyApplied[R, Connection, R0] =
-    new TransactionOrWidenRPartiallyApplied[R, Connection, R0](this)
-
   /** As `transactionOrWiden`, where the only needed environment is the connection. */
   final def transactionOrWiden[E >: DbException, A](
       zio: ZIO[Connection, E, A],
@@ -61,10 +53,6 @@ trait DatabaseOps[Connection, R0] {
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     transactionR[R, E, A](zio, commitOnFailure).flatMapError(dieOnLeft)
-
-  @deprecated("Use transactionOrDieR without specifying an environment", since = "1.3.0")
-  final def transactionOrDieR[R <: Has[_]]: TransactionOrDieRPartiallyApplied[R, Connection, R0] =
-    new TransactionOrDieRPartiallyApplied[R, Connection, R0](this)
 
   /** As `transactionOrDieR`, where the only needed environment is the connection. */
   final def transactionOrDie[E, A](
@@ -83,10 +71,6 @@ trait DatabaseOps[Connection, R0] {
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A]
 
-  @deprecated("Use autoCommitR without specifying an environment", since = "1.3.0")
-  def autoCommitR[R <: Has[_]]: AutoCommitRPartiallyApplied[R, Connection, R0] =
-    new AutoCommitRPartiallyApplied[R, Connection, R0](this)
-
   /** As `autoCommitR`, where the only needed environment is the connection. */
   final def autoCommit[E, A](zio: ZIO[Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R0, Either[DbException, E], A] =
     autoCommitR[Has[Unit], E, A](zio).provideSome(mixHasUnit)
@@ -98,10 +82,6 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).mapError(_.fold(identity, identity))
 
-  @deprecated("Use autoCommitOrWidenR without specifying an environment", since = "1.3.0")
-  final def autoCommitOrWidenR[R <: Has[_]]: AutoCommitOrWidenRPartiallyApplied[R, Connection, R0] =
-    new AutoCommitOrWidenRPartiallyApplied[R, Connection, R0](this)
-
   /** As `autoCommitOrWidenR`, where the only needed environment is the connection. */
   final def autoCommitOrWiden[E >: DbException, A](zio: ZIO[Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R0, E, A] =
     autoCommit[E, A](zio).mapError(_.fold(identity, identity))
@@ -111,10 +91,6 @@ trait DatabaseOps[Connection, R0] {
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).flatMapError(dieOnLeft)
-
-  @deprecated("Use autoCommitOrWidenR without specifying an environment", since = "1.3.0")
-  final def autoCommitOrDieR[R <: Has[_]]: AutoCommitOrDieRPartiallyApplied[R, Connection, R0] =
-    new AutoCommitOrDieRPartiallyApplied[R, Connection, R0](this)
 
   /** As `autoCommitOrDieR`, where the only needed environment is the connection. */
   final def autoCommitOrDie[E, A](zio: ZIO[Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R0, E, A] =
@@ -133,46 +109,6 @@ object DatabaseOps {
   trait ModuleOps[Connection, Dbs <: ServiceOps[Connection]] extends DatabaseOps[Connection, Has[Dbs]] {
     override protected final def mixHasUnit(r0: Has[Dbs]): Has[Dbs] with Has[Unit] = r0 ++ Has(())
   }
-
-  private[tranzactio] final class TransactionRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E, A](
-        zio: ZIO[R with Connection, E, A],
-        commitOnFailure: Boolean = false
-    )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A] =
-      parent.transactionR[R, E, A](zio, commitOnFailure)
-  }
-
-  private[tranzactio] final class TransactionOrWidenRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E >: DbException, A](
-        zio: ZIO[R with Connection, E, A],
-        commitOnFailure: Boolean = false
-    )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
-      parent.transactionR[R, E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
-  }
-
-  private[tranzactio] final class TransactionOrDieRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E, A](
-        zio: ZIO[R with Connection, E, A],
-        commitOnFailure: Boolean = false
-    )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
-      parent.transactionR[R, E, A](zio, commitOnFailure).flatMapError(dieOnLeft)
-  }
-
-  private[tranzactio] final class AutoCommitRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E, A](zio: ZIO[R with Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A] =
-      parent.autoCommitR[R, E, A](zio)
-  }
-
-  private[tranzactio] final class AutoCommitOrWidenRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E >: DbException, A](zio: ZIO[R with Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
-      parent.autoCommitR[R, E, A](zio).mapError(_.fold(identity, identity))
-  }
-
-  private[tranzactio] final class AutoCommitOrDieRPartiallyApplied[R <: Has[_], Connection, R0](val parent: DatabaseOps[Connection, R0]) extends AnyVal {
-    def apply[E, A](zio: ZIO[R with Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
-      parent.autoCommitR[R, E, A](zio).flatMapError(dieOnLeft)
-  }
-
 
   private def dieOnLeft[E](e: Either[DbException, E]): UIO[E] = e match {
     case Right(e) => ZIO.succeed(e)
