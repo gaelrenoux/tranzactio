@@ -1,19 +1,18 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => JdbcConnection}
-
 import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
-import io.github.gaelrenoux.tranzactio.utils.ZCatsBlocker
 import izumi.reflect.Tag
 import zio.blocking.Blocking
 import zio.interop.catz._
+import zio.interop.catz.implicits.rts
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
 import zio.{Has, Task, ZIO, ZLayer}
 
+import java.sql.{Connection => JdbcConnection}
 
 /** TranzactIO module for Doobie. */
 package object doobie extends Wrapper {
@@ -36,7 +35,7 @@ package object doobie extends Wrapper {
   /** Converts a Doobie stream to a ZStream. Note that you can provide a queue size, default value is the same as in ZIO. */
   final def tzioStream[A](q: fs2.Stream[Query, A], queueSize: Int = DefaultStreamQueueSize): TranzactIOStream[A] =
     ZStream.accessStream[Connection] { c =>
-      c.get.transP(monadErrorInstance).apply(q).toZStream(queueSize)
+      c.get.transP.apply(q).toZStream(queueSize)
     }.mapError(DbException.Wrapped)
 
   /** Database for the Doobie wrapper */
@@ -49,9 +48,9 @@ package object doobie extends Wrapper {
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
     final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
-      ZCatsBlocker.provide(env).map { b =>
+      ZIO.effectTotal {
         val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
-        val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
+        val interp = KleisliInterpreter[Task].ConnectionInterpreter
         val tran = Transactor(connection, connect, interp, Strategy.void)
         Has(tran)
       }

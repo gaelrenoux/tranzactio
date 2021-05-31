@@ -32,13 +32,13 @@ object LayeredApp extends zio.App {
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {
     val queries: ZIO[Connection with AppEnv, DbException, List[Person]] = for {
-      _ <- console.putStrLn("Creating the table")
+      _ <- console.putStrLn("Creating the table").orDie
       _ <- PersonQueries.setup
-      _ <- console.putStrLn("Inserting the trio")
+      _ <- console.putStrLn("Inserting the trio").orDie
       _ <- PersonQueries.insert(Person("Buffy", "Summers"))
       _ <- PersonQueries.insert(Person("Willow", "Rosenberg"))
       _ <- PersonQueries.insert(Person("Alexander", "Harris"))
-      _ <- console.putStrLn("Reading the trio")
+      _ <- console.putStrLn("Reading the trio").orDie
       trio <- PersonQueries.list
     } yield trio
 
