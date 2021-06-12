@@ -33,14 +33,14 @@ object LayeredAppStreaming extends zio.App {
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {
     val queries = for {
-      _ <- console.putStrLn("Creating the table")
+      _ <- console.putStrLn("Creating the table").orDie
       _ <- PersonQueries.setup
-      _ <- console.putStrLn("Inserting the trio")
+      _ <- console.putStrLn("Inserting the trio").orDie
       _ <- PersonQueries.insert(Person("Buffy", "Summers"))
       _ <- PersonQueries.insert(Person("Willow", "Rosenberg"))
       _ <- PersonQueries.insert(Person("Alexander", "Harris"))
       _ <- PersonQueries.insert(Person("Rupert", "Giles")) // insert one more!
-      _ <- console.putStrLn("Reading the trio")
+      _ <- console.putStrLn("Reading the trio").orDie
       trio <- {
         val stream: ZStream[PersonQueries with Connection, DbException, Person] = PersonQueries.listStream.take(3)
         stream.run(Sink.foldLeft(List[Person]()) { (ps, p) => p :: ps })
