@@ -43,7 +43,7 @@ object LayeredAppStreaming extends zio.App {
       _ <- console.putStrLn("Reading the trio")
       trio <- {
         val stream: ZStream[PersonQueries with Connection, DbException, Person] = PersonQueries.listStream.take(3)
-        stream.run(Sink.foldLeft(List[Person]())(_.prepended(_)))
+        stream.run(Sink.foldLeft(List[Person]()) { (ps, p) => p :: ps })
       }
     } yield trio.reverse
 
