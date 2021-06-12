@@ -11,8 +11,22 @@
       <option name="featureWarnings" value="true" />
       <option name="explainTypeErrors" value="true" />
       <parameters>
-        <parameter value="-Ymacro-annotations" />
+        <parameter value="-encoding" />
+        <parameter value="utf-8" />
         <parameter value="-Xcheckinit" />
+        <parameter value="-Xlint:adapted-args" />
+        <parameter value="-Xlint:constant" />
+        <parameter value="-Xlint:delayedinit-select" />
+        <parameter value="-Xlint:doc-detached" />
+        <parameter value="-Xlint:inaccessible" />
+        <parameter value="-Xlint:missing-interpolator" />
+        <parameter value="-Xlint:nullary-unit" />
+        <parameter value="-Xlint:option-implicit" />
+        <parameter value="-Xlint:poly-implicit-overload" />
+        <parameter value="-Xlint:private-shadow" />
+        <parameter value="-Xlint:stars-align" />
+        <parameter value="-Xlint:type-parameter-shadow" />
+        <parameter value="-Ymacro-annotations" />
         <parameter value="-Wdead-code" />
         <parameter value="-Wextra-implicit" />
         <parameter value="-Wnumeric-widen" />
@@ -23,26 +37,15 @@
         <parameter value="-Wunused:patvars" />
         <parameter value="-Wunused:privates" />
         <parameter value="-Wvalue-discard" />
-        <parameter value="-Xlint:nullary-unit" />
-        <parameter value="-Xlint:inaccessible" />
-        <parameter value="-Xlint:infer-any" />
-        <parameter value="-Xlint:missing-interpolator" />
-        <parameter value="-Xlint:doc-detached" />
-        <parameter value="-Xlint:private-shadow" />
-        <parameter value="-Xlint:type-parameter-shadow" />
-        <parameter value="-Xlint:poly-implicit-overload" />
-        <parameter value="-Xlint:option-implicit" />
-        <parameter value="-Xlint:delayedinit-select" />
-        <parameter value="-Xlint:stars-align" />
-        <parameter value="-Xlint:constant" />
-        <parameter value="-Xlint:unused" />
-        <parameter value="-Xlint:nonlocal-return" />
-        <parameter value="-Xlint:implicit-not-found" />
-        <parameter value="-Xlint:serial" />
-        <parameter value="-Xlint:valpattern" />
-        <parameter value="-Xlint:eta-zero" />
-        <parameter value="-Xlint:eta-sam" />
         <parameter value="-Xlint:deprecation" />
+        <parameter value="-Xlint:eta-sam" />
+        <parameter value="-Xlint:eta-zero" />
+        <parameter value="-Xlint:implicit-not-found" />
+        <parameter value="-Xlint:infer-any" />
+        <parameter value="-Xlint:nonlocal-return" />
+        <parameter value="-Xlint:serial" />
+        <parameter value="-Xlint:unused" />
+        <parameter value="-Xlint:valpattern" />
       </parameters>
     </profile>
   </component>
