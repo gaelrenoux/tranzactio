@@ -1,11 +1,11 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => JdbcConnection}
-
-import javax.sql.DataSource
 import zio.blocking.Blocking
 import zio.clock.Clock
 import zio.{Has, Tag, ZIO, ZLayer}
+
+import java.sql.{Connection => JdbcConnection}
+import javax.sql.DataSource
 
 /** Template implementing the commodity methods for a Db module. */
 abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Connection] : Tag]

@@ -1,8 +1,8 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => JdbcConnection}
-
 import zio.{Has, Tag, ZIO}
+
+import java.sql.{Connection => JdbcConnection}
 
 
 /** Template implementing a default transactional mechanism, based on a ConnectionSource. */

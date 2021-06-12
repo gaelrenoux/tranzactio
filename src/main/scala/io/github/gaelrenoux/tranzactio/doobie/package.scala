@@ -1,7 +1,5 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => JdbcConnection}
-
 import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
@@ -13,6 +11,8 @@ import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
 import zio.{Has, Task, ZIO, ZLayer}
+
+import java.sql.{Connection => JdbcConnection}
 
 
 /** TranzactIO module for Doobie. */

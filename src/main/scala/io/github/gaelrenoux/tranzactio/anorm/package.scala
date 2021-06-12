@@ -1,11 +1,11 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => JdbcConnection}
-
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
 import izumi.reflect.Tag
 import zio.blocking.{Blocking, effectBlocking}
 import zio.{Has, ZIO, ZLayer}
+
+import java.sql.{Connection => JdbcConnection}
 
 
 /** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to

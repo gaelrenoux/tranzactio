@@ -1,11 +1,11 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.Connection
-
-import javax.sql.DataSource
 import zio._
 import zio.blocking._
 import zio.clock.Clock
+
+import java.sql.Connection
+import javax.sql.DataSource
 
 /** A module able to provide and manage connections. They typically come from a connection pool. */
 object ConnectionSource {

@@ -1,13 +1,13 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection, DriverManager}
-import java.util.UUID
-
-import javax.sql.DataSource
 import org.h2.jdbcx.JdbcDataSource
 import zio.blocking.Blocking
 import zio.test.environment.testEnvironment
 import zio.{Has, ULayer, ZLayer, blocking}
+
+import java.sql.{Connection, DriverManager}
+import java.util.UUID
+import javax.sql.DataSource
 
 object JdbcLayers {
   /** Generates the DataSource layer.

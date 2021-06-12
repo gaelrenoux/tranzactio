@@ -1,9 +1,10 @@
 package samples
 
-import javax.sql.DataSource
 import org.h2.jdbcx.JdbcDataSource
 import zio.blocking.Blocking
 import zio.{Has, ZIO, ZLayer, blocking}
+
+import javax.sql.DataSource
 
 /**
  * Typically, you would use a Connection Pool like HikariCP. Here, we're just gonna use the JDBC H2 datasource directly.
