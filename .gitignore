@@ -15,9 +15,10 @@ project/project/target/
 .cache
 .lib
 
-# Bloop/Metals
+# Bloop/Metals/BSP
 .bloop
 .metals
+.bsp
 
 
 
