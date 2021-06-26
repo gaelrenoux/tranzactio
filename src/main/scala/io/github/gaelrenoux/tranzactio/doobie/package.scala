@@ -5,12 +5,11 @@ import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
 import io.github.gaelrenoux.tranzactio.utils.ZCatsBlocker
-import izumi.reflect.Tag
 import zio.blocking.Blocking
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
-import zio.{Has, Task, ZIO, ZLayer}
+import zio.{Has, Tag, Task, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
 

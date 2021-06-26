@@ -1,9 +1,8 @@
 package io.github.gaelrenoux.tranzactio
 
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
-import izumi.reflect.Tag
 import zio.blocking.{Blocking, effectBlocking}
-import zio.{Has, ZIO, ZLayer}
+import zio.{Has, Tag, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
 

@@ -1,9 +1,8 @@
 package io.github.gaelrenoux.tranzactio.test
 
 import io.github.gaelrenoux.tranzactio.{DatabaseModuleBase, DatabaseOps, DbException, ErrorStrategiesRef}
-import izumi.reflect.Tag
 import zio.blocking.Blocking
-import zio.{Has, ZIO, ZLayer}
+import zio.{Has, Tag, ZIO, ZLayer}
 
 /** Testing utilities on the Database module. */
 trait DatabaseModuleTestOps[Connection <: Has[_]] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
