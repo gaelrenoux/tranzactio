@@ -356,6 +356,7 @@ import doobie.implicits._
 import io.github.gaelrenoux.tranzactio.DbException
 import io.github.gaelrenoux.tranzactio.doobie._
 import zio.blocking.Blocking
+import zio.clock.Clock
 
 val liveQuery: ZIO[Connection, DbException, List[String]] = tzio { sql"SELECT name FROM users".query[String].to[List] }
 val testQuery: ZIO[Connection, DbException, List[String]] = ZIO.succeed(List("Buffy Summers"))
@@ -363,8 +364,8 @@ val testQuery: ZIO[Connection, DbException, List[String]] = ZIO.succeed(List("Bu
 val liveEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(liveQuery)
 val testEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(testQuery)
 
-val willFail: ZIO[Blocking, Any, List[String]] = liveEffect.provideLayer(Database.none) // THIS WILL FAIL
-val testing: ZIO[Blocking, Any, List[String]] = testEffect.provideLayer(Database.none) // This will work
+val willFail: ZIO[Blocking with Clock, Any, List[String]] = liveEffect.provideLayer(Database.none) // THIS WILL FAIL
+val testing: ZIO[Blocking with Clock, Any, List[String]] = testEffect.provideLayer(Database.none) // This will work
 ```
 
 
