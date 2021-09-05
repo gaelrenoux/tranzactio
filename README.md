@@ -198,7 +198,8 @@ Check the backward compatibility information on those libraries to check which v
 | 1.3.0      | 1.0.5        | 0.9.4        | 2.6.10       |
 | 2.0.0      | 1.0.5        | 0.12.1       | 2.6.10       |
 | 2.1.0      | 1.0.9        | 0.13.4       | 2.6.10       |
-| master     | 1.0.9        | 0.13.4       | 2.6.10       |
+| 3.0.0      | 1.0.11       | 1.0.0        | 2.6.10       |
+| master     | 1.0.11       | 1.0.0        | 2.6.10       |
 
 
 
