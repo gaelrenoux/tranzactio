@@ -133,21 +133,21 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
    * be used. */
-  val fromDatasource: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
+  val fromDatasource: ZLayer[Has[DataSource] with TranzactioEnv, Nothing, ConnectionSource] =
     fromDatasource(ErrorStrategies.Parent)
 
   /** As `fromDatasource`, but provides a default ErrorStrategiesRef.
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.access[Has[DataSource] with Blocking with Clock] { env =>
+  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[Has[DataSource] with TranzactioEnv, Nothing, ConnectionSource] =
+    ZIO.access[Has[DataSource] with TranzactioEnv] { env =>
       new DatasourceService(env, errorStrategies)
     }.toLayer
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
-  val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.access[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock] { env =>
+  val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategies] with TranzactioEnv, Nothing, ConnectionSource] =
+    ZIO.access[Has[DataSource] with Has[ErrorStrategies] with TranzactioEnv] { env =>
       val errorStrategies = env.get[ErrorStrategies]
       new DatasourceService(env, errorStrategies)
     }.toLayer
@@ -164,8 +164,8 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[Connection] with Blocking with Clock, Nothing, ConnectionSource] =
-    ZIO.accessM[Has[Connection] with Blocking with Clock] { env =>
+  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Has[Connection] with TranzactioEnv, Nothing, ConnectionSource] =
+    ZIO.accessM[Has[Connection] with TranzactioEnv] { env =>
       val connection = env.get[Connection]
       Semaphore.make(1).map {
         new SingleConnectionService(connection, _, env, errorStrategiesRef)

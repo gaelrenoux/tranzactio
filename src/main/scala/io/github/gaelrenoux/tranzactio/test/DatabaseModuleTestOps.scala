@@ -1,7 +1,6 @@
 package io.github.gaelrenoux.tranzactio.test
 
-import io.github.gaelrenoux.tranzactio.{DatabaseModuleBase, DatabaseOps, DbException, ErrorStrategiesRef}
-import zio.blocking.Blocking
+import io.github.gaelrenoux.tranzactio._
 import zio.{Has, Tag, ZIO, ZLayer}
 
 /** Testing utilities on the Database module. */
@@ -11,11 +10,11 @@ trait DatabaseModuleTestOps[Connection <: Has[_]] extends DatabaseModuleBase[Con
 
   /** A Connection which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
-  def noConnection(env: Blocking): ZIO[Any, Nothing, Connection] = connectionFromJdbc(env, NoopJdbcConnection)
+  def noConnection(env: TranzactioEnv): ZIO[Any, Nothing, Connection] = connectionFromJdbc(env, NoopJdbcConnection)
 
   /** A Database which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
-  lazy val none: ZLayer[Blocking, Nothing, Database] = ZLayer.fromFunction { b: Blocking =>
+  lazy val none: ZLayer[TranzactioEnv, Nothing, Database] = ZLayer.fromFunction { b: TranzactioEnv =>
     new Service {
       override def transactionR[R <: Has[_], E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
         (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =

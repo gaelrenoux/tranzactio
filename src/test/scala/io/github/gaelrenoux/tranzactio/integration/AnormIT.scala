@@ -1,11 +1,10 @@
 package io.github.gaelrenoux.tranzactio.integration
 
 import anorm._
-import io.github.gaelrenoux.tranzactio.ConnectionSource
 import io.github.gaelrenoux.tranzactio.anorm._
+import io.github.gaelrenoux.tranzactio.{ConnectionSource, TranzactioEnv}
 import samples.Person
 import samples.anorm.PersonQueries
-import zio.blocking.Blocking
 import zio.test.Assertion._
 import zio.test._
 import zio.{ULayer, ZLayer}
@@ -13,7 +12,7 @@ import zio.{ULayer, ZLayer}
 /** Integration tests for Doobie */
 object AnormIT extends ITSpec[Database, PersonQueries] {
 
-  override val dbLayer: ZLayer[ConnectionSource with Blocking, Nothing, Database] = Database.fromConnectionSource
+  override val dbLayer: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] = Database.fromConnectionSource
 
   override val personQueriesLive: ULayer[PersonQueries] = PersonQueries.live
 

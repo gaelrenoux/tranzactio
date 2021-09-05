@@ -2,11 +2,10 @@ package io.github.gaelrenoux.tranzactio.integration
 
 import doobie.implicits._
 import doobie.util.fragment.Fragment
-import io.github.gaelrenoux.tranzactio.ConnectionSource
 import io.github.gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio.{ConnectionSource, TranzactioEnv}
 import samples.Person
 import samples.doobie.PersonQueries
-import zio.blocking.Blocking
 import zio.test.Assertion._
 import zio.test._
 import zio.{ULayer, ZLayer}
@@ -15,7 +14,7 @@ import zio.{ULayer, ZLayer}
 /** Integration tests for Doobie */
 object DoobieIT extends ITSpec[Database, PersonQueries] {
 
-  override val dbLayer: ZLayer[ConnectionSource with Blocking, Nothing, Database] = Database.fromConnectionSource
+  override val dbLayer: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] = Database.fromConnectionSource
 
   override val personQueriesLive: ULayer[PersonQueries] = PersonQueries.live
 
