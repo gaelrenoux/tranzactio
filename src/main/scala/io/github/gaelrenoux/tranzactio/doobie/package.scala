@@ -47,7 +47,7 @@ package object doobie extends Wrapper {
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
     final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
-      ZIO.effectTotal {
+      ZIO.succeed {
         val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
         val interp = KleisliInterpreter[Task].ConnectionInterpreter
         val tran = Transactor(connection, connect, interp, Strategy.void)
