@@ -198,7 +198,8 @@ Check the backward compatibility information on those libraries to check which v
 | 1.3.0      | 1.0.5        | 0.9.4        | 2.6.10       |
 | 2.0.0      | 1.0.5        | 0.12.1       | 2.6.10       |
 | 2.1.0      | 1.0.9        | 0.13.4       | 2.6.10       |
-| master     | 1.0.9        | 0.13.4       | 2.6.10       |
+| 3.0.0      | 1.0.11       | 1.0.0        | 2.6.10       |
+| master     | 1.0.11       | 1.0.0        | 2.6.10       |
 
 
 
@@ -355,6 +356,7 @@ import doobie.implicits._
 import io.github.gaelrenoux.tranzactio.DbException
 import io.github.gaelrenoux.tranzactio.doobie._
 import zio.blocking.Blocking
+import zio.clock.Clock
 
 val liveQuery: ZIO[Connection, DbException, List[String]] = tzio { sql"SELECT name FROM users".query[String].to[List] }
 val testQuery: ZIO[Connection, DbException, List[String]] = ZIO.succeed(List("Buffy Summers"))
@@ -362,8 +364,8 @@ val testQuery: ZIO[Connection, DbException, List[String]] = ZIO.succeed(List("Bu
 val liveEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(liveQuery)
 val testEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(testQuery)
 
-val willFail: ZIO[Blocking, Any, List[String]] = liveEffect.provideLayer(Database.none) // THIS WILL FAIL
-val testing: ZIO[Blocking, Any, List[String]] = testEffect.provideLayer(Database.none) // This will work
+val willFail: ZIO[Blocking with Clock, Any, List[String]] = liveEffect.provideLayer(Database.none) // THIS WILL FAIL
+val testing: ZIO[Blocking with Clock, Any, List[String]] = testEffect.provideLayer(Database.none) // This will work
 ```
 
 

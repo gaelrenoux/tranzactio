@@ -31,12 +31,12 @@ package object anorm extends Wrapper {
     private[tranzactio] override implicit val connectionTag: Tag[Connection] = anorm.connectionTag
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
+    final def connectionFromJdbc(env: TranzactioEnv, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
       ZIO.succeed(Has(connection) ++ env)
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
-    final def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database] =
-      ZLayer.fromFunction { env: ConnectionSource with Blocking =>
+    final def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] =
+      ZLayer.fromFunction { env: ConnectionSource with TranzactioEnv =>
         new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
           override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
             self.connectionFromJdbc(env, connection)

@@ -35,27 +35,27 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   }
 
   /** Creates a Database Layer which requires an existing ConnectionSource. */
-  def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database]
+  def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database]
 
   /** Creates a Tranzactio Connection, given a JDBC connection and a Blocking. Useful for some utilities. */
-  def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection]
+  def connectionFromJdbc(env: TranzactioEnv, connection: JdbcConnection): ZIO[Any, Nothing, Connection]
 
   /** Commodity method: creates a Database Layer which includes its own ConnectionSource based on a DataSource. Most
    * connection pool implementations should be able to provide you a DataSource.
    *
    * When no implicit ErrorStrategies is available, the default ErrorStrategies will be used.
    */
-  final val fromDatasource: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] =
-    (ConnectionSource.fromDatasource ++ Blocking.any) >>> fromConnectionSource
+  final val fromDatasource: ZLayer[Has[DataSource] with TranzactioEnv, Nothing, Database] =
+    (ConnectionSource.fromDatasource ++ Blocking.any ++ Clock.any) >>> fromConnectionSource
 
   /** As `fromDatasource`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
    * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
   final def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] =
-    (ConnectionSource.fromDatasource(errorStrategies) ++ Blocking.any) >>> fromConnectionSource
+    (ConnectionSource.fromDatasource(errorStrategies) ++ Blocking.any ++ Clock.any) >>> fromConnectionSource
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
   final val fromDatasourceAndErrorStrategies: ZLayer[Has[DataSource] with Has[ErrorStrategies] with Blocking with Clock, Nothing, Database] =
-    (ConnectionSource.fromDatasourceAndErrorStrategies ++ Blocking.any) >>> fromConnectionSource
+    (ConnectionSource.fromDatasourceAndErrorStrategies ++ Blocking.any ++ Clock.any) >>> fromConnectionSource
 
 
   val any: ZLayer[Database, Nothing, Database] = ZLayer.requires[Database]

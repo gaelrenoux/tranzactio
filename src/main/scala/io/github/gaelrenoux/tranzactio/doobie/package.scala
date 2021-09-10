@@ -4,15 +4,12 @@ import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
-import io.github.gaelrenoux.tranzactio.utils.ZCatsBlocker
-import zio.blocking.Blocking
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
 import zio.{Has, Tag, Task, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
-
 
 /** TranzactIO module for Doobie. */
 package object doobie extends Wrapper {
@@ -35,7 +32,7 @@ package object doobie extends Wrapper {
   /** Converts a Doobie stream to a ZStream. Note that you can provide a queue size, default value is the same as in ZIO. */
   final def tzioStream[A](q: fs2.Stream[Query, A], queueSize: Int = DefaultStreamQueueSize): TranzactIOStream[A] =
     ZStream.accessStream[Connection] { c =>
-      c.get.transP(monadErrorInstance).apply(q).toZStream(queueSize)
+      c.get.transP.apply(q).toZStream(queueSize)
     }.mapError(DbException.Wrapped)
 
   /** Database for the Doobie wrapper */
@@ -47,17 +44,20 @@ package object doobie extends Wrapper {
     private[tranzactio] override implicit val connectionTag: Tag[Connection] = doobie.connectionTag
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    final def connectionFromJdbc(env: Blocking, connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
-      ZCatsBlocker.provide(env).map { b =>
-        val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
-        val interp = KleisliInterpreter[Task](b).ConnectionInterpreter
-        val tran = Transactor(connection, connect, interp, Strategy.void)
-        Has(tran)
-      }
+    final def connectionFromJdbc(env: TranzactioEnv, connection: JdbcConnection): ZIO[Any, Nothing, Connection] = {
+      ZIO.runtime[TranzactioEnv].flatMap { implicit r: zio.Runtime[TranzactioEnv] =>
+        ZIO.succeed[Connection] {
+          val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
+          val interp = KleisliInterpreter[Task].ConnectionInterpreter
+          val tran = Transactor(connection, connect, interp, Strategy.void)
+          Has(tran)
+        }
+      }.provide(env)
+    }
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
-    final def fromConnectionSource: ZLayer[ConnectionSource with Blocking, Nothing, Database] =
-      ZLayer.fromFunction { env: ConnectionSource with Blocking =>
+    final def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] =
+      ZLayer.fromFunction { env: ConnectionSource with TranzactioEnv =>
         new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
           override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
             self.connectionFromJdbc(env, connection)
