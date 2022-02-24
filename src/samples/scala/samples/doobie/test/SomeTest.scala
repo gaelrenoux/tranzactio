@@ -5,7 +5,7 @@ import samples.doobie.PersonQueries
 import zio._
 import zio.test.Assertion._
 import zio.test._
-import zio.test.environment._
+
 
 /** This is a test where you check you business methods, using stub queries.  */
 object SomeTest extends RunnableSpec[TestEnvironment with Database with PersonQueries, Any] {
@@ -26,7 +26,7 @@ object SomeTest extends RunnableSpec[TestEnvironment with Database with PersonQu
     myTest
   )
 
-  private val myTest = testM("some test on a method") {
+  private val myTest = test("some test on a method") {
     for {
       h <- Database.transactionR(PersonQueries.list)
       // do something with that result

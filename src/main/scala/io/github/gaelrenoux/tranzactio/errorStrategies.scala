@@ -1,9 +1,10 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.blocking.Blocking
-import zio.clock.Clock
-import zio.duration._
+
+import zio.Clock
+
 import zio.{Schedule, ZIO}
+import zio._
 
 /** How to handle issues in the various operations of the database. Note that this only applies to the operation
  * performed when handling the connection, and not the execution of the requests! */
@@ -101,18 +102,18 @@ trait ErrorStrategy {
   self =>
 
   /** How this ErrorStrategy transforms a DB operation. */
-  def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Blocking, DbException, A]
+  def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A]
 
   /** Adds a timeout to the current ErrorStrategy. Note that if a retry has already been defined, the timeout is applied
    * '''after''' the retry. */
   def timeout(d: Duration): ErrorStrategy = new ErrorStrategy {
-    override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Blocking, DbException, A] =
+    override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A] =
       self(z).timeoutFail(DbException.Timeout(d))(d)
   }
 
   /** Adds a retry to the current ErrorStrategy. */
   def retry(schedule: Schedule[Clock, Any, Any]): ErrorStrategy = new ErrorStrategy {
-    def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Blocking, DbException, A] =
+    def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A] =
       self(z).retry(schedule)
   }
 
@@ -139,7 +140,7 @@ trait ErrorStrategy {
  * empty strategy (no timeout and no retry). */
 object ErrorStrategy extends ErrorStrategy {
 
-  override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Blocking, DbException, A] = z
+  override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A] = z
 
   /** Alias for the ErrorStrategy companion object. Can be used for clarity, to mark when you actually want no retry and no timeout. */
   val Nothing: ErrorStrategy = this

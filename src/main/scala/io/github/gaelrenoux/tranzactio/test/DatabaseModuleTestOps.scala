@@ -1,10 +1,10 @@
 package io.github.gaelrenoux.tranzactio.test
 
 import io.github.gaelrenoux.tranzactio._
-import zio.{Has, Tag, ZIO, ZLayer}
+import zio.{Tag, ZIO, ZLayer}
 
 /** Testing utilities on the Database module. */
-trait DatabaseModuleTestOps[Connection <: Has[_]] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
+trait DatabaseModuleTestOps[Connection <: _] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
 
   private[tranzactio] implicit val connectionTag: Tag[Connection]
 
@@ -16,7 +16,7 @@ trait DatabaseModuleTestOps[Connection <: Has[_]] extends DatabaseModuleBase[Con
    * so they do not need a Database). Trying to run actual queries against it will fail. */
   lazy val none: ZLayer[TranzactioEnv, Nothing, Database] = ZLayer.fromFunction { b: TranzactioEnv =>
     new Service {
-      override def transactionR[R <: Has[_], E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
+      override def transactionR[R <: _, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
         (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
         noConnection(b).flatMap { c =>
           zio.provideSome[R] { r: R =>
@@ -24,7 +24,7 @@ trait DatabaseModuleTestOps[Connection <: Has[_]] extends DatabaseModuleBase[Con
           }.mapError(Right(_))
         }
 
-      override def autoCommitR[R <: Has[_], E, A](zio: ZIO[Connection with R, E, A])
+      override def autoCommitR[R <: _, E, A](zio: ZIO[Connection with R, E, A])
         (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
         noConnection(b).flatMap { c =>
           zio.provideSome[R] { r: R =>

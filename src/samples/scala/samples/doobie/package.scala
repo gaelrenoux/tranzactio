@@ -1,7 +1,6 @@
 package samples
 
-import zio.Has
 
 package object doobie {
-  type PersonQueries = Has[PersonQueries.Service]
+  type PersonQueries = PersonQueries.Service
 }

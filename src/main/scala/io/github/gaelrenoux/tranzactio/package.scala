@@ -1,13 +1,12 @@
 package io.github.gaelrenoux
 
-import zio.Has
-import zio.blocking.Blocking
-import zio.clock.Clock
+
+import zio.Clock
 
 package object tranzactio {
 
-  type ConnectionSource = Has[ConnectionSource.Service]
+  type ConnectionSource = ConnectionSource.Service
 
-  type TranzactioEnv = Blocking with Clock
+  type TranzactioEnv = Any with Clock
 
 }

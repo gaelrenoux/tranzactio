@@ -5,10 +5,11 @@ import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategiesRef}
 import samples.{Conf, ConnectionPool, Person}
 import zio._
 import zio.stream._
+import zio.Console
 
 /** Same as LayeredApp, but using Doobie's stream (converted into ZIO strem). */
 // scalastyle:off magic.number
-object LayeredAppStreaming extends zio.App {
+object LayeredAppStreaming extends zio.ZIOAppDefault {
 
   private val zenv = ZEnv.any
   private val conf = Conf.live("samble-doobie-app-streaming")
@@ -22,9 +23,9 @@ object LayeredAppStreaming extends zio.App {
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] = {
     val prog = for {
-      _ <- console.putStrLn("Starting the app")
+      _ <- Console.printLine("Starting the app")
       trio <- myApp().provideLayer(appEnv)
-      _ <- console.putStrLn(trio.mkString(", "))
+      _ <- Console.printLine(trio.mkString(", "))
     } yield ExitCode(0)
 
     prog.orDie
@@ -33,21 +34,21 @@ object LayeredAppStreaming extends zio.App {
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {
     val queries = for {
-      _ <- console.putStrLn("Creating the table").orDie
+      _ <- Console.printLine("Creating the table").orDie
       _ <- PersonQueries.setup
-      _ <- console.putStrLn("Inserting the trio").orDie
+      _ <- Console.printLine("Inserting the trio").orDie
       _ <- PersonQueries.insert(Person("Buffy", "Summers"))
       _ <- PersonQueries.insert(Person("Willow", "Rosenberg"))
       _ <- PersonQueries.insert(Person("Alexander", "Harris"))
       _ <- PersonQueries.insert(Person("Rupert", "Giles")) // insert one more!
-      _ <- console.putStrLn("Reading the trio").orDie
+      _ <- Console.printLine("Reading the trio").orDie
       trio <- {
         val stream: ZStream[PersonQueries with Connection, DbException, Person] = PersonQueries.listStream.take(3)
         stream.run(Sink.foldLeft(List[Person]()) { (ps, p) => p :: ps })
       }
     } yield trio.reverse
 
-    ZIO.accessM[AppEnv] { env =>
+    ZIO.environmentWithZIO[AppEnv] { env =>
       // if this implicit is not provided, tranzactio will use Conf.Root.dbRecovery instead
       implicit val errorRecovery: ErrorStrategiesRef = env.get[Conf.Root].alternateDbRecovery
       Database.transactionOrWidenR(queries)

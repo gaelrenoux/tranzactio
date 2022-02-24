@@ -1,25 +1,26 @@
 package io.github.gaelrenoux.tranzactio
 
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
-import zio.blocking.{Blocking, effectBlocking}
-import zio.{Has, Tag, ZIO, ZLayer}
+import zio.blocking.Blocking
+import zio.{Tag, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
+import zio.ZIO.attemptBlocking
 
 
 /** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to
  * provide the wrapper around the synchronous Anorm method. */
 package object anorm extends Wrapper {
-  override final type Connection = Has[JdbcConnection] with Blocking
-  override final type Database = Has[Database.Service]
+  override final type Connection = JdbcConnection with Any
+  override final type Database = Database.Service
   override final type Query[A] = JdbcConnection => A
   override final type TranzactIO[A] = ZIO[Connection, DbException, A]
 
   private[tranzactio] val connectionTag = implicitly[Tag[Connection]]
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
-    ZIO.accessM[Connection] { c =>
-      effectBlocking(q(c.get[JdbcConnection]))
+    ZIO.environmentWithZIO[Connection] { c =>
+      attemptBlocking(q(c.get[JdbcConnection]))
     }.mapError(DbException.Wrapped)
 
   /** Database for the Anorm wrapper */

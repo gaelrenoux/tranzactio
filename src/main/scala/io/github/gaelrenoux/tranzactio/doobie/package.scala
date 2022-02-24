@@ -7,14 +7,14 @@ import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
-import zio.{Has, Tag, Task, ZIO, ZLayer}
+import zio.{Tag, Task, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
 
 /** TranzactIO module for Doobie. */
 package object doobie extends Wrapper {
-  override final type Connection = Has[Transactor[Task]]
-  override final type Database = Has[Database.Service]
+  override final type Connection = Transactor[Task]
+  override final type Database = Database.Service
   override final type Query[A] = _root_.doobie.ConnectionIO[A]
   override final type TranzactIO[A] = ZIO[Connection, DbException, A]
   final type TranzactIOStream[A] = ZStream[Connection, DbException, A]
@@ -25,13 +25,13 @@ package object doobie extends Wrapper {
   final val DefaultStreamQueueSize = 16
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
-    ZIO.accessM[Connection] { c =>
+    ZIO.environmentWithZIO[Connection] { c =>
       c.get.trans.apply(q)
     }.mapError(DbException.Wrapped)
 
   /** Converts a Doobie stream to a ZStream. Note that you can provide a queue size, default value is the same as in ZIO. */
   final def tzioStream[A](q: fs2.Stream[Query, A], queueSize: Int = DefaultStreamQueueSize): TranzactIOStream[A] =
-    ZStream.accessStream[Connection] { c =>
+    ZStream.environmentWithStream[Connection] { c =>
       c.get.transP.apply(q).toZStream(queueSize)
     }.mapError(DbException.Wrapped)
 

@@ -1,11 +1,12 @@
 package samples
 
 import zio.test.Assertion._
-import zio.test.environment._
-import zio.test.{DefaultRunnableSpec, ZSpec, _}
+
+import zio.test.{ZSpec, _}
+import zio.test.ZIOSpecDefault
 
 /** Run all samples as ZIO tests */
-object SamplesSpec extends DefaultRunnableSpec {
+object SamplesSpec extends ZIOSpecDefault {
 
   override def spec: ZSpec[TestEnvironment, Any] = suite("SamplesSpec")(
     testApp("Doobie", doobie.LayeredApp),
@@ -13,8 +14,8 @@ object SamplesSpec extends DefaultRunnableSpec {
     testApp("Anorm", anorm.LayeredApp)
   )
 
-  private def testApp(name: String, app: zio.App) =
-    testM(s"$name LayeredApp prints its progress then the trio") {
+  private def testApp(name: String, app: zio.ZIOAppDefault) =
+    test(s"$name LayeredApp prints its progress then the trio") {
       for {
         _ <- app.run(Nil)
         output <- TestConsole.output
