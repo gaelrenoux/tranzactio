@@ -14,7 +14,7 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   type Database = Dbs
   type Service = DatabaseOps.ServiceOps[Connection]
 
-  override def transactionR[R <: _, E, A](
+  override def transactionR[R <: *, E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Dbs with R, Either[DbException, E], A] = {
@@ -23,7 +23,7 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
     }
   }
 
-  override def autoCommitR[R <: _, E, A](
+  override def autoCommitR[R <: *, E, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Dbs with R, Either[DbException, E], A] = {
     ZIO.environmentWithZIO { db: Dbs =>

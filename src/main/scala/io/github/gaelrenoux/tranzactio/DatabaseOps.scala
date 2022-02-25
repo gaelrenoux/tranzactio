@@ -20,7 +20,7 @@ trait DatabaseOps[Connection, R0] {
    *
    * This method should be implemented by subclasses, to provide the connection.
    */
-  def transactionR[R <: _, E, A](
+  def transactionR[R <: *, E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A]
@@ -34,7 +34,7 @@ trait DatabaseOps[Connection, R0] {
 
   /** As `transactionR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-  final def transactionOrWidenR[R <: _, E >: DbException, A](
+  final def transactionOrWidenR[R <: *, E >: DbException, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
@@ -48,7 +48,7 @@ trait DatabaseOps[Connection, R0] {
     transaction[E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
 
   /** As `transactionR`, but errors when handling the connections are treated as defects instead of failures. */
-  final def transactionOrDieR[R <: _, E, A](
+  final def transactionOrDieR[R <: *, E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
@@ -67,7 +67,7 @@ trait DatabaseOps[Connection, R0] {
    *
    * This method should be implemented by subclasses, to provide the connection.
    */
-  def autoCommitR[R <: _, E, A](
+  def autoCommitR[R <: *, E, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A]
 
@@ -77,7 +77,7 @@ trait DatabaseOps[Connection, R0] {
 
   /** As `autoCommitR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-  final def autoCommitOrWidenR[R <: _, E >: DbException, A](
+  final def autoCommitOrWidenR[R <: *, E >: DbException, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).mapError(_.fold(identity, identity))
@@ -87,7 +87,7 @@ trait DatabaseOps[Connection, R0] {
     autoCommit[E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `autoCommitR`, but errors when handling the connections are treated as defects instead of failures. */
-  final def autoCommitOrDieR[R <: _, E, A](
+  final def autoCommitOrDieR[R <: *, E, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).flatMapError(dieOnLeft)
