@@ -13,8 +13,8 @@ import zio.ZIO
  */
 object ConnectionPool {
 
-  val live: ZLayer[Conf with Any, Throwable, DataSource] =
-    ZIO.environmentWithZIO[Conf with Any] { env =>
+  val live: ZLayer[Conf, Throwable, DataSource] =
+    ZIO.environmentWithZIO[Conf] { env =>
       val conf = env.get[Conf.Root]
       ZIO.attemptBlocking {
         val ds = new JdbcDataSource

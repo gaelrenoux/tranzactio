@@ -92,7 +92,7 @@ object ConnectionSource {
 
   /** Service based on a DataSource. */
   private class DatasourceService(
-      env: DataSource with Any with Clock,
+      env: DataSource with Clock,
       defaultErrorStrategies: ErrorStrategiesRef
   ) extends ServiceBase(env, defaultErrorStrategies) {
     private val ds = env.get[DataSource]
@@ -158,7 +158,7 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
    * be used. */
-  val fromConnection: ZLayer[Connection with Any with Clock, Nothing, ConnectionSource] =
+  val fromConnection: ZLayer[Connection with Clock, Nothing, ConnectionSource] =
     fromConnection(ErrorStrategies.Parent)
 
   /** As `fromConnection`, but provides a default ErrorStrategiesRef.

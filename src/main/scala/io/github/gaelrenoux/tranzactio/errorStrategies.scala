@@ -102,18 +102,18 @@ trait ErrorStrategy {
   self =>
 
   /** How this ErrorStrategy transforms a DB operation. */
-  def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A]
+  def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock, DbException, A]
 
   /** Adds a timeout to the current ErrorStrategy. Note that if a retry has already been defined, the timeout is applied
    * '''after''' the retry. */
   def timeout(d: Duration): ErrorStrategy = new ErrorStrategy {
-    override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A] =
+    override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock, DbException, A] =
       self(z).timeoutFail(DbException.Timeout(d))(d)
   }
 
   /** Adds a retry to the current ErrorStrategy. */
   def retry(schedule: Schedule[Clock, Any, Any]): ErrorStrategy = new ErrorStrategy {
-    def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A] =
+    def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock, DbException, A] =
       self(z).retry(schedule)
   }
 
@@ -140,7 +140,7 @@ trait ErrorStrategy {
  * empty strategy (no timeout and no retry). */
 object ErrorStrategy extends ErrorStrategy {
 
-  override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock with Any, DbException, A] = z
+  override def apply[R, A](z: ZIO[R, DbException, A]): ZIO[R with Clock, DbException, A] = z
 
   /** Alias for the ErrorStrategy companion object. Can be used for clarity, to mark when you actually want no retry and no timeout. */
   val Nothing: ErrorStrategy = this

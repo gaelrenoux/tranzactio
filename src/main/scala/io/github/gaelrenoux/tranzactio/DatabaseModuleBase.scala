@@ -46,16 +46,16 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
    * When no implicit ErrorStrategies is available, the default ErrorStrategies will be used.
    */
   final val fromDatasource: ZLayer[DataSource with TranzactioEnv, Nothing, Database] =
-    (ConnectionSource.fromDatasource ++ Blocking.any ++ Clock.any) >>> fromConnectionSource
+    (ConnectionSource.fromDatasource ++ Clock.any) >>> fromConnectionSource
 
   /** As `fromDatasource`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
    * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
-  final def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource with Any with Clock, Nothing, Database] =
-    (ConnectionSource.fromDatasource(errorStrategies) ++ Blocking.any ++ Clock.any) >>> fromConnectionSource
+  final def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource with Clock, Nothing, Database] =
+    (ConnectionSource.fromDatasource(errorStrategies) ++ Clock.any) >>> fromConnectionSource
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
-  final val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies with Any with Clock, Nothing, Database] =
-    (ConnectionSource.fromDatasourceAndErrorStrategies ++ Blocking.any ++ Clock.any) >>> fromConnectionSource
+  final val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies with Clock, Nothing, Database] =
+    (ConnectionSource.fromDatasourceAndErrorStrategies ++ Clock.any) >>> fromConnectionSource
 
 
   val any: ZLayer[Database, Nothing, Database] = ZLayer.requires[Database]

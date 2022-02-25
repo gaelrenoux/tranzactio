@@ -11,7 +11,7 @@ import zio.ZIO.attemptBlocking
 /** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to
  * provide the wrapper around the synchronous Anorm method. */
 package object anorm extends Wrapper {
-  override final type Connection = JdbcConnection with Any
+  override final type Connection = JdbcConnection
   override final type Database = Database.Service
   override final type Query[A] = JdbcConnection => A
   override final type TranzactIO[A] = ZIO[Connection, DbException, A]
