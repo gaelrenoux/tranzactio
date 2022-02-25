@@ -14,23 +14,20 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   type Database = Dbs
   type Service = DatabaseOps.ServiceOps[Connection]
 
-  override def transactionR[R <: *, E, A](
+  override def transactionR[R, E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Dbs with R, Either[DbException, E], A] = {
-    ZIO.environmentWithZIO { db: Dbs =>
-      db.get[Dbs].transactionR[R, E, A](zio, commitOnFailure)
+    ZIO.serviceWithZIO { db: Dbs =>
+      db.transactionR[R, E, A](zio, commitOnFailure)
     }
   }
 
-  override def autoCommitR[R <: *, E, A](
+  override def autoCommitR[R, E, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Dbs with R, Either[DbException, E], A] = {
-    ZIO.environmentWithZIO { db: Dbs =>
-      db.get[Dbs].autoCommitR[R, E, A](zio).provideSome[R] { r =>
-        val env = r ++ Has(()) // needed for the compiler
-        env
-      }
+    ZIO.serviceWithZIO { db: Dbs =>
+      db.autoCommitR[R, E, A](zio)
     }
   }
 

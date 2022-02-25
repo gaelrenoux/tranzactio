@@ -22,12 +22,12 @@ object ConnectionSource {
 
   /** ConnectionSource with standard behavior. Children class need to implement `getConnection`. */
   abstract class ServiceBase(
-      env: Any with Clock,
+      clock: Clock,
       val defaultErrorStrategies: ErrorStrategiesRef
   ) extends ConnectionSource.Service {
 
     /** Main function: how to obtain a connection. Needs to be provided. */
-    protected def getConnection: RIO[Any, Connection]
+    protected def getConnection: Task[Connection]
 
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
@@ -86,19 +86,19 @@ object ConnectionSource {
 
     private def wrap[R, A](es: ErrorStrategy)(z: ZIO[Any, Throwable, A]) = es {
       z.mapError(e => DbException.Wrapped(e))
-    }.provide(env)
+    }.provideEnvironment(ZEnvironment(clock))
 
   }
 
   /** Service based on a DataSource. */
   private class DatasourceService(
-      env: DataSource with Clock,
+      clock: Clock,
+      dataSource: DataSource,
       defaultErrorStrategies: ErrorStrategiesRef
-  ) extends ServiceBase(env, defaultErrorStrategies) {
-    private val ds = env.get[DataSource]
+  ) extends ServiceBase(clock, defaultErrorStrategies) {
 
     override def getConnection: RIO[Any, Connection] = attemptBlocking {
-      ds.getConnection()
+      dataSource.getConnection()
     }
   }
 
@@ -107,9 +107,9 @@ object ConnectionSource {
   private class SingleConnectionService(
       connection: Connection,
       semaphore: Semaphore,
-      env: Any with Clock,
+      clock: Clock,
       defaultErrorStrategies: ErrorStrategiesRef
-  ) extends ServiceBase(env, defaultErrorStrategies) {
+  ) extends ServiceBase(clock, defaultErrorStrategies) {
 
     override def getConnection: UIO[Connection] = UIO.succeed(connection)
 
@@ -141,17 +141,34 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource with TranzactioEnv, Nothing, ConnectionSource] =
-    ZIO.access[DataSource with TranzactioEnv] { env =>
-      new DatasourceService(env, errorStrategies)
-    }.toLayer
+  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource with TranzactioEnv, Nothing, ConnectionSource] = {
+    val layer = ZLayer {
+      for {
+        clock <- ZIO.service[Clock]
+        source <- ZIO.service[DataSource]
+      } yield new DatasourceService(clock, source, errorStrategies)
+    }
+    layer
+  }
+    /* ZIO.services[DataSource, TranzactioEnv] { (dataSource, clock) =>
+      new DatasourceService(clock, dataSource, errorStrategies)
+    }.toLayer */
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
-  val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies with TranzactioEnv, Nothing, ConnectionSource] =
-    ZIO.access[DataSource with ErrorStrategies with TranzactioEnv] { env =>
+  val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies with TranzactioEnv, Nothing, ConnectionSource] = {
+    val layer = ZLayer {
+      for {
+        clock <- ZIO.service[Clock]
+        source <- ZIO.service[DataSource]
+        errorStrategies <- ZIO.service[ErrorStrategies]
+      } yield new DatasourceService(clock, source, errorStrategies)
+    }
+    layer
+  }
+    /* ZIO.access[DataSource with ErrorStrategies with TranzactioEnv] { env =>
       val errorStrategies = env.get[ErrorStrategies]
       new DatasourceService(env, errorStrategies)
-    }.toLayer
+    }.toLayer */
 
   /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
    * for the connection to be available (see the Semaphore documentation for details).
@@ -165,12 +182,21 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Connection with TranzactioEnv, Nothing, ConnectionSource] =
-    ZIO.environmentWithZIO[Connection with TranzactioEnv] { env =>
+  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Connection with TranzactioEnv, Nothing, ConnectionSource] = {
+    val layer = ZLayer {
+      for {
+        connection <- ZIO.service[Connection]
+        clock <- ZIO.service[Clock]
+        semaphore <- Semaphore.make(1)
+      } yield new SingleConnectionService(connection, semaphore, clock, errorStrategiesRef)
+    }
+    layer
+  }
+    /* ZIO.environmentWithZIO[Connection with TranzactioEnv] { env =>
       val connection = env.get[Connection]
       Semaphore.make(1).map {
         new SingleConnectionService(connection, _, env, errorStrategiesRef)
       }
     }.toLayer
-
+*/
 }

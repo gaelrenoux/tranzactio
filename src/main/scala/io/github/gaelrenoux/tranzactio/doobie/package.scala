@@ -10,6 +10,7 @@ import zio.stream.interop.fs2z._
 import zio.{Tag, Task, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
+import zio.ZEnvironment
 
 /** TranzactIO module for Doobie. */
 package object doobie extends Wrapper {
@@ -50,14 +51,14 @@ package object doobie extends Wrapper {
           val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
           val interp = KleisliInterpreter[Task].ConnectionInterpreter
           val tran = Transactor(connection, connect, interp, Strategy.void)
-          Has(tran)
+          tran
         }
-      }.provide(env)
+      }.provideEnvironment(ZEnvironment(env))
     }
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
     final def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] =
-      ZLayer.fromFunction { env: ConnectionSource with TranzactioEnv =>
+      ZLayer.fromFunctionEnvironment { env: ConnectionSource with TranzactioEnv =>
         new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
           override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
             self.connectionFromJdbc(env, connection)
