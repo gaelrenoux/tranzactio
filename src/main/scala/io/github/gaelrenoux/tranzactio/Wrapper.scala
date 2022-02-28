@@ -8,8 +8,6 @@ trait Wrapper {
   type Connection
 
   /** The Database provides a connection (transactionally or otherwise). */
-  // TODO
-  // type Database <: _ <: DatabaseOps.ServiceOps[Connection]
   type Database <: DatabaseOps.ServiceOps[Connection]
 
   val Database: DatabaseOps.ModuleOps[Connection, _ <: DatabaseOps.ServiceOps[Connection]] // scalastyle:ignore field.name

@@ -11,7 +11,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
   /** A Connection which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
   def noConnection(env: TranzactioEnv): ZIO[Any, Nothing, Connection] = connectionFromJdbc(env, NoopJdbcConnection)
-
+  
   /** A Database which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
   lazy val none: ZLayer[TranzactioEnv, Nothing, Database] = ???

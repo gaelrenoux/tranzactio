@@ -7,6 +7,6 @@ package object tranzactio {
 
   type ConnectionSource = ConnectionSource.Service
 
-  type TranzactioEnv = Any with Clock
+  type TranzactioEnv = Clock
 
 }

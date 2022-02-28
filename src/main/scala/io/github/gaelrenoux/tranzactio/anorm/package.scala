@@ -5,6 +5,7 @@ import zio.{Tag, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
 import zio.ZIO.attemptBlocking
+import zio.ZEnvironment
 
 
 /** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to
@@ -26,23 +27,29 @@ package object anorm extends Wrapper {
   object Database
     extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]]
       with DatabaseModuleTestOps[Connection] {
+
     self =>
 
     private[tranzactio] override implicit val connectionTag: Tag[Connection] = anorm.connectionTag
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    final def connectionFromJdbc(env: TranzactioEnv, connection: JdbcConnection): ZIO[Any, Nothing, Connection] = ???
-      // ZIO.succeed(Has(connection) ++ env)
+    override final def connectionFromJdbc(env: TranzactioEnv, connection: JdbcConnection): ZIO[Any, Nothing, Connection] = {
+      // TODO: what to do with env (clock)
+      // Tempt to think its not needed
+      ZIO.succeed(connection)
+    } 
 
+   
     /** Creates a Database Layer which requires an existing ConnectionSource. */
-    final def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] = ???
-        // TODO
-      // ZLayer.fromFunction { env: ConnectionSource with TranzactioEnv =>
+    override final def fromConnectionSource: ZLayer[ConnectionSource, Nothing, Database] =  ???
+      // ZLayer.fromFunction { env: ZEnvironment[ConnectionSource] =>
+        
       //   new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
-      //     override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
-      //       self.connectionFromJdbc(env, connection)
+      //     override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] = self.connectionFromJdbc(connection)
       //   }
       // }
+
+
 
   }
 
