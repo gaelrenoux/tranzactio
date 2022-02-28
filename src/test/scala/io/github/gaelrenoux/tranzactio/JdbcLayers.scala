@@ -2,8 +2,8 @@ package io.github.gaelrenoux.tranzactio
 
 import org.h2.jdbcx.JdbcDataSource
 
-import zio.test.environment.testEnvironment
-import zio.{ULayer, ZLayer, blocking}
+import zio.test.testEnvironment
+import zio.{ULayer, ZLayer}
 
 import java.sql.{Connection, DriverManager}
 import java.util.UUID

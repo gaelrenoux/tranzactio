@@ -10,6 +10,7 @@ import zio.Console
  * your dependencies). */
 object LayeredApp extends zio.ZIOAppDefault {
 
+
   private val zenv = ZEnv.any
   private val conf = Conf.live("samble-doobie-app")
   private val dbRecoveryConf = conf >>> ZLayer.fromService { (c: Conf.Root) => c.dbRecovery }
@@ -20,7 +21,11 @@ object LayeredApp extends zio.ZIOAppDefault {
   type AppEnv = ZEnv with Database with PersonQueries with Conf
   private val appEnv = zenv ++ conf ++ database ++ personQueries
 
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] = {
+
+  // TODO: use
+  override def run: ZIO[Environment with ZEnv with ZIOAppArgs,Any,Any] = ???
+  
+  def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] = {
     val prog = for {
       _ <- Console.printLine("Starting the app")
       trio <- myApp().provideLayer(appEnv)

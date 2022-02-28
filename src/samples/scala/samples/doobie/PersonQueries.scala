@@ -64,15 +64,15 @@ object PersonQueries {
     val failing: TranzactIO[Unit] = ZIO.fail(DbException.Wrapped(new RuntimeException))
   })
 
-  def setup: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.environmentWithZIO(_.get.setup)
+  def setup: ZIO[PersonQueries with Connection, DbException, Unit] = ??? // TODO ZIO.environmentWithZIO(_.get.setup)
 
-  val list: ZIO[PersonQueries with Connection, DbException, List[Person]] = ZIO.environmentWithZIO(_.get.list)
+  val list: ZIO[PersonQueries with Connection, DbException, List[Person]] = ??? // TODO ZIO.environmentWithZIO(_.get.list)
 
-  val listStream: ZStream[PersonQueries with Connection, DbException, Person] = ZStream.environmentWithStream(_.get.listStream)
+  val listStream: ZStream[PersonQueries with Connection, DbException, Person] = ??? // TODO  ZStream.environmentWithStream(_.get.listStream)
 
-  def insert(p: Person): ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.environmentWithZIO(_.get.insert(p))
+  def insert(p: Person): ZIO[PersonQueries with Connection, DbException, Unit] = ??? // TODO ZIO.environmentWithZIO(_.get.insert(p))
 
-  val failing: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.environmentWithZIO(_.get.failing)
+  val failing: ZIO[PersonQueries with Connection, DbException, Unit] = ??? // TODO ZIO.environmentWithZIO(_.get.failing)
 
 }
 

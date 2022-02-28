@@ -4,11 +4,13 @@ import io.github.gaelrenoux.tranzactio._
 import io.github.gaelrenoux.tranzactio.integration.ITSpec.ITEnv
 
 import zio.test._
-import zio.test.environment.{TestEnvironment, testEnvironment}
-import zio.{Tag, ZLayer, _}
+import zio.test.{TestEnvironment, testEnvironment}
+import zio.{Tag, ZLayer}
 import zio._
 
-abstract class ITSpec[Db <: _ : Tag, PersonQueries <: _ : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
+//
+// abstract class ITSpec[Db <: _ : Tag, PersonQueries <: _ : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
+abstract class ITSpec[Db : Tag, PersonQueries : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
   type Spec = ZSpec[ITEnv[Db, PersonQueries], Any]
 
   implicit val errorStrategies: ErrorStrategies = ErrorStrategies.Nothing
@@ -33,5 +35,5 @@ abstract class ITSpec[Db <: _ : Tag, PersonQueries <: _ : Tag] extends RunnableS
 }
 
 object ITSpec {
-  type ITEnv[Db <: _, PersonQueries <: _] = PersonQueries with Db with TestEnvironment
+  type ITEnv[Db, PersonQueries] = PersonQueries with Db with TestEnvironment
 }

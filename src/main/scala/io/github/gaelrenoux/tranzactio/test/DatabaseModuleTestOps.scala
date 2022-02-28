@@ -14,23 +14,25 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
 
   /** A Database which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
-  lazy val none: ZLayer[TranzactioEnv, Nothing, Database] = ZLayer.fromFunction { b: TranzactioEnv =>
-    new Service {
-      override def transactionR[R, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
-        (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
-        noConnection(b).flatMap { c =>
-          zio.provideSome[R] { r: R =>
-            r ++[Connection] c // does not compile without the explicit type
-          }.mapError(Right(_))
-        }
+  lazy val none: ZLayer[TranzactioEnv, Nothing, Database] = ???
+    // ZLayer.fromFunction { b: TranzactioEnv =>
+    // new Service {
+    //   override def transactionR[R, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
+    //     (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+    //     noConnection(b).flatMap { c =>
+    //       zio.provideSome[R] { r: R =>
+    //         r ++[Connection] c // does not compile without the explicit type
+    //       }.mapError(Right(_))
+    //     }
 
-      override def autoCommitR[R, E, A](zio: ZIO[Connection with R, E, A])
-        (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
-        noConnection(b).flatMap { c =>
-          zio.provideSome[R] { r: R =>
-            r ++[Connection] c // does not compile without the explicit type
-          }.mapError(Right(_))
-        }
-    }
-  }
+    //   override def autoCommitR[R, E, A](zio: ZIO[Connection with R, E, A])
+    //     (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+    //     noConnection(b).flatMap { c =>
+    //       zio.provideSome[R] { r: R =>
+    //         r ++[Connection] c // does not compile without the explicit type
+    //       }.mapError(Right(_))
+    //     }
+    // }
+  // }
+  // TODO
 }

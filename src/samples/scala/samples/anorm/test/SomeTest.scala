@@ -2,7 +2,7 @@ package samples.anorm.test
 
 import io.github.gaelrenoux.tranzactio.anorm._
 import samples.anorm.PersonQueries
-import zio._
+import zio.ULayer
 import zio.test.Assertion._
 import zio.test._
 
@@ -23,14 +23,13 @@ object SomeTest extends RunnableSpec[TestEnvironment with Database with PersonQu
 
 
   def spec: Spec = suite("My tests with Anorm")(
-    myTest
-  )
-
-  private val myTest = test("some test on a method") {
-    for {
+    test("some test on a method")(
+      for {
       h <- Database.transactionR(PersonQueries.list)
       // do something with that result
     } yield assert(h)(equalTo(Nil))
-  }
+    )
+  )
+
 
 }

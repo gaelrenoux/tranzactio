@@ -1,5 +1,8 @@
 package io.github.gaelrenoux.tranzactio
 
+// TODO get secs etc 
+// import zio.{ULayer, ZIO, Ref}
+// import zio.Duration._
 import zio._
 
 import zio.test.Assertion._
@@ -24,7 +27,7 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
     testDisallowConcurrentTasks
   )
 
-  private val testDisallowConcurrentTasks = test("disallow concurrent tasks") {
+  private val testDisallowConcurrentTasks = zio.test.test("disallow concurrent tasks") {
     def query(trace: Ref[List[String]]) = {
       trace.update(s"start" :: _) *> ZIO.sleep(5.second) *> trace.update(s"end" :: _)
     }

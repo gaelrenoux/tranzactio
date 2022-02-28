@@ -34,9 +34,7 @@ object ConnectionSource {
       openConnection.mapError(Left(_)).acquireReleaseWith(closeConnection(_).orDie) { c: Connection =>
         setAutoCommit(c, autoCommit = false)
           .mapError(Left(_))
-          .zipRight {
-            task(c).mapError(Right(_))
-          }
+          .zipRight(task(c).mapError(Right(_)))
           .tapBoth(
             _ => if (commitOnFailure) commitConnection(c).mapError(Left(_)) else rollbackConnection(c).mapError(Left(_)),
             _ => commitConnection(c).mapError(Left(_))
