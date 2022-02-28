@@ -126,8 +126,6 @@ object ConnectionSource {
       }
   }
 
-  val any: ZLayer[DataSource, Nothing, DataSource] = ZLayer.requires[DataSource]
-
   /** ConnectionSource created from a DataSource. Any connection pool you use should be able to provide a DataSource.
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will

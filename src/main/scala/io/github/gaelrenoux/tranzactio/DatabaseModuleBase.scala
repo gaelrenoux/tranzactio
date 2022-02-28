@@ -54,6 +54,4 @@ abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Conn
   final val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies with Clock, Nothing, Database] =
     (ConnectionSource.fromDatasourceAndErrorStrategies ++ Clock.any) >>> fromConnectionSource
 
-
-  val any: ZLayer[Database, Nothing, Database] = ZLayer.requires[Database]
 }
