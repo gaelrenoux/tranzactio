@@ -138,33 +138,24 @@ object ConnectionSource {
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
   def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource with TranzactioEnv, Nothing, ConnectionSource] = {
-    val layer = ZLayer {
+    ZLayer {
       for {
         clock <- ZIO.service[Clock]
         source <- ZIO.service[DataSource]
       } yield new DatasourceService(clock, source, errorStrategies)
     }
-    layer
   }
-    /* ZIO.services[DataSource, TranzactioEnv] { (dataSource, clock) =>
-      new DatasourceService(clock, dataSource, errorStrategies)
-    }.toLayer */
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
   val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies with TranzactioEnv, Nothing, ConnectionSource] = {
-    val layer = ZLayer {
+    ZLayer {
       for {
         clock <- ZIO.service[Clock]
         source <- ZIO.service[DataSource]
         errorStrategies <- ZIO.service[ErrorStrategies]
       } yield new DatasourceService(clock, source, errorStrategies)
     }
-    layer
   }
-    /* ZIO.access[DataSource with ErrorStrategies with TranzactioEnv] { env =>
-      val errorStrategies = env.get[ErrorStrategies]
-      new DatasourceService(env, errorStrategies)
-    }.toLayer */
 
   /** ConnectionSource created from a single connection. If several operations are launched concurrently, they will wait
    * for the connection to be available (see the Semaphore documentation for details).
@@ -179,20 +170,12 @@ object ConnectionSource {
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
   def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Connection with TranzactioEnv, Nothing, ConnectionSource] = {
-    val layer = ZLayer {
+    ZLayer {
       for {
         connection <- ZIO.service[Connection]
         clock <- ZIO.service[Clock]
         semaphore <- Semaphore.make(1)
       } yield new SingleConnectionService(connection, semaphore, clock, errorStrategiesRef)
     }
-    layer
   }
-    /* ZIO.environmentWithZIO[Connection with TranzactioEnv] { env =>
-      val connection = env.get[Connection]
-      Semaphore.make(1).map {
-        new SingleConnectionService(connection, _, env, errorStrategiesRef)
-      }
-    }.toLayer
-*/
 }
