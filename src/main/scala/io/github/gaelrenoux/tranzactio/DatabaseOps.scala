@@ -100,7 +100,7 @@ trait DatabaseOps[Connection, R0] {
 
 object DatabaseOps {
 
-  /** API for a Database service. Has[Unit] is used for the environment, as it has to be a Has, in place of Any. */
+  /** API for a Database service. */
   trait ServiceOps[Connection] extends DatabaseOps[Connection, Any] {
   }
 

@@ -16,7 +16,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
 
   override def transactionR[R, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean = false)
     (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] = 
-    
+
     ZIO.environmentWithZIO[R] { r =>
       runTransaction({ c: JdbcConnection =>
         connectionFromJdbc(c)

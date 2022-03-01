@@ -59,7 +59,7 @@ package object doobie extends Wrapper {
     /** Creates a Database Layer which requires an existing ConnectionSource. */
     final def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] = 
       ZLayer.fromFunctionEnvironment { env: ZEnvironment[ConnectionSource with TranzactioEnv] =>
-        ZEnvironment(new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
+        ZEnvironment(new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) {
           override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
             self.connectionFromJdbc(env.get[TranzactioEnv], connection)
         })
