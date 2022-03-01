@@ -5,6 +5,7 @@ import zio.{Tag, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
 import zio.ZIO.attemptBlocking
+import zio.ZEnvironment
 
 /** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to
  * provide the wrapper around the synchronous Anorm method. */
@@ -39,17 +40,13 @@ package object anorm extends Wrapper {
 
    
     /** Creates a Database Layer which requires an existing ConnectionSource. */
-    override final def fromConnectionSource: ZLayer[ConnectionSource, Nothing, Database] =  ???
-      // ZLayer.fromFunction { env: ZEnvironment[ConnectionSource] =>
-        
-      //   new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) with Database.Service {
-      //     override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] = self.connectionFromJdbc(connection)
-      //   }
-      // }
-
-
-
+    override final def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] = 
+      ZLayer.fromFunctionEnvironment { env: ZEnvironment[ConnectionSource with TranzactioEnv] => 
+        ZEnvironment(new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) {
+          override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any,Nothing,Connection] = 
+            self.connectionFromJdbc(env.get[TranzactioEnv], connection)
+        })
+      }
   }
-
 
 }

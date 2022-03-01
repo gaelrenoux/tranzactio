@@ -20,18 +20,14 @@ object LayeredApp extends zio.ZIOAppDefault {
   type AppEnv = ZEnv with Database with PersonQueries with Conf
   private val appEnv = zenv ++ conf ++ database ++ personQueries
 
-
- // TODO use
-  override def run: ZIO[Environment with ZEnv with ZIOAppArgs,Any,Any] = ???
-
-  def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] = {
+  override def run: ZIO[Environment with ZEnv with ZIOAppArgs,Any,Any] = {
     val prog = for {
       _ <- Console.printLine("Starting the app")
       trio <- myApp().provideLayer(appEnv)
       _ <- Console.printLine(trio.mkString(", "))
     } yield ExitCode(0)
 
-    prog.orDie
+    prog
   }
 
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
