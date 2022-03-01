@@ -10,9 +10,6 @@ trait DatabaseOps[Connection, R0] {
 
   import DatabaseOps._
 
-  /** How to mix a Has[Unit] in an R0. Needed to express `method` in term of `methodR`. */
-  //protected def mixHasUnit(r0: R0): R0 with Unit
-
   /** Provides that ZIO with a Connection. A transaction will be opened before any actions in the ZIO, and closed
    * after. It will commit only if the ZIO succeeds, and rollback otherwise. Failures in the initial ZIO will be
    * wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a failure with the
