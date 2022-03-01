@@ -8,8 +8,6 @@ import zio.test.{TestEnvironment, testEnvironment}
 import zio.{Tag, ZLayer}
 import zio._
 
-//
-// abstract class ITSpec[Db <: _ : Tag, PersonQueries <: _ : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
 abstract class ITSpec[Db : Tag, PersonQueries : Tag] extends RunnableSpec[ITEnv[Db, PersonQueries], Any] {
   type Spec = ZSpec[ITEnv[Db, PersonQueries], Any]
 

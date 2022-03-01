@@ -20,7 +20,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
        override def transactionR[R, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
        (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
        noConnection(env.get[TranzactioEnv]).flatMap { c =>
-         ZIO.environmentWith[R] { r => r ++ ZEnvironment(c) }
+         ZIO.environmentWith[R](_ ++ ZEnvironment(c))
           .flatMap(zio.provideEnvironment(_))
           .mapError(Right(_))
         }
@@ -28,7 +28,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
       override def autoCommitR[R, E, A](zio: ZIO[Connection with R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
        noConnection(env.get[TranzactioEnv]).flatMap { c =>
-         ZIO.environmentWith[R] { r => r ++ ZEnvironment(c) }
+         ZIO.environmentWith[R](_ ++ ZEnvironment(c))
           .flatMap(zio.provideEnvironment(_))
           .mapError(Right(_))
         }

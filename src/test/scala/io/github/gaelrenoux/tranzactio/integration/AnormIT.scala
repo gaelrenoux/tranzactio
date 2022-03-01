@@ -51,7 +51,7 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
   private val testDataRollbackedOnTransactionFailure = test("data rollbacked on transaction failure if commitOnFailure=false") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       persons <- Database.transactionR(PersonQueries.list)
     } yield assert(persons)(equalTo(Nil))
   }
@@ -59,7 +59,7 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
   private val testDataCommittedOnTransactionFailure = test("data committed on transaction failure if commitOnFailure=true") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy) &&& PersonQueries.failing, commitOnFailure = true).flip
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing), commitOnFailure = true).flip
       persons <- Database.transactionR(PersonQueries.list)
     } yield assert(persons)(equalTo(List(buffy)))
   }
@@ -67,7 +67,7 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
   private val testConnectionClosedOnTransactionFailure = test("connection closed on transaction failure") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       connectionCount <- Database.transaction(connectionCountQuery)
     } yield assert(connectionCount)(equalTo(1)) // only the current connection
   }
@@ -91,7 +91,7 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
   private val testDataRollbackedOnAutoCommitFailure = test("data rollbacked on autoCommit failure") {
     for {
       _ <- Database.autoCommitR(PersonQueries.setup)
-      _ <- Database.autoCommitR(PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      _ <- Database.autoCommitR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       persons <- Database.autoCommitR(PersonQueries.list)
     } yield assert(persons)(equalTo(List(buffy)))
   }

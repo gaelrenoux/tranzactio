@@ -5,8 +5,6 @@ import zio.{Tag, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
 import zio.ZIO.attemptBlocking
-import zio.ZEnvironment
-
 
 /** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to
  * provide the wrapper around the synchronous Anorm method. */

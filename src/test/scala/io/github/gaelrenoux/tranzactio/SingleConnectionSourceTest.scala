@@ -1,8 +1,5 @@
 package io.github.gaelrenoux.tranzactio
 
-// TODO get secs etc 
-// import zio.{ULayer, ZIO, Ref}
-// import zio.Duration._
 import zio._
 
 import zio.test.Assertion._
