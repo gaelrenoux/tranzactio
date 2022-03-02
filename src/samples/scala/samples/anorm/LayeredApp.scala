@@ -12,7 +12,7 @@ object LayeredApp extends zio.ZIOAppDefault {
 
   private val zenv = ZEnv.any
   private val conf = Conf.live("samble-anorm-app")
-  private val dbRecoveryConf = conf >>> ZLayer.fromService { (c: Conf.Root) => c.dbRecovery }
+  private val dbRecoveryConf = conf >>> { (c: Conf.Root) => c.dbRecovery }.toLayer
   private val datasource = (conf ++ zenv) >>> ConnectionPool.live
   private val database = (datasource ++ zenv ++ dbRecoveryConf) >>> Database.fromDatasourceAndErrorStrategies
   private val personQueries = PersonQueries.live
