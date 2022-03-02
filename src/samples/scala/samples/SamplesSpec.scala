@@ -1,9 +1,8 @@
 package samples
 
-import zio.{Chunk, ZEnv, ZIO, ZIOAppArgs, ZLayer}
+import zio.{Chunk, ZEnv, ZIOAppArgs, ZLayer, ZIOAppDefault}
 import zio.test.Assertion._
-import zio.test.{ZSpec, _}
-import zio.test.ZIOSpecDefault
+import zio.test.{ZSpec, ZIOSpecDefault, _}
 
 /** Run all samples as ZIO tests */
 object SamplesSpec extends ZIOSpecDefault {
@@ -16,9 +15,7 @@ object SamplesSpec extends ZIOSpecDefault {
        testApp("Anorm", anorm.LayeredApp)
      )
 
-  private def testApp(name: String, app: zio.ZIOAppDefault): ZSpec[TestConsole with ZEnv, Any] =
-
-
+  private def testApp(name: String, app: ZIOAppDefault): ZSpec[TestConsole with ZEnv, Any] =
 
      test(s"$name LayeredApp prints its progress then the trio") {
        for {
