@@ -33,8 +33,6 @@ package object anorm extends Wrapper {
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
     override final def connectionFromJdbc(env: TranzactioEnv, connection: JdbcConnection): ZIO[Any, Nothing, Connection] = {
-      // TODO: what to do with env (clock)
-      // Tempt to think its not needed
       ZIO.succeed(connection)
     } 
 
