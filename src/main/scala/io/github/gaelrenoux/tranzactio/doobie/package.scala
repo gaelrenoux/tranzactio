@@ -53,7 +53,7 @@ package object doobie extends Wrapper {
           val tran = Transactor(connection, connect, interp, Strategy.void)
           tran
         }
-      }.provideEnvironment(ZEnvironment(env))
+      }.provideService(env)
     }
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */

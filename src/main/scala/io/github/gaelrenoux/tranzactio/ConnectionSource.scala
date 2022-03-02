@@ -84,7 +84,7 @@ object ConnectionSource {
 
     private def wrap[R, A](es: ErrorStrategy)(z: ZIO[Any, Throwable, A]) = es {
       z.mapError(e => DbException.Wrapped(e))
-    }.provideEnvironment(ZEnvironment(clock))
+    }.provideService(clock)
 
   }
 
