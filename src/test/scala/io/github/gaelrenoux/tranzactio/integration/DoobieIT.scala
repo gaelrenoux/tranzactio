@@ -55,7 +55,7 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
   private val testDataRollbackedOnTransactionFailure = test("data rollbacked on transaction failure if commitOnFailure=false") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing).flip)
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       persons <- Database.transactionR(PersonQueries.list)
     } yield assert(persons)(equalTo(Nil))
   }
@@ -63,7 +63,7 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
   private val testDataCommittedOnTransactionFailure = test("data committed on transaction failure if commitOnFailure=true") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing).flip, commitOnFailure = true)
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing), commitOnFailure = true).flip
       persons <- Database.transactionR(PersonQueries.list)
     } yield assert(persons)(equalTo(List(buffy)))
   }
@@ -71,7 +71,7 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
   private val testConnectionClosedOnTransactionFailure = test("connection closed on transaction failure") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing).flip)
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       connectionCount <- Database.transaction(connectionCountQuery)
     } yield assert(connectionCount)(equalTo(1)) // only the current connection
   }
