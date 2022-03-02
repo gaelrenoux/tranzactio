@@ -161,10 +161,9 @@ Again, the code for Anorm is identical, except it has a different import: `io.gi
 import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
 import zio._
-import zio.blocking.Blocking
 import zio.clock.Clock
 
-val dbLayer: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] = Database.fromDatasource
+val dbLayer: ZLayer[Has[DataSource] with Clock, Nothing, Database] = Database.fromDatasource
 ```
 
 
@@ -291,7 +290,7 @@ Database.transaction(???) // es is passed implicitly to the method
 
 ```scala
 val es: ErrorStrategies = ErrorStrategies.retryForeverFixed(10.seconds)
-val dbLayerFromDatasource: ZLayer[Has[DataSource] with Blocking with Clock, Nothing, Database] = Database.fromDatasource(es)
+val dbLayerFromDatasource: ZLayer[Has[DataSource] with Clock, Nothing, Database] = Database.fromDatasource(es)
 ```
 
 #### Defining an ErrorStrategies instance
@@ -355,7 +354,6 @@ import zio._
 import doobie.implicits._
 import io.github.gaelrenoux.tranzactio.DbException
 import io.github.gaelrenoux.tranzactio.doobie._
-import zio.blocking.Blocking
 import zio.clock.Clock
 
 val liveQuery: ZIO[Connection, DbException, List[String]] = tzio { sql"SELECT name FROM users".query[String].to[List] }
@@ -364,8 +362,8 @@ val testQuery: ZIO[Connection, DbException, List[String]] = ZIO.succeed(List("Bu
 val liveEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(liveQuery)
 val testEffect: ZIO[Database, DbException, List[String]] = Database.transactionOrWiden(testQuery)
 
-val willFail: ZIO[Blocking with Clock, Any, List[String]] = liveEffect.provideLayer(Database.none) // THIS WILL FAIL
-val testing: ZIO[Blocking with Clock, Any, List[String]] = testEffect.provideLayer(Database.none) // This will work
+val willFail: ZIO[Clock, Any, List[String]] = liveEffect.provideLayer(Database.none) // THIS WILL FAIL
+val testing: ZIO[Clock, Any, List[String]] = testEffect.provideLayer(Database.none) // This will work
 ```
 
 
