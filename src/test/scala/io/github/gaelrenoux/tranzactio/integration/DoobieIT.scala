@@ -9,6 +9,7 @@ import samples.doobie.PersonQueries
 import zio.test.Assertion._
 import zio.test._
 import zio.{ULayer, ZLayer}
+import scala.annotation.nowarn
 
 
 /** Integration tests for Doobie */
@@ -52,6 +53,7 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
     } yield assert(connectionCount)(equalTo(1)) // only the current connection
   }
 
+  @nowarn("msg=a type was inferred to be `Any`; this may indicate a programming error.")
   private val testDataRollbackedOnTransactionFailure = test("data rollbacked on transaction failure if commitOnFailure=false") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
@@ -60,6 +62,7 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
     } yield assert(persons)(equalTo(Nil))
   }
 
+  @nowarn("msg=a type was inferred to be `Any`; this may indicate a programming error.")
   private val testDataCommittedOnTransactionFailure = test("data committed on transaction failure if commitOnFailure=true") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
@@ -91,7 +94,8 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
       connectionCount <- Database.autoCommit(connectionCountQuery)
     } yield assert(connectionCount)(equalTo(1)) // only the current connection
   }
-
+  
+  @nowarn("msg=a type was inferred to be `Any`; this may indicate a programming error.")
   private val testDataRollbackedOnAutoCommitFailure = test("data rollbacked on autoCommit failure") {
     for {
       _ <- Database.autoCommitR(PersonQueries.setup)
