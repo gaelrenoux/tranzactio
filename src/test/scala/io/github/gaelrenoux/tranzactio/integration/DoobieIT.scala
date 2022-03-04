@@ -95,7 +95,7 @@ object DoobieIT extends ITSpec[Database, PersonQueries] {
   private val testDataRollbackedOnAutoCommitFailure = test("data rollbacked on autoCommit failure") {
     for {
       _ <- Database.autoCommitR(PersonQueries.setup)
-      _ <- Database.autoCommitR(PersonQueries.insert(buffy).zip(PersonQueries.failing).flip)
+      _ <- Database.autoCommitR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       persons <- Database.autoCommitR(PersonQueries.list)
     } yield assert(persons)(equalTo(List(buffy)))
   }
