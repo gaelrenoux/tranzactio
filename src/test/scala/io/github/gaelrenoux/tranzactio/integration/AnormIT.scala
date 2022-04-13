@@ -32,7 +32,7 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
     testConnectionClosedOnAutoCommitFailure
   )
 
-  private val testDataCommittedOnTransactionSuccess = testM("data committed on transaction success") {
+  private val testDataCommittedOnTransactionSuccess = test("data committed on transaction success") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
       _ <- Database.transactionR(PersonQueries.insert(buffy))
@@ -40,7 +40,7 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
     } yield assert(persons)(equalTo(List(buffy)))
   }
 
-  private val testConnectionClosedOnTransactionSuccess = testM("connection closed on transaction success") {
+  private val testConnectionClosedOnTransactionSuccess = test("connection closed on transaction success") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
       _ <- Database.transactionR(PersonQueries.insert(buffy))
@@ -48,31 +48,31 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
     } yield assert(connectionCount)(equalTo(1)) // only the current connection
   }
 
-  private val testDataRollbackedOnTransactionFailure = testM("data rollbacked on transaction failure if commitOnFailure=false") {
+  private val testDataRollbackedOnTransactionFailure = test("data rollbacked on transaction failure if commitOnFailure=false") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       persons <- Database.transactionR(PersonQueries.list)
     } yield assert(persons)(equalTo(Nil))
   }
 
-  private val testDataCommittedOnTransactionFailure = testM("data committed on transaction failure if commitOnFailure=true") {
+  private val testDataCommittedOnTransactionFailure = test("data committed on transaction failure if commitOnFailure=true") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy) &&& PersonQueries.failing, commitOnFailure = true).flip
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing), commitOnFailure = true).flip
       persons <- Database.transactionR(PersonQueries.list)
     } yield assert(persons)(equalTo(List(buffy)))
   }
 
-  private val testConnectionClosedOnTransactionFailure = testM("connection closed on transaction failure") {
+  private val testConnectionClosedOnTransactionFailure = test("connection closed on transaction failure") {
     for {
       _ <- Database.transactionR(PersonQueries.setup)
-      _ <- Database.transactionR(PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       connectionCount <- Database.transaction(connectionCountQuery)
     } yield assert(connectionCount)(equalTo(1)) // only the current connection
   }
 
-  private val testDataCommittedOnAutoCommitSuccess = testM("data committed on autoCommit success") {
+  private val testDataCommittedOnAutoCommitSuccess = test("data committed on autoCommit success") {
     for {
       _ <- Database.autoCommitR(PersonQueries.setup)
       _ <- Database.autoCommitR(PersonQueries.insert(buffy))
@@ -80,7 +80,7 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
     } yield assert(persons)(equalTo(List(buffy)))
   }
 
-  private val testConnectionClosedOnAutoCommitSuccess = testM("connection closed on autoCommit success") {
+  private val testConnectionClosedOnAutoCommitSuccess = test("connection closed on autoCommit success") {
     for {
       _ <- Database.autoCommitR(PersonQueries.setup)
       _ <- Database.autoCommitR(PersonQueries.insert(buffy))
@@ -88,15 +88,15 @@ object AnormIT extends ITSpec[Database, PersonQueries] {
     } yield assert(connectionCount)(equalTo(1)) // only the current connection
   }
 
-  private val testDataRollbackedOnAutoCommitFailure = testM("data rollbacked on autoCommit failure") {
+  private val testDataRollbackedOnAutoCommitFailure = test("data rollbacked on autoCommit failure") {
     for {
       _ <- Database.autoCommitR(PersonQueries.setup)
-      _ <- Database.autoCommitR(PersonQueries.insert(buffy) &&& PersonQueries.failing).flip
+      _ <- Database.autoCommitR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
       persons <- Database.autoCommitR(PersonQueries.list)
     } yield assert(persons)(equalTo(List(buffy)))
   }
 
-  private val testConnectionClosedOnAutoCommitFailure = testM("connection closed on autoCommit failure") {
+  private val testConnectionClosedOnAutoCommitFailure = test("connection closed on autoCommit failure") {
     for {
       _ <- Database.autoCommitR(PersonQueries.setup)
       _ <- Database.autoCommitR(PersonQueries.insert(buffy))

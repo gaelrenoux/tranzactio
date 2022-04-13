@@ -1,10 +1,10 @@
 package io.github.gaelrenoux.tranzactio
 
 import zio._
-import zio.duration._
+
 import zio.test.Assertion._
 import zio.test._
-import zio.test.environment._
+
 
 object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with ConnectionSource, Any] {
   type Env = TestEnvironment with ConnectionSource
@@ -24,7 +24,7 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
     testDisallowConcurrentTasks
   )
 
-  private val testDisallowConcurrentTasks = testM("disallow concurrent tasks") {
+  private val testDisallowConcurrentTasks = zio.test.test("disallow concurrent tasks") {
     def query(trace: Ref[List[String]]) = {
       trace.update(s"start" :: _) *> ZIO.sleep(5.second) *> trace.update(s"end" :: _)
     }
@@ -42,7 +42,7 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
     for {
       trace <- Ref.make[List[String]](Nil)
       forked <- runParallel(trace).fork
-      _ <- TestClock.adjust(1.second).repeatWhileM(_ => forked.status.map(!_.isDone))
+      _ <- TestClock.adjust(1.second).repeatWhileZIO(_ => forked.status.map(!_.isDone))
       _ <- forked.join
       result <- trace.get
     } yield assert(result)(equalTo("end" :: "start" :: "end" :: "start" :: Nil))

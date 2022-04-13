@@ -1,6 +1,5 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.Has
 
 /** A specific wrapper package for one specific library (e.g. Doobie). */
 trait Wrapper {
@@ -9,7 +8,7 @@ trait Wrapper {
   type Connection
 
   /** The Database provides a connection (transactionally or otherwise). */
-  type Database <: Has[_ <: DatabaseOps.ServiceOps[Connection]]
+  type Database <: DatabaseOps.ServiceOps[Connection]
 
   val Database: DatabaseOps.ModuleOps[Connection, _ <: DatabaseOps.ServiceOps[Connection]] // scalastyle:ignore field.name
 

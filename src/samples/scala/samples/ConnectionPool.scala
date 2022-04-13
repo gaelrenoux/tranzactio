@@ -1,10 +1,11 @@
 package samples
 
 import org.h2.jdbcx.JdbcDataSource
-import zio.blocking.Blocking
-import zio.{Has, ZIO, ZLayer, blocking}
+
 
 import javax.sql.DataSource
+import zio.ZIO
+import zio.ZLayer
 
 /**
  * Typically, you would use a Connection Pool like HikariCP. Here, we're just gonna use the JDBC H2 datasource directly.
@@ -12,10 +13,10 @@ import javax.sql.DataSource
  */
 object ConnectionPool {
 
-  val live: ZLayer[Conf with Blocking, Throwable, Has[DataSource]] =
-    ZIO.accessM[Conf with Blocking] { env =>
+  val live: ZLayer[Conf, Throwable, DataSource] =
+    ZIO.environmentWithZIO[Conf] { env =>
       val conf = env.get[Conf.Root]
-      blocking.effectBlocking {
+      ZIO.attemptBlocking {
         val ds = new JdbcDataSource
         ds.setURL(conf.db.url)
         ds.setUser(conf.db.username)

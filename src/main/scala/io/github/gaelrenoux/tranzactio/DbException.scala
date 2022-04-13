@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.duration.Duration
+import zio.Duration
 
 /** All exceptions that may happen when working with the DB. */
 sealed trait DbException extends Exception

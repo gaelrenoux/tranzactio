@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.{Has, ZIO}
+import zio.ZIO
 
 /** This is not a runnable test. It is here to check the type inference produces the expected types. */
 trait DatabaseOpsCompileTest {
@@ -184,7 +184,7 @@ object DatabaseOpsCompileTest {
 
   trait DatabaseService extends DatabaseOps.ServiceOps[Connection]
 
-  type Database = Has[DatabaseService]
+  type Database = DatabaseService
 
-  type Environment = Has[String]
+  type Environment = String
 }

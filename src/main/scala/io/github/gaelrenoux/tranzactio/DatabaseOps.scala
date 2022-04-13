@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.{Has, UIO, ZIO}
+import zio.{UIO, ZIO}
 
 /** Operations for a Database, based on a few atomic operations. Can be used both by the actual DB service, or by the DB
  * component where a Database is required in the resulting ZIO.
@@ -10,9 +10,6 @@ trait DatabaseOps[Connection, R0] {
 
   import DatabaseOps._
 
-  /** How to mix a Has[Unit] in an R0. Needed to express `method` in term of `methodR`. */
-  protected def mixHasUnit(r0: R0): R0 with Has[Unit]
-
   /** Provides that ZIO with a Connection. A transaction will be opened before any actions in the ZIO, and closed
    * after. It will commit only if the ZIO succeeds, and rollback otherwise. Failures in the initial ZIO will be
    * wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a failure with the
@@ -20,7 +17,7 @@ trait DatabaseOps[Connection, R0] {
    *
    * This method should be implemented by subclasses, to provide the connection.
    */
-  def transactionR[R <: Has[_], E, A](
+  def transactionR[R, E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A]
@@ -30,11 +27,11 @@ trait DatabaseOps[Connection, R0] {
       zio: ZIO[Connection, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R0, Either[DbException, E], A] =
-    transactionR[Has[Unit], E, A](zio, commitOnFailure).provideSome(mixHasUnit)
+    transactionR[R0, E, A](zio, commitOnFailure)
 
   /** As `transactionR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-  final def transactionOrWidenR[R <: Has[_], E >: DbException, A](
+  final def transactionOrWidenR[R, E >: DbException, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
@@ -48,7 +45,7 @@ trait DatabaseOps[Connection, R0] {
     transaction[E, A](zio, commitOnFailure).mapError(_.fold(identity, identity))
 
   /** As `transactionR`, but errors when handling the connections are treated as defects instead of failures. */
-  final def transactionOrDieR[R <: Has[_], E, A](
+  final def transactionOrDieR[R, E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
@@ -67,17 +64,17 @@ trait DatabaseOps[Connection, R0] {
    *
    * This method should be implemented by subclasses, to provide the connection.
    */
-  def autoCommitR[R <: Has[_], E, A](
+  def autoCommitR[R, E, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, Either[DbException, E], A]
 
   /** As `autoCommitR`, where the only needed environment is the connection. */
   final def autoCommit[E, A](zio: ZIO[Connection, E, A])(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R0, Either[DbException, E], A] =
-    autoCommitR[Has[Unit], E, A](zio).provideSome(mixHasUnit)
+    autoCommitR[R0, E, A](zio)
 
   /** As `autoCommitR`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
-  final def autoCommitOrWidenR[R <: Has[_], E >: DbException, A](
+  final def autoCommitOrWidenR[R, E >: DbException, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).mapError(_.fold(identity, identity))
@@ -87,7 +84,7 @@ trait DatabaseOps[Connection, R0] {
     autoCommit[E, A](zio).mapError(_.fold(identity, identity))
 
   /** As `autoCommitR`, but errors when handling the connections are treated as defects instead of failures. */
-  final def autoCommitOrDieR[R <: Has[_], E, A](
+  final def autoCommitOrDieR[R, E, A](
       zio: ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[R with R0, E, A] =
     autoCommitR[R, E, A](zio).flatMapError(dieOnLeft)
@@ -100,14 +97,12 @@ trait DatabaseOps[Connection, R0] {
 
 object DatabaseOps {
 
-  /** API for a Database service. Has[Unit] is used for the environment, as it has to be a Has, in place of Any. */
+  /** API for a Database service. */
   trait ServiceOps[Connection] extends DatabaseOps[Connection, Any] {
-    override protected final def mixHasUnit(r0: Any): Any with Has[Unit] = Has(())
   }
 
   /** API for commodity methods needing a Database. */
-  trait ModuleOps[Connection, Dbs <: ServiceOps[Connection]] extends DatabaseOps[Connection, Has[Dbs]] {
-    override protected final def mixHasUnit(r0: Has[Dbs]): Has[Dbs] with Has[Unit] = r0 ++ Has(())
+  trait ModuleOps[Connection, Dbs <: ServiceOps[Connection]] extends DatabaseOps[Connection, Dbs] {
   }
 
   private def dieOnLeft[E](e: Either[DbException, E]): UIO[E] = e match {
