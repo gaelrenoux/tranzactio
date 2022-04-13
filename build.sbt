@@ -5,8 +5,8 @@ name := "tranzactio"
 licenses := Seq("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 description := "ZIO wrapper for Scala DB libraries (e.g. Doobie)"
 
-val scala212Version = "2.12.14"
-val scala213Version = "2.13.6"
+val scala212Version = "2.12.15"
+val scala213Version = "2.13.8"
 val supportedScalaVersions = List(scala212Version, scala213Version)
 
 scalaVersion := scala213Version
@@ -108,7 +108,7 @@ scalacOptions ++= allVersionsOption ++ {
 
 val ZioVersion = "2.0.0-RC2"
 val ZioCatsVersion = "3.3.0-RC2"
-val DoobieVersion = "1.0.0-RC1"
+val DoobieVersion = "1.0.0-RC2"
 val AnormVersion = "2.6.10"
 val H2Version = "1.4.200"
 
