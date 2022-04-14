@@ -123,7 +123,7 @@ val simple: ZIO[Database, String, Long] = Database.transactionOrDie(zio)
 
 // If you have an additional environment, use the *R method.
 val zioEnv: ZIO[Connection with Console, String, Long] = ???
-val withEnv: ZIO[Database with Console, String, Long] = Database.transactionOrDieR(zioEnv)
+val withEnv: ZIO[Database with Console, String, Long] = Database.transactionOrDie(zioEnv)
 
 // Do you want to handle connection errors yourself? They will appear on the Left side of the Either.
 val withSeparateErrors: ZIO[Database, Either[DbException, String], Long] = Database.transaction(zio)
