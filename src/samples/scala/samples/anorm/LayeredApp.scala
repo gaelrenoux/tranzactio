@@ -40,7 +40,7 @@ object LayeredApp extends zio.ZIOAppDefault {
     } yield trio
 
     ZIO.serviceWithZIO[Conf] { conf =>
-      // if this implicit is not provided, tranzactio will use Conf.Root.dbRecovery instead
+      // if this implicit is not provided, tranzactio will use Conf.dbRecovery instead
       implicit val errorRecovery: ErrorStrategiesRef = conf.alternateDbRecovery
       Database.transactionOrWiden(queries)
     }
