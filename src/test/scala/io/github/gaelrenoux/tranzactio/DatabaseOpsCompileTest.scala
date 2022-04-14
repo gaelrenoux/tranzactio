@@ -160,5 +160,5 @@ object DatabaseOpsCompileTest {
 
   type Database = DatabaseService
 
-  type Environment = String
+  trait Environment
 }
