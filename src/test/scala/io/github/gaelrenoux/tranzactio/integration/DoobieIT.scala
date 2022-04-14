@@ -10,8 +10,6 @@ import zio.test.Assertion._
 import zio.test._
 import zio.{Scope, ZIO, ZLayer}
 
-import scala.annotation.nowarn
-
 
 /** Integration tests for Doobie */
 object DoobieIT extends ITSpec {
@@ -61,7 +59,6 @@ object DoobieIT extends ITSpec {
     }
   }
 
-  @nowarn("msg=a type was inferred to be `Any`; this may indicate a programming error.")
   private val testDataRollbackedOnTransactionFailure: Spec = test("data rollbacked on transaction failure if commitOnFailure=false") {
     wrap {
       for {
@@ -72,7 +69,6 @@ object DoobieIT extends ITSpec {
     }
   }
 
-  @nowarn("msg=a type was inferred to be `Any`; this may indicate a programming error.")
   private val testDataCommittedOnTransactionFailure: Spec = test("data committed on transaction failure if commitOnFailure=true") {
     wrap {
       for {
@@ -113,7 +109,6 @@ object DoobieIT extends ITSpec {
     } // only the current connection
   }
 
-  @nowarn("msg=a type was inferred to be `Any`; this may indicate a programming error.")
   private val testDataRollbackedOnAutoCommitFailure: Spec = test("data rollbacked on autoCommit failure") {
     wrap {
       for {

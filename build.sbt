@@ -67,7 +67,7 @@ val scala213Options = Seq(
   "-Xlint:eta-sam", // Warn on eta-expansion to meet a Java-defined functional interface that is not explicitly annotated with @FunctionalInterface.
   "-Xlint:eta-zero", // Warn on eta-expansion (rather than auto-application) of zero-ary method.
   "-Xlint:implicit-not-found", // Check @implicitNotFound and @implicitAmbiguous messages.
-  "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`.
+  // "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`. // Happens too much. See https://github.com/zio/zio/pull/6455.
   "-Xlint:nonlocal-return", // A return statement used an exception for flow control.
   "-Xlint:serial", // @SerialVersionUID on traits and non-serializable classes.
   "-Xlint:unused", // Enable -Ywarn-unused:imports,privates,locals,implicits.
