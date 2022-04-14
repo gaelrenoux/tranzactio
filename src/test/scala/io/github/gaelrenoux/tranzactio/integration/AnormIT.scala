@@ -38,9 +38,9 @@ object AnormIT extends ITSpec {
   private val testDataCommittedOnTransactionSuccess: Spec = test("data committed on transaction success") {
     wrap {
       for {
-        _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy))
-        persons <- Database.transactionR(PersonQueries.list)
+        _ <- Database.transaction(PersonQueries.setup)
+        _ <- Database.transaction(PersonQueries.insert(buffy))
+        persons <- Database.transaction(PersonQueries.list)
       } yield assert(persons)(equalTo(List(buffy)))
     }
   }
@@ -48,8 +48,8 @@ object AnormIT extends ITSpec {
   private val testConnectionClosedOnTransactionSuccess: Spec = test("connection closed on transaction success") {
     wrap {
       for {
-        _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy))
+        _ <- Database.transaction(PersonQueries.setup)
+        _ <- Database.transaction(PersonQueries.insert(buffy))
         connectionCount <- Database.transaction(connectionCountQuery)
       } yield assert(connectionCount)(equalTo(1)) // only the current connection
     }
@@ -58,9 +58,9 @@ object AnormIT extends ITSpec {
   private val testDataRollbackedOnTransactionFailure: Spec = test("data rollbacked on transaction failure if commitOnFailure=false") {
     wrap {
       for {
-        _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
-        persons <- Database.transactionR(PersonQueries.list)
+        _ <- Database.transaction(PersonQueries.setup)
+        _ <- Database.transaction(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
+        persons <- Database.transaction(PersonQueries.list)
       } yield assert(persons)(equalTo(Nil))
     }
   }
@@ -68,9 +68,9 @@ object AnormIT extends ITSpec {
   private val testDataCommittedOnTransactionFailure: Spec = test("data committed on transaction failure if commitOnFailure=true") {
     wrap {
       for {
-        _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy) <*> PersonQueries.failing, commitOnFailure = true).flip
-        persons <- Database.transactionR(PersonQueries.list)
+        _ <- Database.transaction(PersonQueries.setup)
+        _ <- Database.transaction(PersonQueries.insert(buffy) <*> PersonQueries.failing, commitOnFailure = true).flip
+        persons <- Database.transaction(PersonQueries.list)
       } yield assert(persons)(equalTo(List(buffy)))
     }
   }
@@ -78,8 +78,8 @@ object AnormIT extends ITSpec {
   private val testConnectionClosedOnTransactionFailure: Spec = test("connection closed on transaction failure") {
     wrap {
       for {
-        _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
+        _ <- Database.transaction(PersonQueries.setup)
+        _ <- Database.transaction(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
         connectionCount <- Database.transaction(connectionCountQuery)
       } yield assert(connectionCount)(equalTo(1))
     } // only the current connection
@@ -88,9 +88,9 @@ object AnormIT extends ITSpec {
   private val testDataCommittedOnAutoCommitSuccess: Spec = test("data committed on autoCommit success") {
     wrap {
       for {
-        _ <- Database.autoCommitR(PersonQueries.setup)
-        _ <- Database.autoCommitR(PersonQueries.insert(buffy))
-        persons <- Database.autoCommitR(PersonQueries.list)
+        _ <- Database.autoCommit(PersonQueries.setup)
+        _ <- Database.autoCommit(PersonQueries.insert(buffy))
+        persons <- Database.autoCommit(PersonQueries.list)
       } yield assert(persons)(equalTo(List(buffy)))
     }
   }
@@ -98,8 +98,8 @@ object AnormIT extends ITSpec {
   private val testConnectionClosedOnAutoCommitSuccess: Spec = test("connection closed on autoCommit success") {
     wrap {
       for {
-        _ <- Database.autoCommitR(PersonQueries.setup)
-        _ <- Database.autoCommitR(PersonQueries.insert(buffy))
+        _ <- Database.autoCommit(PersonQueries.setup)
+        _ <- Database.autoCommit(PersonQueries.insert(buffy))
         connectionCount <- Database.autoCommit(connectionCountQuery)
       } yield assert(connectionCount)(equalTo(1))
     } // only the current connection
@@ -108,9 +108,9 @@ object AnormIT extends ITSpec {
   private val testDataRollbackedOnAutoCommitFailure: Spec = test("data rollbacked on autoCommit failure") {
     wrap {
       for {
-        _ <- Database.autoCommitR(PersonQueries.setup)
-        _ <- Database.autoCommitR(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
-        persons <- Database.autoCommitR(PersonQueries.list)
+        _ <- Database.autoCommit(PersonQueries.setup)
+        _ <- Database.autoCommit(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
+        persons <- Database.autoCommit(PersonQueries.list)
       } yield assert(persons)(equalTo(List(buffy)))
     }
   }
@@ -118,8 +118,8 @@ object AnormIT extends ITSpec {
   private val testConnectionClosedOnAutoCommitFailure: Spec = test("connection closed on autoCommit failure") {
     wrap {
       for {
-        _ <- Database.autoCommitR(PersonQueries.setup)
-        _ <- Database.autoCommitR(PersonQueries.insert(buffy))
+        _ <- Database.autoCommit(PersonQueries.setup)
+        _ <- Database.autoCommit(PersonQueries.insert(buffy))
         connectionCount <- Database.autoCommit(connectionCountQuery)
       } yield assert(connectionCount)(equalTo(1)) // only the current connection
     }

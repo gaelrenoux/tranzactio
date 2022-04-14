@@ -21,7 +21,7 @@ object SomeTest extends ZIOSpec[TestEnvironment with Database with PersonQueries
 
   val myTest: Spec = test("some test on a method")(
     for {
-      h <- Database.transactionR(PersonQueries.list)
+      h <- Database.transaction(PersonQueries.list)
       // do something with that result
     } yield assert(h)(equalTo(Nil))
   )
