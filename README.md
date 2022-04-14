@@ -121,7 +121,7 @@ import zio.console.Console
 val zio: ZIO[Connection, String, Long] = ???
 val simple: ZIO[Database, String, Long] = Database.transactionOrDie(zio)
 
-// If you have an additional environment, use the *R method.
+// If you have an additional environment, it would end up on the resulting effect as well.
 val zioEnv: ZIO[Connection with Console, String, Long] = ???
 val withEnv: ZIO[Database with Console, String, Long] = Database.transactionOrDie(zioEnv)
 
@@ -153,7 +153,7 @@ This module is provided as usual through a `ZLayer`.
 The most common way to construct a `Database` is using a `javax.sql.DataSource`, which your connection pool implementation (like HikariCP) should provide.
 Alternatively (e.g. in a test environment), you can create a `DataSource` manually.
 
-There layer to build a `Database` from a `javax.sql.DataSource` is on the `Database` object.
+The layer to build a `Database` from a `javax.sql.DataSource` is on the `Database` object.
 Here's an example for Doobie.
 Again, the code for Anorm is identical, except it has a different import: `io.github.gaelrenoux.tranzactio.anorm._` instead of `io.github.gaelrenoux.tranzactio.doobie._`.
 
@@ -163,7 +163,7 @@ import javax.sql.DataSource
 import zio._
 import zio.clock.Clock
 
-val dbLayer: ZLayer[Has[DataSource] with Clock, Nothing, Database] = Database.fromDatasource
+val dbLayer: ZLayer[Has[DataSource], Nothing, Database] = Database.fromDatasource
 ```
 
 
@@ -198,7 +198,8 @@ Check the backward compatibility information on those libraries to check which v
 | 2.0.0      | 1.0.5        | 0.12.1       | 2.6.10       |
 | 2.1.0      | 1.0.9        | 0.13.4       | 2.6.10       |
 | 3.0.0      | 1.0.11       | 1.0.0        | 2.6.10       |
-| master     | 1.0.11       | 1.0.0        | 2.6.10       |
+| 4.0.0      | 2.0.0        | 1.0.0        | 2.6.10       |
+| master     | 2.0.0        | 1.0.0        | 2.6.10       |
 
 
 
@@ -249,14 +250,14 @@ val result2: ZIO[Database, E, A] = Database.transactionOrDie(zio)
 val result3: ZIO[Database, Exception, A] = Database.transactionOrWiden(zio)
 ```
  
-In addition, a frequent case is to have an additional environment on your ZIO monad, e.g.: `ZIO[ZEnv with Connection, E, A]`.
-To handle this case, all methods mentioned above have an additional variant with a final `R`:
+A frequent case is to have an additional environment on your ZIO monad, e.g.: `ZIO[ZEnv with Connection, E, A]`.
+All methods mentioned above will carry over the additional environment:
 ```scala
 val zio: ZIO[ZEnv with Connection, E, A] = ???
-val result1: ZIO[Database with ZEnv, Either[DbException, E], A] = Database.transactionR(zio)
-val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDieR(zio)
+val result1: ZIO[Database with ZEnv, Either[DbException, E], A] = Database.transaction(zio)
+val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDie(zio)
 // assuming E extends Exception:
-val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWidenR(zio)
+val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWiden(zio)
 ```
 
 All the `transaction` methods take an optional argument `commitOnFailure` (which defaults to `false`).
@@ -296,7 +297,7 @@ val dbLayerFromDatasource: ZLayer[Has[DataSource] with Clock, Nothing, Database]
 #### Defining an ErrorStrategies instance
 
 To define an `ErrorStrategies`, start from the companion object, then add the retries and timeouts you want to apply.
-Note that the operations applies in the order you gave them (a timeout defined after a retry will apply a maximum duration to the the retrying effect).
+Note that the operations are applied in the order you gave them (a timeout defined after a retry will apply a maximum duration to the retrying effect).
 ```scala
 val es: ErrorStrategies = ErrorStrategies.timeout(3.seconds).retryCountExponential(10, 1.second, maxDelay = 10.seconds)
 val es2: ErrorStrategies = ErrorStrategies.timeout(3.seconds).retryForeverFixed(1.second).timeout(1.minute)
@@ -338,7 +339,7 @@ For that purpose, you can use the layer `ConnectionSource.fromConnection`.
 This layer requires a single JDBC `Connection`, and provides a `ConnectionSource` module.
 You must then use the `Database.fromConnectionSource` layer to get the `Database` module.
 
-Note that this ConnectionSource does not allow for concurrent usage, as that would lead to undetermined results.
+Note that this ConnectionSource does not allow for concurrent usage, as that would lead to undeterministic results.
 For example, some operation might close a transaction while a concurrent operation is between queries!
 The non-concurrent behavior is enforced through a ZIO semaphore.
 
@@ -346,7 +347,7 @@ The non-concurrent behavior is enforced through a ZIO semaphore.
 
 ### Unit Testing
 
-When unit testing, you typically use `ZIO.succeed` for your queries, instead of an SQL query.
+When unit testing, you typically use `ZIO.succeed` for your queries, instead of an actual SQL query.
 However, the type signature still requires a Database, which you need to provide.
 `Database.none` exists for this purpose: it satisfies the compiler, but does not provide a usable Database (so don't try to run any actual SQL queries against it).
 ```scala
@@ -368,15 +369,19 @@ val testing: ZIO[Clock, Any, List[String]] = testEffect.provideLayer(Database.no
 
 
 
-## What's next ?
-
-### Follow ZIO versions
-
-The API is pretty final by now. Changes should only happen if there is some major change in ZIO.
 
 
+## FAQ
 
-### More database access libraries
+### I've got a compiler error: a type was inferred to be Any
+
+Happens quite a lot when using ZIO, because Any is used to mark an 'empty' environment.
+The best thing to do is to drop this warning from your configuration.
+See https://github.com/zio/zio/pull/6455.
+
+
+
+### When will tranzactio work with <insert DB library here>?
 
 I want to add wrappers around more database access libraries.
 Anorm was the second one I did, next should probably be Quill (based on the popularity of the project on GitHub),
