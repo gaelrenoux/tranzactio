@@ -15,11 +15,11 @@ object SomeTest extends ZIOSpec[TestEnvironment with Database with PersonQueries
   /** Using a 'none' Database, because we're not actually using it */
   override def layer: ZLayer[Scope, Any, Env] = testEnvironment ++ PersonQueries.test ++ Database.none
 
-  def spec: Spec = suite("My tests with Doobie")(
+  override def spec: Spec = suite("My tests with Doobie")(
     myTest
   )
 
-  def myTest: Spec = test("some test on a method")(
+  val myTest: Spec = test("some test on a method")(
     for {
       h <- Database.transactionR(PersonQueries.list)
       // do something with that result

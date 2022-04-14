@@ -6,9 +6,9 @@ import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{ConnectionSource, JdbcLayers}
 import samples.Person
 import samples.doobie.PersonQueries
+import zio.ZLayer
 import zio.test.Assertion._
 import zio.test._
-import zio.{Scope, ZIO, ZLayer}
 
 import scala.annotation.nowarn
 
@@ -66,7 +66,7 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
+        _ <- Database.transactionR(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
         persons <- Database.transactionR(PersonQueries.list)
       } yield assert(persons)(equalTo(Nil))
     }
@@ -77,7 +77,7 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing), commitOnFailure = true).flip
+        _ <- Database.transactionR(PersonQueries.insert(buffy) <*> PersonQueries.failing, commitOnFailure = true).flip
         persons <- Database.transactionR(PersonQueries.list)
       } yield assert(persons)(equalTo(List(buffy)))
     }
@@ -87,7 +87,7 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transactionR(PersonQueries.setup)
-        _ <- Database.transactionR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
+        _ <- Database.transactionR(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
         connectionCount <- Database.transaction(connectionCountQuery)
       } yield assert(connectionCount)(equalTo(1))
     } // only the current connection
@@ -118,7 +118,7 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.autoCommitR(PersonQueries.setup)
-        _ <- Database.autoCommitR(PersonQueries.insert(buffy).zip(PersonQueries.failing)).flip
+        _ <- Database.autoCommitR(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
         persons <- Database.autoCommitR(PersonQueries.list)
       } yield assert(persons)(equalTo(List(buffy)))
     }
