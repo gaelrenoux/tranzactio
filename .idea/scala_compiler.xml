@@ -41,7 +41,6 @@
         <parameter value="-Xlint:eta-sam" />
         <parameter value="-Xlint:eta-zero" />
         <parameter value="-Xlint:implicit-not-found" />
-        <parameter value="-Xlint:infer-any" />
         <parameter value="-Xlint:nonlocal-return" />
         <parameter value="-Xlint:serial" />
         <parameter value="-Xlint:unused" />
