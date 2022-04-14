@@ -6,9 +6,9 @@ import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{ConnectionSource, JdbcLayers}
 import samples.Person
 import samples.doobie.PersonQueries
-import zio.ZLayer
 import zio.test.Assertion._
 import zio.test._
+import zio.{Scope, ZIO, ZLayer}
 
 import scala.annotation.nowarn
 
