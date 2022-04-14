@@ -107,7 +107,7 @@ object DatabaseOps {
   trait ServiceOps[Connection] extends DatabaseOps[Connection, Any]
 
   /** API for commodity methods needing a Database. */
-  trait ModuleOps[Connection, Dbs <: ServiceOps[Connection]] extends DatabaseOps[Connection, Dbs]
+  trait ModuleOps[Connection, Database <: ServiceOps[Connection]] extends DatabaseOps[Connection, Database]
 
   private def dieOnLeft[E](e: Either[DbException, E]): UIO[E] = e match {
     case Right(e) => ZIO.succeed(e)
