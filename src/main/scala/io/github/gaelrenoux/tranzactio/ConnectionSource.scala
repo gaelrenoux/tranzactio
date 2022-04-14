@@ -12,10 +12,10 @@ object ConnectionSource {
   trait Service {
 
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean = false)
-      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A]
+      (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A]
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
-      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A]
+      (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A]
   }
 
   /** ConnectionSource with standard behavior. Children class need to implement `getConnection`. */
@@ -24,10 +24,10 @@ object ConnectionSource {
   ) extends ConnectionSource.Service {
 
     /** Main function: how to obtain a connection. Needs to be provided. */
-    protected def getConnection: Task[Connection]
+    protected def getConnection(implicit trace: ZTraceElement): Task[Connection]
 
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean = false)
-      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+      (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
       openConnection.mapError(Left(_)).acquireReleaseWith(closeConnection(_).orDie) { c: Connection =>
         setAutoCommit(c, autoCommit = false)
           .mapError(Left(_))
@@ -39,7 +39,7 @@ object ConnectionSource {
       }
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
-      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+      (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
       openConnection.mapError(Left(_)).acquireReleaseWith(closeConnection(_).orDie) { c: Connection =>
         setAutoCommit(c, autoCommit = true)
           .mapError(Left(_))
@@ -53,33 +53,33 @@ object ConnectionSource {
     private def bottomErrorStrategy(implicit errorStrategies: ErrorStrategiesRef) =
       errorStrategies.orElse(defaultErrorStrategies).orElseDefault
 
-    def openConnection(implicit errorStrategies: ErrorStrategiesRef): ZIO[Any, DbException, Connection] =
+    def openConnection(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Connection] =
       wrap(bottomErrorStrategy.openConnection) {
         getConnection.mapError(e => DbException.Wrapped(e))
       }
 
-    def setAutoCommit(c: Connection, autoCommit: Boolean)(implicit errorStrategies: ErrorStrategiesRef): ZIO[Any, DbException, Unit] =
+    def setAutoCommit(c: Connection, autoCommit: Boolean)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.setAutoCommit) {
         attemptBlocking(c.setAutoCommit(autoCommit))
       }
 
-    def commitConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef): ZIO[Any, DbException, Unit] =
+    def commitConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.commitConnection) {
         attemptBlocking(c.commit())
       }
 
-    def rollbackConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef): ZIO[Any, DbException, Unit] =
+    def rollbackConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.rollbackConnection) {
         attemptBlocking(c.rollback())
       }
 
     /** Cannot fail */
-    def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef): ZIO[Any, DbException, Unit] =
+    def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.closeConnection) {
         attemptBlocking(c.close())
       }
 
-    private def wrap[R, A](es: ErrorStrategy)(z: ZIO[Any, Throwable, A]) = es {
+    private def wrap[R, A](es: ErrorStrategy)(z: ZIO[Any, Throwable, A])(implicit trace: ZTraceElement) = es {
       z.mapError(e => DbException.Wrapped(e))
     }
 
@@ -91,7 +91,7 @@ object ConnectionSource {
       defaultErrorStrategies: ErrorStrategiesRef
   ) extends ServiceBase(defaultErrorStrategies) {
 
-    override def getConnection: RIO[Any, Connection] = attemptBlocking {
+    override def getConnection(implicit trace: ZTraceElement): RIO[Any, Connection] = attemptBlocking {
       dataSource.getConnection()
     }
   }
@@ -104,18 +104,18 @@ object ConnectionSource {
       defaultErrorStrategies: ErrorStrategiesRef
   ) extends ServiceBase(defaultErrorStrategies) {
 
-    override def getConnection: UIO[Connection] = UIO.succeed(connection)
+    override def getConnection(implicit trace: ZTraceElement): UIO[Connection] = UIO.succeed(connection)
 
-    override def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef): ZIO[Any, Nothing, Unit] = ZIO.unit
+    override def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, Nothing, Unit] = ZIO.unit
 
     override def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean)
-      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+      (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
       semaphore.withPermit {
         super.runTransaction(task, commitOnFailure)
       }
 
     override def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
-      (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
+      (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
       semaphore.withPermit {
         super.runAutoCommit(task)
       }
@@ -125,14 +125,14 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
    * be used. */
-  val fromDatasource: ZLayer[DataSource, Nothing, ConnectionSource] =
+  def fromDatasource(implicit trace: ZTraceElement): ZLayer[DataSource, Nothing, ConnectionSource] =
     fromDatasource(ErrorStrategies.Parent)
 
   /** As `fromDatasource`, but provides a default ErrorStrategiesRef.
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource, Nothing, ConnectionSource] = {
+  def fromDatasource(errorStrategies: ErrorStrategiesRef)(implicit trace: ZTraceElement): ZLayer[DataSource, Nothing, ConnectionSource] = {
     ZLayer {
       for {
         source <- ZIO.service[DataSource]
@@ -141,7 +141,7 @@ object ConnectionSource {
   }
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
-  val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies, Nothing, ConnectionSource] = {
+  def fromDatasourceAndErrorStrategies(implicit trace: ZTraceElement): ZLayer[DataSource with ErrorStrategies, Nothing, ConnectionSource] = {
     ZLayer {
       for {
         source <- ZIO.service[DataSource]
@@ -155,14 +155,14 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
    * be used. */
-  val fromConnection: ZLayer[Connection, Nothing, ConnectionSource] =
+  def fromConnection(implicit trace: ZTraceElement): ZLayer[Connection, Nothing, ConnectionSource] =
     fromConnection(ErrorStrategies.Parent)
 
   /** As `fromConnection`, but provides a default ErrorStrategiesRef.
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Connection, Nothing, ConnectionSource] = {
+  def fromConnection(errorStrategiesRef: ErrorStrategiesRef)(implicit trace: ZTraceElement): ZLayer[Connection, Nothing, ConnectionSource] = {
     ZLayer {
       for {
         connection <- ZIO.service[Connection]

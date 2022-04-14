@@ -1,5 +1,7 @@
 package io.github.gaelrenoux.tranzactio
 
+import zio.ZTraceElement
+
 
 /** A specific wrapper package for one specific library (e.g. Doobie). */
 trait Wrapper {
@@ -24,6 +26,6 @@ trait Wrapper {
   type TranzactIO[A]
 
   /** Wraps a library-specific query into a TranzactIO. */
-  def tzio[A](q: Query[A]): TranzactIO[A]
+  def tzio[A](q: Query[A])(implicit trace: ZTraceElement): TranzactIO[A]
 
 }
