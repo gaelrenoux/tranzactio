@@ -16,7 +16,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
    * so they do not need a Database). Trying to run actual queries against it will fail. */
   lazy val none: ZLayer[Any, Nothing, Database] =
     ZLayer.succeed {
-      /* TODO: Declare this as a static service, no need for dynamic declaration anymore */
+      /* Can't extract this into a static class, both Service and Connection are local to the trait */
       new Service {
         override def transaction[R, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
           (implicit errorStrategies: ErrorStrategiesRef): ZIO[R, Either[DbException, E], A] =
