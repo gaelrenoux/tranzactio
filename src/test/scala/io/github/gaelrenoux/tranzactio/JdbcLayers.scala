@@ -1,14 +1,12 @@
 package io.github.gaelrenoux.tranzactio
 
 import org.h2.jdbcx.JdbcDataSource
-
 import zio.test.testEnvironment
-import zio.{ULayer, ZLayer}
+import zio.{Scope, ZIO, ZLayer}
 
 import java.sql.{Connection, DriverManager}
 import java.util.UUID
 import javax.sql.DataSource
-import zio.ZIO
 
 object JdbcLayers {
   /** Generates the DataSource layer.
@@ -27,13 +25,13 @@ object JdbcLayers {
     ds
   }.toLayer
 
-  val datasourceU: ULayer[DataSource] = testEnvironment >>> datasource.orDie
+  val datasourceU: ZLayer[Scope, Nothing, DataSource] = testEnvironment >>> datasource.orDie
 
   /** Generates a layer providing a single connection. Connection will not be closed until you close the JVM... */
   val connection: ZLayer[Any, Throwable, Connection] = ZIO.attemptBlocking {
     DriverManager.getConnection(s"jdbc:h2:mem:${UUID.randomUUID().toString};DB_CLOSE_DELAY=10", "sa", "sa")
   }.toLayer
 
-  val connectionU: ULayer[Connection] = testEnvironment >>> connection.orDie
+  val connectionU: ZLayer[Scope, Nothing, Connection] = testEnvironment >>> connection.orDie
 
 }

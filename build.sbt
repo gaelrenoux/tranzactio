@@ -106,8 +106,8 @@ scalacOptions ++= allVersionsOption ++ {
 }
 
 
-val ZioVersion = "2.0.0-RC2"
-val ZioCatsVersion = "3.3.0-RC2"
+val ZioVersion = "2.0.0-RC3"
+val ZioCatsVersion = "3.3.0-RC3-2"
 val DoobieVersion = "1.0.0-RC2"
 val AnormVersion = "2.6.10"
 val H2Version = "1.4.200"

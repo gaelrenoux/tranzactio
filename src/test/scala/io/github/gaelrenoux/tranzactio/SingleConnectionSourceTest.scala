@@ -1,7 +1,7 @@
 package io.github.gaelrenoux.tranzactio
 
+import zio.Fiber.Status
 import zio._
-
 import zio.test.Assertion._
 import zio.test._
 
@@ -16,7 +16,7 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
 
   override def runner: TestRunner[Env, Any] = TestRunner(TestExecutor.default(testEnvironment ++ csLayer))
 
-  lazy val csLayer: ULayer[ConnectionSource] = (JdbcLayers.connectionU ++ testEnvironment) >>> ConnectionSource.fromConnection
+  lazy val csLayer: ZLayer[Scope, Nothing, ConnectionSource] = (JdbcLayers.connectionU ++ testEnvironment) >>> ConnectionSource.fromConnection
 
   val connectionCountSql = "select count(*) from information_schema.sessions"
 
@@ -42,7 +42,7 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
     for {
       trace <- Ref.make[List[String]](Nil)
       forked <- runParallel(trace).fork
-      _ <- TestClock.adjust(1.second).repeatWhileZIO(_ => forked.status.map(!_.isDone))
+      _ <- TestClock.adjust(1.second).repeatWhileZIO(_ => forked.status.map(_ != Status.Done))
       _ <- forked.join
       result <- trace.get
     } yield assert(result)(equalTo("end" :: "start" :: "end" :: "start" :: Nil))

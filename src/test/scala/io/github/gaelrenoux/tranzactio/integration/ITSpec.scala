@@ -17,7 +17,7 @@ abstract class ITSpec[Db : Tag, PersonQueries : Tag] extends RunnableSpec[ITEnv[
 
   override def runner: TestRunner[ITEnv[Db, PersonQueries], Any] = TestRunner(TestExecutor.default(itLayer))
 
-  private lazy val itLayer: ULayer[ITEnv[Db, PersonQueries]] = {
+  private lazy val itLayer: ZLayer[Scope, Nothing, ITEnv[Db, PersonQueries]] = {
     val uCsLayer = (testEnvironment ++ JdbcLayers.datasourceU) >>> ConnectionSource.fromDatasource
     val uDbLayer = (uCsLayer ++ testEnvironment) >>> dbLayer
     testEnvironment ++ personQueriesLive ++ uDbLayer
