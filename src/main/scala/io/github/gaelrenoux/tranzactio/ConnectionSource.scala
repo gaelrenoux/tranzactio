@@ -1,12 +1,10 @@
 package io.github.gaelrenoux.tranzactio
 
+import zio.ZIO.attemptBlocking
 import zio._
-
-import zio.Clock
 
 import java.sql.Connection
 import javax.sql.DataSource
-import zio.ZIO.attemptBlocking
 
 /** A module able to provide and manage connections. They typically come from a connection pool. */
 object ConnectionSource {
@@ -22,7 +20,6 @@ object ConnectionSource {
 
   /** ConnectionSource with standard behavior. Children class need to implement `getConnection`. */
   abstract class ServiceBase(
-      clock: Clock,
       val defaultErrorStrategies: ErrorStrategiesRef
   ) extends ConnectionSource.Service {
 
@@ -84,16 +81,15 @@ object ConnectionSource {
 
     private def wrap[R, A](es: ErrorStrategy)(z: ZIO[Any, Throwable, A]) = es {
       z.mapError(e => DbException.Wrapped(e))
-    }.provideService(clock)
+    }
 
   }
 
   /** Service based on a DataSource. */
   private class DatasourceService(
-      clock: Clock,
       dataSource: DataSource,
       defaultErrorStrategies: ErrorStrategiesRef
-  ) extends ServiceBase(clock, defaultErrorStrategies) {
+  ) extends ServiceBase(defaultErrorStrategies) {
 
     override def getConnection: RIO[Any, Connection] = attemptBlocking {
       dataSource.getConnection()
@@ -105,9 +101,8 @@ object ConnectionSource {
   private class SingleConnectionService(
       connection: Connection,
       semaphore: Semaphore,
-      clock: Clock,
       defaultErrorStrategies: ErrorStrategiesRef
-  ) extends ServiceBase(clock, defaultErrorStrategies) {
+  ) extends ServiceBase(defaultErrorStrategies) {
 
     override def getConnection: UIO[Connection] = UIO.succeed(connection)
 
@@ -130,30 +125,28 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
    * be used. */
-  val fromDatasource: ZLayer[DataSource with TranzactioEnv, Nothing, ConnectionSource] =
+  val fromDatasource: ZLayer[DataSource, Nothing, ConnectionSource] =
     fromDatasource(ErrorStrategies.Parent)
 
   /** As `fromDatasource`, but provides a default ErrorStrategiesRef.
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource with TranzactioEnv, Nothing, ConnectionSource] = {
+  def fromDatasource(errorStrategies: ErrorStrategiesRef): ZLayer[DataSource, Nothing, ConnectionSource] = {
     ZLayer {
       for {
-        clock <- ZIO.service[Clock]
         source <- ZIO.service[DataSource]
-      } yield new DatasourceService(clock, source, errorStrategies)
+      } yield new DatasourceService(source, errorStrategies)
     }
   }
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
-  val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies with TranzactioEnv, Nothing, ConnectionSource] = {
+  val fromDatasourceAndErrorStrategies: ZLayer[DataSource with ErrorStrategies, Nothing, ConnectionSource] = {
     ZLayer {
       for {
-        clock <- ZIO.service[Clock]
         source <- ZIO.service[DataSource]
         errorStrategies <- ZIO.service[ErrorStrategies]
-      } yield new DatasourceService(clock, source, errorStrategies)
+      } yield new DatasourceService(source, errorStrategies)
     }
   }
 
@@ -162,20 +155,19 @@ object ConnectionSource {
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the default ErrorStrategiesRef will
    * be used. */
-  val fromConnection: ZLayer[Connection with Clock, Nothing, ConnectionSource] =
+  val fromConnection: ZLayer[Connection, Nothing, ConnectionSource] =
     fromConnection(ErrorStrategies.Parent)
 
   /** As `fromConnection`, but provides a default ErrorStrategiesRef.
    *
    * When a Database method is called with no available implicit ErrorStrategiesRef, the ErrorStrategiesRef in argument
    * will be used. */
-  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Connection with TranzactioEnv, Nothing, ConnectionSource] = {
+  def fromConnection(errorStrategiesRef: ErrorStrategiesRef): ZLayer[Connection, Nothing, ConnectionSource] = {
     ZLayer {
       for {
         connection <- ZIO.service[Connection]
-        clock <- ZIO.service[Clock]
         semaphore <- Semaphore.make(1)
-      } yield new SingleConnectionService(connection, semaphore, clock, errorStrategiesRef)
+      } yield new SingleConnectionService(connection, semaphore, errorStrategiesRef)
     }
   }
 }

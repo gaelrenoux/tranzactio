@@ -1,20 +1,20 @@
 package io.github.gaelrenoux.tranzactio
 
 import zio.Fiber.Status
-import zio._
 import zio.test.Assertion._
 import zio.test._
+import zio.{test => _, _}
 
 
-object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with ConnectionSource, Any] {
+object SingleConnectionSourceTest extends ZIOSpec[TestEnvironment with ConnectionSource] {
   type Env = TestEnvironment with ConnectionSource
   type Spec = ZSpec[Env, Any]
 
   implicit private val errorStrategies: ErrorStrategies = ErrorStrategies.Nothing
 
-  override def aspects: List[TestAspect[Nothing, Env, Nothing, Any]] = List(TestAspect.timeout(5.seconds))
+  // TODO add aspect to timeout tests to 5 seconds
 
-  override def runner: TestRunner[Env, Any] = TestRunner(TestExecutor.default(testEnvironment ++ csLayer))
+  override def layer: ZLayer[Scope, Any, Env] = csLayer ++ testEnvironment
 
   lazy val csLayer: ZLayer[Scope, Nothing, ConnectionSource] = (JdbcLayers.connectionU ++ testEnvironment) >>> ConnectionSource.fromConnection
 
@@ -24,9 +24,9 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
     testDisallowConcurrentTasks
   )
 
-  private val testDisallowConcurrentTasks = zio.test.test("disallow concurrent tasks") {
+  private val testDisallowConcurrentTasks: ZSpec[ConnectionSource, Nothing] = test("disallow concurrent tasks") {
     def query(trace: Ref[List[String]]) = {
-      trace.update(s"start" :: _) *> ZIO.sleep(5.second) *> trace.update(s"end" :: _)
+      trace.update("start" :: _) *> ZIO.sleep(5.second) *> trace.update("end" :: _)
     }
 
     def runParallel(trace: Ref[List[String]]) =
@@ -47,5 +47,4 @@ object SingleConnectionSourceTest extends RunnableSpec[TestEnvironment with Conn
       result <- trace.get
     } yield assert(result)(equalTo("end" :: "start" :: "end" :: "start" :: Nil))
   }
-
 }

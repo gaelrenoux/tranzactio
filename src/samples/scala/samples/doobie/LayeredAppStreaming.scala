@@ -11,28 +11,25 @@ import zio.Console
 // scalastyle:off magic.number
 object LayeredAppStreaming extends zio.ZIOAppDefault {
 
-  private val zenv = ZEnv.any
   private val conf = Conf.live("samble-doobie-app-streaming")
-  private val dbRecoveryConf = conf >>> { (c: Conf.Root) => c.dbRecovery }.toLayer
-  private val datasource = (conf ++ zenv) >>> ConnectionPool.live
-  private val database = (datasource ++ zenv ++ dbRecoveryConf) >>> Database.fromDatasourceAndErrorStrategies
+  private val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery)
+  private val datasource = conf >>> ConnectionPool.live
+  private val database = (datasource ++ dbRecoveryConf) >>> Database.fromDatasourceAndErrorStrategies
   private val personQueries = PersonQueries.live
 
-  type AppEnv = ZEnv with Database with PersonQueries with Conf
-  private val appEnv = zenv ++ conf ++ database ++ personQueries
-  override def run: ZIO[Environment with ZEnv with ZIOAppArgs, Any, Any] = {
-    val prog = for {
+  type AppEnv = Database with PersonQueries with Conf
+  private val appEnv = database ++ personQueries ++ conf
+
+  override def run: ZIO[ZIOAppArgs with Scope, Any, Any] =
+    for {
       _ <- Console.printLine("Starting the app")
       trio <- myApp().provideLayer(appEnv)
-    _ <- Console.printLine(trio.mkString(", "))
+      _ <- Console.printLine(trio.mkString(", "))
     } yield ExitCode(0)
-    prog
-  }
-
 
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {
-    val queries = for {
+    val queries: ZIO[Connection with AppEnv, DbException, List[Person]] = for {
       _ <- Console.printLine("Creating the table").orDie
       _ <- PersonQueries.setup
       _ <- Console.printLine("Inserting the trio").orDie
