@@ -7,25 +7,24 @@ import java.sql.{Connection => JdbcConnection}
 import javax.sql.DataSource
 
 /** Template implementing the commodity methods for a Db module. */
-abstract class DatabaseModuleBase[Connection, Dbs <: DatabaseOps.ServiceOps[Connection] : Tag]
-  extends DatabaseOps.ModuleOps[Connection, Dbs] {
+abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps[Connection] : Tag]
+  extends DatabaseOps.ModuleOps[Connection, Database] {
 
-  type Database = Dbs
   type Service = DatabaseOps.ServiceOps[Connection]
 
   override def transaction[R, E, A](
       zio: ZIO[Connection with R, E, A],
       commitOnFailure: Boolean = false
-  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Dbs with R, Either[DbException, E], A] = {
-    ZIO.serviceWithZIO { db: Dbs =>
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Database with R, Either[DbException, E], A] = {
+    ZIO.serviceWithZIO { db: Database =>
       db.transaction[R, E, A](zio, commitOnFailure)
     }
   }
 
   override def autoCommit[R, E, A](
       zio: ZIO[Connection with R, E, A]
-  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Dbs with R, Either[DbException, E], A] = {
-    ZIO.serviceWithZIO { db: Dbs =>
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent): ZIO[Database with R, Either[DbException, E], A] = {
+    ZIO.serviceWithZIO { db: Database =>
       db.autoCommit[R, E, A](zio)
     }
   }

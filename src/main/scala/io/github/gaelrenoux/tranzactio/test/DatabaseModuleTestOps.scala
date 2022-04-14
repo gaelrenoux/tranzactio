@@ -6,6 +6,8 @@ import zio.{Tag, ZEnvironment, ZIO, ZLayer}
 /** Testing utilities on the Database module. */
 trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
 
+  type AnyDatabase = DatabaseOps.ServiceOps[Connection]
+
   private[tranzactio] implicit val connectionTag: Tag[Connection]
 
   /** A Connection which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
@@ -14,7 +16,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
 
   /** A Database which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
-  lazy val none: ZLayer[Any, Nothing, Database] =
+  lazy val none: ZLayer[Any, Nothing, AnyDatabase] =
     ZLayer.succeed {
       /* Can't extract this into a static class, both Service and Connection are local to the trait */
       new Service {
