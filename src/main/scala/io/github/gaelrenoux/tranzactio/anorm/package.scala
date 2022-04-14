@@ -17,8 +17,8 @@ package object anorm extends Wrapper {
   private[tranzactio] val connectionTag = implicitly[Tag[Connection]]
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
-    ZIO.environmentWithZIO[Connection] { c =>
-      attemptBlocking(q(c.get[JdbcConnection]))
+    ZIO.serviceWithZIO[Connection] { c =>
+      attemptBlocking(q(c))
     }.mapError(DbException.Wrapped)
 
   /** Database for the Anorm wrapper */

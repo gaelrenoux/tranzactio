@@ -25,14 +25,14 @@ package object doobie extends Wrapper {
   final val DefaultStreamQueueSize = 16
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
-    ZIO.environmentWithZIO[Connection] { c =>
-      c.get.trans.apply(q)
+    ZIO.serviceWithZIO[Connection] { c =>
+      c.trans.apply(q)
     }.mapError(DbException.Wrapped)
 
   /** Converts a Doobie stream to a ZStream. Note that you can provide a queue size, default value is the same as in ZIO. */
   final def tzioStream[A](q: fs2.Stream[Query, A], queueSize: Int = DefaultStreamQueueSize): TranzactIOStream[A] =
-    ZStream.environmentWithStream[Connection] { c =>
-      c.get.transP.apply(q).toZStream(queueSize)
+    ZStream.serviceWithStream[Connection] { c =>
+      c.transP.apply(q).toZStream(queueSize)
     }.mapError(DbException.Wrapped)
 
   /** Database for the Doobie wrapper */

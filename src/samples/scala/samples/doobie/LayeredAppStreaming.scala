@@ -44,9 +44,9 @@ object LayeredAppStreaming extends zio.ZIOAppDefault {
       }
     } yield trio.reverse
 
-    ZIO.environmentWithZIO[AppEnv] { env =>
+    ZIO.serviceWithZIO[Conf] { conf =>
       // if this implicit is not provided, tranzactio will use Conf.Root.dbRecovery instead
-      implicit val errorRecovery: ErrorStrategiesRef = env.get[Conf.Root].alternateDbRecovery
+      implicit val errorRecovery: ErrorStrategiesRef = conf.alternateDbRecovery
       Database.transactionOrWidenR(queries)
     }
   }
