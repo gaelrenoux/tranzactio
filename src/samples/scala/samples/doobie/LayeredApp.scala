@@ -10,28 +10,21 @@ import zio.Console
  * your dependencies). */
 object LayeredApp extends zio.ZIOAppDefault {
 
-
-  private val zenv = ZEnv.any
   private val conf = Conf.live("samble-doobie-app")
-  private val dbRecoveryConf = conf >>> { (c: Conf.Root) => c.dbRecovery }.toLayer
-  private val datasource = (conf ++ zenv) >>> ConnectionPool.live
-  private val database = (datasource ++ zenv ++ dbRecoveryConf) >>> Database.fromDatasourceAndErrorStrategies
+  private val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery)
+  private val datasource = conf >>> ConnectionPool.live
+  private val database = (datasource ++ dbRecoveryConf) >>> Database.fromDatasourceAndErrorStrategies
   private val personQueries = PersonQueries.live
 
-  type AppEnv = ZEnv with Database with PersonQueries with Conf
-  private val appEnv = zenv ++ conf ++ database ++ personQueries
+  type AppEnv = Database with PersonQueries with Conf
+  private val appEnv = database ++ personQueries ++ conf
 
-
-  override def run: ZIO[Environment with ZEnv with ZIOAppArgs,Any,Any] = {
-    val prog = for {
+  override def run: ZIO[ZIOAppArgs with Scope, Any, Any] =
+    for {
       _ <- Console.printLine("Starting the app")
       trio <- myApp().provideLayer(appEnv)
       _ <- Console.printLine(trio.mkString(", "))
     } yield ExitCode(0)
-
-    prog
-  }
-  
 
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {
@@ -46,9 +39,9 @@ object LayeredApp extends zio.ZIOAppDefault {
       trio <- PersonQueries.list
     } yield trio
 
-    ZIO.environmentWithZIO[AppEnv] { env =>
+    ZIO.serviceWithZIO[Conf] { conf =>
       // if this implicit is not provided, tranzactio will use Conf.Root.dbRecovery instead
-      implicit val errorRecovery: ErrorStrategiesRef = env.get[Conf.Root].alternateDbRecovery
+      implicit val errorRecovery: ErrorStrategiesRef = conf.alternateDbRecovery
       Database.transactionOrWidenR(queries)
     }
   }

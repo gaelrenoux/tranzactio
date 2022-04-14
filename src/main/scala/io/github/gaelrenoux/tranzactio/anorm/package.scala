@@ -1,11 +1,10 @@
 package io.github.gaelrenoux.tranzactio
 
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
+import zio.ZIO.attemptBlocking
 import zio.{Tag, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
-import zio.ZIO.attemptBlocking
-import zio.ZEnvironment
 
 /** TranzactIO module for Anorm. Note that the 'Connection' also includes the Blocking module, as tzio also needs to
  * provide the wrapper around the synchronous Anorm method. */
@@ -18,32 +17,30 @@ package object anorm extends Wrapper {
   private[tranzactio] val connectionTag = implicitly[Tag[Connection]]
 
   override final def tzio[A](q: Query[A]): TranzactIO[A] =
-    ZIO.environmentWithZIO[Connection] { c =>
-      attemptBlocking(q(c.get[JdbcConnection]))
+    ZIO.serviceWithZIO[Connection] { c =>
+      attemptBlocking(q(c))
     }.mapError(DbException.Wrapped)
 
   /** Database for the Anorm wrapper */
   object Database
     extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]]
       with DatabaseModuleTestOps[Connection] {
-
     self =>
 
     private[tranzactio] override implicit val connectionTag: Tag[Connection] = anorm.connectionTag
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    override final def connectionFromJdbc(env: TranzactioEnv, connection: JdbcConnection): ZIO[Any, Nothing, Connection] = {
+    override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] = {
       ZIO.succeed(connection)
-    } 
+    }
 
-   
     /** Creates a Database Layer which requires an existing ConnectionSource. */
-    override final def fromConnectionSource: ZLayer[ConnectionSource with TranzactioEnv, Nothing, Database] = 
-      ZLayer.fromFunctionEnvironment { env: ZEnvironment[ConnectionSource with TranzactioEnv] => 
-        ZEnvironment(new DatabaseServiceBase[Connection](env.get[ConnectionSource.Service]) {
-          override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any,Nothing,Connection] = 
-            self.connectionFromJdbc(env.get[TranzactioEnv], connection)
-        })
+    override final def fromConnectionSource: ZLayer[ConnectionSource, Nothing, Database] =
+      ZLayer.fromFunction { cs: ConnectionSource =>
+        new DatabaseServiceBase[Connection](cs) {
+          override final def connectionFromJdbc(connection: JdbcConnection): ZIO[Any, Nothing, Connection] =
+            self.connectionFromJdbc(connection)
+        }
       }
   }
 

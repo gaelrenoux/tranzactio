@@ -13,9 +13,8 @@ import zio.ZLayer
  */
 object ConnectionPool {
 
-  val live: ZLayer[Conf, Throwable, DataSource] =
-    ZIO.environmentWithZIO[Conf] { env =>
-      val conf = env.get[Conf.Root]
+  val live: ZLayer[Conf, Throwable, DataSource] = ZLayer.fromZIO(
+    ZIO.serviceWithZIO[Conf] { conf =>
       ZIO.attemptBlocking {
         val ds = new JdbcDataSource
         ds.setURL(conf.db.url)
@@ -23,6 +22,7 @@ object ConnectionPool {
         ds.setPassword(conf.db.password)
         ds
       }
-    }.toLayer
+    }
+  )
 
 }
