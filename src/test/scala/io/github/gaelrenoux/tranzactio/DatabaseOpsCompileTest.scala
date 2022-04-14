@@ -23,9 +23,6 @@ trait DatabaseOpsCompileTest {
         serviceOperations.transaction(z[Connection, String])
       val d: ZIO[Any, Either[DbException, String], Int] =
         serviceOperations.transaction(z[Connection, String], commitOnFailure = true)
-
-      val e: ZIO[Environment, Either[DbException, String], Int] =
-        serviceOperations.transactionR(z[Connection with Environment, String], commitOnFailure = true)
     }
 
     object TransactionOrWiden {
