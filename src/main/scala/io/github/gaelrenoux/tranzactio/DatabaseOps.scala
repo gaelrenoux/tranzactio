@@ -110,8 +110,8 @@ object DatabaseOps {
   trait ModuleOps[Connection, Database <: ServiceOps[Connection]] extends DatabaseOps[Connection, Database]
 
   private def dieOnLeft[E](e: Either[DbException, E])(implicit trace: ZTraceElement): UIO[E] = e match {
-    case Right(e) => ZIO.succeed(e)
-    case Left(e) => ZIO.die(e)
+    case Right(appError) => ZIO.succeed(appError)
+    case Left(dbError) => ZIO.die(dbError)
   }
 
 }
