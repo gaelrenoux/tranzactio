@@ -116,7 +116,7 @@ trait ErrorStrategy {
   def retryCountExponential(count: Int, delay: Duration, factor: Double = 2.0, maxDelay: Duration = Duration.Infinity)
     (implicit trace: ZTraceElement): ErrorStrategy = {
     if (maxDelay == Duration.Infinity) retry(Schedule.recurs(count) && Schedule.exponential(delay, factor))
-    else retry(Schedule.recurs(count) && (Schedule.exponential(delay, factor) || Schedule.spaced(10.seconds)))
+    else retry(Schedule.recurs(count) && (Schedule.exponential(delay, factor) || Schedule.spaced(maxDelay)))
   }
 
   def retryCountFixed(count: Int, delay: Duration)(implicit trace: ZTraceElement): ErrorStrategy = {
@@ -126,7 +126,7 @@ trait ErrorStrategy {
   def retryForeverExponential(delay: Duration, factor: Double = 2.0, maxDelay: Duration = Duration.Infinity)
     (implicit trace: ZTraceElement): ErrorStrategy = {
     if (maxDelay == Duration.Infinity) retry(Schedule.exponential(delay, factor))
-    else retry(Schedule.exponential(delay, factor) || Schedule.spaced(10.seconds))
+    else retry(Schedule.exponential(delay, factor) || Schedule.spaced(maxDelay))
   }
 
   def retryForeverFixed(delay: Duration)(implicit trace: ZTraceElement): ErrorStrategy = {
