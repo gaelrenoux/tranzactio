@@ -111,8 +111,8 @@ object DatabaseOps {
   }
 
   private def dieOnLeft[E](e: Either[DbException, E]): UIO[E] = e match {
-    case Right(e) => ZIO.succeed(e)
-    case Left(e) => ZIO.die(e)
+    case Right(appError) => ZIO.succeed(appError)
+    case Left(dbError) => ZIO.die(dbError)
   }
 
 }
