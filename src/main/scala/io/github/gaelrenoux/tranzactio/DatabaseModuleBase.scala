@@ -13,8 +13,8 @@ abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps
   type Service = DatabaseOps.ServiceOps[Connection]
 
   override def transaction[R, E, A](
-      zio: ZIO[Connection with R, E, A],
-      commitOnFailure: Boolean = false
+      zio: => ZIO[Connection with R, E, A],
+      commitOnFailure: => Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: ZTraceElement): ZIO[Database with R, Either[DbException, E], A] = {
     ZIO.serviceWithZIO { db: Database =>
       db.transaction[R, E, A](zio, commitOnFailure)
@@ -22,7 +22,7 @@ abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps
   }
 
   override def autoCommit[R, E, A](
-      zio: ZIO[Connection with R, E, A]
+      zio: => ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: ZTraceElement): ZIO[Database with R, Either[DbException, E], A] = {
     ZIO.serviceWithZIO { db: Database =>
       db.autoCommit[R, E, A](zio)
@@ -33,7 +33,7 @@ abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps
   def fromConnectionSource(implicit trace: ZTraceElement): ZLayer[ConnectionSource, Nothing, Database]
 
   /** Creates a Tranzactio Connection, given a JDBC connection and a Blocking. Useful for some utilities. */
-  def connectionFromJdbc(connection: JdbcConnection)(implicit trace: ZTraceElement): ZIO[Any, Nothing, Connection]
+  def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: ZTraceElement): ZIO[Any, Nothing, Connection]
 
   /** Commodity method: creates a Database Layer which includes its own ConnectionSource based on a DataSource. Most
    * connection pool implementations should be able to provide you a DataSource.

@@ -11,9 +11,9 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
 
   import connectionSource._
 
-  def connectionFromJdbc(connection: JdbcConnection)(implicit trace: ZTraceElement): ZIO[Any, Nothing, Connection]
+  def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: ZTraceElement): ZIO[Any, Nothing, Connection]
 
-  override def transaction[R, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean = false)
+  override def transaction[R, E, A](zio: => ZIO[Connection with R, E, A], commitOnFailure: => Boolean = false)
     (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
     ZIO.environmentWithZIO[R] { r =>
       runTransaction({ c: JdbcConnection =>
@@ -23,7 +23,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
       }, commitOnFailure)
     }
 
-  override def autoCommit[R, E, A](zio: ZIO[Connection with R, E, A])
+  override def autoCommit[R, E, A](zio: => ZIO[Connection with R, E, A])
     (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
     ZIO.environmentWithZIO[R] { r =>
       runAutoCommit { c: JdbcConnection =>

@@ -11,7 +11,7 @@ object ConnectionSource {
 
   trait Service {
 
-    def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean = false)
+    def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A]
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
@@ -26,7 +26,7 @@ object ConnectionSource {
     /** Main function: how to obtain a connection. Needs to be provided. */
     protected def getConnection(implicit trace: ZTraceElement): Task[Connection]
 
-    def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean = false)
+    def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
       openConnection.mapError(Left(_)).acquireReleaseWith(closeConnection(_).orDie) { c: Connection =>
         setAutoCommit(c, autoCommit = false)
@@ -58,28 +58,29 @@ object ConnectionSource {
         getConnection.mapError(e => DbException.Wrapped(e))
       }
 
-    def setAutoCommit(c: Connection, autoCommit: Boolean)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
+    def setAutoCommit(c: => Connection, autoCommit: => Boolean)
+      (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.setAutoCommit) {
         attemptBlocking(c.setAutoCommit(autoCommit))
       }
 
-    def commitConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
+    def commitConnection(c: => Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.commitConnection) {
         attemptBlocking(c.commit())
       }
 
-    def rollbackConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
+    def rollbackConnection(c: => Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.rollbackConnection) {
         attemptBlocking(c.rollback())
       }
 
     /** Cannot fail */
-    def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
+    def closeConnection(c: => Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, DbException, Unit] =
       wrap(bottomErrorStrategy.closeConnection) {
         attemptBlocking(c.close())
       }
 
-    private def wrap[R, A](es: ErrorStrategy)(z: ZIO[Any, Throwable, A])(implicit trace: ZTraceElement) = es {
+    private def wrap[R, A](es: ErrorStrategy)(z: => ZIO[Any, Throwable, A])(implicit trace: ZTraceElement) = es {
       z.mapError(e => DbException.Wrapped(e))
     }
 
@@ -97,7 +98,7 @@ object ConnectionSource {
   }
 
   /** Service based on a single connection, which is reused each time. Uses a Semaphore to make sure the connection
-   * can't be used by concurrent operations. */
+   * can't be used by concurrent operations. The connection will not be closed. */
   private class SingleConnectionService(
       connection: Connection,
       semaphore: Semaphore,
@@ -106,9 +107,9 @@ object ConnectionSource {
 
     override def getConnection(implicit trace: ZTraceElement): UIO[Connection] = UIO.succeed(connection)
 
-    override def closeConnection(c: Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, Nothing, Unit] = ZIO.unit
+    override def closeConnection(c: => Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[Any, Nothing, Unit] = ZIO.unit
 
-    override def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: Boolean)
+    override def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean)
       (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
       semaphore.withPermit {
         super.runTransaction(task, commitOnFailure)

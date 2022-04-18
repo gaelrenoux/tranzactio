@@ -20,7 +20,11 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
     ZLayer.succeed {
       /* Can't extract this into a static class, both Service and Connection are local to the trait */
       new Service {
-        override def transaction[R, E, A](zio: ZIO[Connection with R, E, A], commitOnFailure: Boolean)
+        /**
+         * @param commitOnFailure Unused.
+         * @param errorStrategies Unused.
+         */
+        override def transaction[R, E, A](zio: => ZIO[Connection with R, E, A], commitOnFailure: => Boolean)
           (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
           noConnection.flatMap { c =>
             ZIO.environmentWith[R](_ ++ ZEnvironment(c))
@@ -28,7 +32,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
               .mapError(Right(_))
           }
 
-        override def autoCommit[R, E, A](zio: ZIO[Connection with R, E, A])
+        override def autoCommit[R, E, A](zio: => ZIO[Connection with R, E, A])
           (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
           noConnection.flatMap { c =>
             ZIO.environmentWith[R](_ ++ ZEnvironment(c))

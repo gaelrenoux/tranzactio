@@ -14,7 +14,6 @@ sealed trait ErrorStrategiesRef {
 }
 
 
-
 /** Refer to the parent module, up to the default value in Tranzactio (which is Brutal). */
 case object ErrorStrategiesParent extends ErrorStrategiesRef {
   override def orElse(es: ErrorStrategiesRef): ErrorStrategiesRef = es
@@ -23,11 +22,10 @@ case object ErrorStrategiesParent extends ErrorStrategiesRef {
 }
 
 
-
 /** Contains one ErrorStrategy for each DB operation. Carries a few methods to apply changes to all methods.
  * @param openConnection Note that `openConnection` is a special case. Timeouts should '''not''' be handled in ZIO over
- *                       this method, as that could lead to connection leaks. Therefore, the timeout method specifically
- *                       ignore `openConnection`.
+ * this method, as that could lead to connection leaks. Therefore, the `timeout` method specifically ignore
+ * `openConnection`.
  */
 case class ErrorStrategies(
     openConnection: ErrorStrategy,
@@ -94,25 +92,24 @@ object ErrorStrategies extends ErrorStrategies(ErrorStrategy, ErrorStrategy, Err
 }
 
 
-
 /** An ErrorStrategy defines how to handle one of the DB operations (openConnection, commit, etc.) It is typically
  * created starting from the ErrorStrategy object, then applying timeout and retry. */
 trait ErrorStrategy {
   self =>
 
   /** How this ErrorStrategy transforms a DB operation. */
-  def apply[R, A](z: ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A]
+  def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A]
 
   /** Adds a timeout to the current ErrorStrategy. Note that if a retry has already been defined, the timeout is applied
    * '''after''' the retry. */
   def timeout(d: Duration): ErrorStrategy = new ErrorStrategy {
-    override def apply[R, A](z: ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] =
+    override def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] =
       self(z).timeoutFail(DbException.Timeout(d))(d)
   }
 
   /** Adds a retry to the current ErrorStrategy. */
   def retry(schedule: Schedule[Any, Any, Any]): ErrorStrategy = new ErrorStrategy {
-    def apply[R, A](z: ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] =
+    def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] =
       self(z).retry(schedule)
   }
 
@@ -141,7 +138,7 @@ trait ErrorStrategy {
  * empty strategy (no timeout and no retry). */
 object ErrorStrategy extends ErrorStrategy {
 
-  override def apply[R, A](z: ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] = z
+  override def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] = z
 
   /** Alias for the ErrorStrategy companion object. Can be used for clarity, to mark when you actually want no retry and no timeout. */
   val Nothing: ErrorStrategy = this

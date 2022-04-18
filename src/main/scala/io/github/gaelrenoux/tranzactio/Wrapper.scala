@@ -26,6 +26,6 @@ trait Wrapper {
   type TranzactIO[A]
 
   /** Wraps a library-specific query into a TranzactIO. */
-  def tzio[A](q: Query[A])(implicit trace: ZTraceElement): TranzactIO[A]
+  def tzio[A](q: => Query[A])(implicit trace: ZTraceElement): TranzactIO[A]
 
 }
