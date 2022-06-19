@@ -3,9 +3,8 @@ name: CI
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ master, v3.x ]
   pull_request:
-    branches: [ master ]
   release:
     types: [published]
 
