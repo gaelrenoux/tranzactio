@@ -1,7 +1,7 @@
 package io.github.gaelrenoux.tranzactio.test
 
 import io.github.gaelrenoux.tranzactio._
-import zio.{Tag, ZEnvironment, ZIO, ZLayer, ZTraceElement}
+import zio.{Tag, ZEnvironment, ZIO, ZLayer, Trace}
 
 /** Testing utilities on the Database module. */
 trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
@@ -12,11 +12,11 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
 
   /** A Connection which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
-  def noConnection(implicit trace: ZTraceElement): ZIO[Any, Nothing, Connection] = connectionFromJdbc(NoopJdbcConnection)
+  def noConnection(implicit trace: Trace): ZIO[Any, Nothing, Connection] = connectionFromJdbc(NoopJdbcConnection)
 
   /** A Database which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
-  def none(implicit trace: ZTraceElement): ZLayer[Any, Nothing, AnyDatabase] =
+  def none(implicit trace: Trace): ZLayer[Any, Nothing, AnyDatabase] =
     ZLayer.succeed {
       /* Can't extract this into a static class, both Service and Connection are local to the trait */
       new Service {
@@ -25,7 +25,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
          * @param errorStrategies Unused.
          */
         override def transaction[R, E, A](zio: => ZIO[Connection with R, E, A], commitOnFailure: => Boolean)
-          (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
+          (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
           noConnection.flatMap { c =>
             ZIO.environmentWith[R](_ ++ ZEnvironment(c))
               .flatMap(zio.provideEnvironment(_))
@@ -33,7 +33,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
           }
 
         override def autoCommit[R, E, A](zio: => ZIO[Connection with R, E, A])
-          (implicit errorStrategies: ErrorStrategiesRef, trace: ZTraceElement): ZIO[R, Either[DbException, E], A] =
+          (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
           noConnection.flatMap { c =>
             ZIO.environmentWith[R](_ ++ ZEnvironment(c))
               .flatMap(zio.provideEnvironment(_))
