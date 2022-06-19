@@ -7,7 +7,7 @@ import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
-import zio.{Tag, Task, ZIO, ZLayer, ZTraceElement}
+import zio.{Tag, Task, ZIO, ZLayer, Trace}
 
 import java.sql.{Connection => JdbcConnection}
 
@@ -24,13 +24,13 @@ package object doobie extends Wrapper {
   /** Default queue size when converting from FS2 streams. Same default value as in FS2RIOStreamSyntax.toZStream. */
   final val DefaultStreamQueueSize = 16
 
-  override final def tzio[A](q: => Query[A])(implicit trace: ZTraceElement): TranzactIO[A] =
+  override final def tzio[A](q: => Query[A])(implicit trace: Trace): TranzactIO[A] =
     ZIO.serviceWithZIO[Connection] { c =>
       c.trans.apply(q)
     }.mapError(DbException.Wrapped)
 
   /** Converts a Doobie stream to a ZStream. Note that you can provide a queue size, default value is the same as in ZIO. */
-  final def tzioStream[A](q: => fs2.Stream[Query, A], queueSize: => Int = DefaultStreamQueueSize)(implicit trace: ZTraceElement): TranzactIOStream[A] =
+  final def tzioStream[A](q: => fs2.Stream[Query, A], queueSize: => Int = DefaultStreamQueueSize)(implicit trace: Trace): TranzactIOStream[A] =
     ZStream.serviceWithStream[Connection] { c =>
       c.transP.apply(q).toZStream(queueSize)
     }.mapError(DbException.Wrapped)
@@ -44,7 +44,7 @@ package object doobie extends Wrapper {
     private[tranzactio] override implicit val connectionTag: Tag[Connection] = doobie.connectionTag
 
     /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: ZTraceElement): ZIO[Any, Nothing, Connection] = {
+    override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] = {
       ZIO.succeed {
         val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
         val interp = KleisliInterpreter[Task].ConnectionInterpreter
@@ -54,10 +54,10 @@ package object doobie extends Wrapper {
     }
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
-    override final def fromConnectionSource(implicit trace: ZTraceElement): ZLayer[ConnectionSource, Nothing, Database] =
+    override final def fromConnectionSource(implicit trace: Trace): ZLayer[ConnectionSource, Nothing, Database] =
       ZLayer.fromFunction { cs: ConnectionSource =>
         new DatabaseServiceBase[Connection](cs) {
-          override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: ZTraceElement): ZIO[Any, Nothing, Connection] =
+          override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] =
             self.connectionFromJdbc(connection)
         }
       }

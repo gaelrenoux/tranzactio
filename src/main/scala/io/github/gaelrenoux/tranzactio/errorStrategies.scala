@@ -59,17 +59,17 @@ case class ErrorStrategies(
     all(_.retry(schedule))
 
   def retryCountExponential(count: Int, delay: Duration, factor: Double = 2.0, maxDelay: Duration = Duration.Infinity)
-    (implicit trace: ZTraceElement): ErrorStrategies =
+    (implicit trace: Trace): ErrorStrategies =
     all(_.retryCountExponential(count, delay, factor, maxDelay))
 
-  def retryCountFixed(count: Int, delay: Duration)(implicit trace: ZTraceElement): ErrorStrategies =
+  def retryCountFixed(count: Int, delay: Duration)(implicit trace: Trace): ErrorStrategies =
     all(_.retryCountFixed(count, delay))
 
   def retryForeverExponential(delay: Duration, factor: Double = 2.0, maxDelay: Duration = Duration.Infinity)
-    (implicit trace: ZTraceElement): ErrorStrategies =
+    (implicit trace: Trace): ErrorStrategies =
     all(_.retryForeverExponential(delay, factor, maxDelay))
 
-  def retryForeverFixed(delay: Duration)(implicit trace: ZTraceElement): ErrorStrategies =
+  def retryForeverFixed(delay: Duration)(implicit trace: Trace): ErrorStrategies =
     all(_.retryForeverFixed(delay))
 }
 
@@ -98,38 +98,38 @@ trait ErrorStrategy {
   self =>
 
   /** How this ErrorStrategy transforms a DB operation. */
-  def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A]
+  def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: Trace): ZIO[R, DbException, A]
 
   /** Adds a timeout to the current ErrorStrategy. Note that if a retry has already been defined, the timeout is applied
    * '''after''' the retry. */
   def timeout(d: Duration): ErrorStrategy = new ErrorStrategy {
-    override def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] =
+    override def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: Trace): ZIO[R, DbException, A] =
       self(z).timeoutFail(DbException.Timeout(d))(d)
   }
 
   /** Adds a retry to the current ErrorStrategy. */
   def retry(schedule: Schedule[Any, Any, Any]): ErrorStrategy = new ErrorStrategy {
-    def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] =
+    def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: Trace): ZIO[R, DbException, A] =
       self(z).retry(schedule)
   }
 
   def retryCountExponential(count: Int, delay: Duration, factor: Double = 2.0, maxDelay: Duration = Duration.Infinity)
-    (implicit trace: ZTraceElement): ErrorStrategy = {
+    (implicit trace: Trace): ErrorStrategy = {
     if (maxDelay == Duration.Infinity) retry(Schedule.recurs(count) && Schedule.exponential(delay, factor))
     else retry(Schedule.recurs(count) && (Schedule.exponential(delay, factor) || Schedule.spaced(maxDelay)))
   }
 
-  def retryCountFixed(count: Int, delay: Duration)(implicit trace: ZTraceElement): ErrorStrategy = {
+  def retryCountFixed(count: Int, delay: Duration)(implicit trace: Trace): ErrorStrategy = {
     retry(Schedule.recurs(count) && Schedule.spaced(delay))
   }
 
   def retryForeverExponential(delay: Duration, factor: Double = 2.0, maxDelay: Duration = Duration.Infinity)
-    (implicit trace: ZTraceElement): ErrorStrategy = {
+    (implicit trace: Trace): ErrorStrategy = {
     if (maxDelay == Duration.Infinity) retry(Schedule.exponential(delay, factor))
     else retry(Schedule.exponential(delay, factor) || Schedule.spaced(maxDelay))
   }
 
-  def retryForeverFixed(delay: Duration)(implicit trace: ZTraceElement): ErrorStrategy = {
+  def retryForeverFixed(delay: Duration)(implicit trace: Trace): ErrorStrategy = {
     retry(Schedule.spaced(delay))
   }
 }
@@ -138,7 +138,7 @@ trait ErrorStrategy {
  * empty strategy (no timeout and no retry). */
 object ErrorStrategy extends ErrorStrategy {
 
-  override def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: ZTraceElement): ZIO[R, DbException, A] = z
+  override def apply[R, A](z: => ZIO[R, DbException, A])(implicit trace: Trace): ZIO[R, DbException, A] = z
 
   /** Alias for the ErrorStrategy companion object. Can be used for clarity, to mark when you actually want no retry and no timeout. */
   val Nothing: ErrorStrategy = this

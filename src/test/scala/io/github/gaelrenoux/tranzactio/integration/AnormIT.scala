@@ -23,7 +23,7 @@ object AnormIT extends ITSpec {
   private def wrap[E, A](z: ZIO[Database with PersonQueries, E, A]): ZIO[Scope, E, A] =
     z.provideSome(myLayer)
 
-  def spec: Spec = suite("Anorm Integration Tests")(
+  def spec: MySpec = suite("Anorm Integration Tests")(
     testDataCommittedOnTransactionSuccess,
     testConnectionClosedOnTransactionSuccess,
     testDataRollbackedOnTransactionFailure,
@@ -35,7 +35,7 @@ object AnormIT extends ITSpec {
     testConnectionClosedOnAutoCommitFailure
   )
 
-  private val testDataCommittedOnTransactionSuccess: Spec = test("data committed on transaction success") {
+  private val testDataCommittedOnTransactionSuccess: MySpec = test("data committed on transaction success") {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
@@ -45,7 +45,7 @@ object AnormIT extends ITSpec {
     }
   }
 
-  private val testConnectionClosedOnTransactionSuccess: Spec = test("connection closed on transaction success") {
+  private val testConnectionClosedOnTransactionSuccess: MySpec = test("connection closed on transaction success") {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
@@ -55,7 +55,7 @@ object AnormIT extends ITSpec {
     }
   }
 
-  private val testDataRollbackedOnTransactionFailure: Spec = test("data rollbacked on transaction failure if commitOnFailure=false") {
+  private val testDataRollbackedOnTransactionFailure: MySpec = test("data rollbacked on transaction failure if commitOnFailure=false") {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
@@ -65,7 +65,7 @@ object AnormIT extends ITSpec {
     }
   }
 
-  private val testDataCommittedOnTransactionFailure: Spec = test("data committed on transaction failure if commitOnFailure=true") {
+  private val testDataCommittedOnTransactionFailure: MySpec = test("data committed on transaction failure if commitOnFailure=true") {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
@@ -75,7 +75,7 @@ object AnormIT extends ITSpec {
     }
   }
 
-  private val testConnectionClosedOnTransactionFailure: Spec = test("connection closed on transaction failure") {
+  private val testConnectionClosedOnTransactionFailure: MySpec = test("connection closed on transaction failure") {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
@@ -85,7 +85,7 @@ object AnormIT extends ITSpec {
     } // only the current connection
   }
 
-  private val testDataCommittedOnAutoCommitSuccess: Spec = test("data committed on autoCommit success") {
+  private val testDataCommittedOnAutoCommitSuccess: MySpec = test("data committed on autoCommit success") {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
@@ -95,7 +95,7 @@ object AnormIT extends ITSpec {
     }
   }
 
-  private val testConnectionClosedOnAutoCommitSuccess: Spec = test("connection closed on autoCommit success") {
+  private val testConnectionClosedOnAutoCommitSuccess: MySpec = test("connection closed on autoCommit success") {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
@@ -105,7 +105,7 @@ object AnormIT extends ITSpec {
     } // only the current connection
   }
 
-  private val testDataRollbackedOnAutoCommitFailure: Spec = test("data rollbacked on autoCommit failure") {
+  private val testDataRollbackedOnAutoCommitFailure: MySpec = test("data rollbacked on autoCommit failure") {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
@@ -115,7 +115,7 @@ object AnormIT extends ITSpec {
     }
   }
 
-  private val testConnectionClosedOnAutoCommitFailure: Spec = test("connection closed on autoCommit failure") {
+  private val testConnectionClosedOnAutoCommitFailure: MySpec = test("connection closed on autoCommit failure") {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)

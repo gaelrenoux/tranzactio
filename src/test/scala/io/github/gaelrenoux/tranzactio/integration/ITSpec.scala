@@ -5,7 +5,7 @@ import zio._
 import zio.test.{TestEnvironment, _}
 
 abstract class ITSpec extends ZIOSpecDefault {
-  type Spec = ZSpec[TestEnvironment with Scope, Any]
+  type MySpec = Spec[TestEnvironment with Scope, Any]
 
   implicit val errorStrategies: ErrorStrategies = ErrorStrategies.Nothing
 
