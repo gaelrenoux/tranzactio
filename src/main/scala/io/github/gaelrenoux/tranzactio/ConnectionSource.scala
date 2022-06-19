@@ -27,8 +27,8 @@ object ConnectionSource {
     protected def getConnection(implicit trace: Trace): Task[Connection]
 
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
-      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
-      openConnection.mapError(Left(_)).acquireReleaseWith(closeConnection(_).orDie) { c: Connection =>
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] = {
+      ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { c: Connection =>
         setAutoCommit(c, autoCommit = false)
           .mapError(Left(_))
           .zipRight(task(c).mapError(Right(_)))
@@ -37,10 +37,11 @@ object ConnectionSource {
             _ => commitConnection(c).mapError(Left(_))
           )
       }
+    }
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
-      openConnection.mapError(Left(_)).acquireReleaseWith(closeConnection(_).orDie) { c: Connection =>
+      ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { c: Connection =>
         setAutoCommit(c, autoCommit = true)
           .mapError(Left(_))
           .zipRight {
@@ -105,7 +106,7 @@ object ConnectionSource {
       defaultErrorStrategies: ErrorStrategiesRef
   ) extends ServiceBase(defaultErrorStrategies) {
 
-    override def getConnection(implicit trace: Trace): UIO[Connection] = UIO.succeed(connection)
+    override def getConnection(implicit trace: Trace): UIO[Connection] = ZIO.succeed(connection)
 
     override def closeConnection(c: => Connection)(implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[Any, Nothing, Unit] = ZIO.unit
 
