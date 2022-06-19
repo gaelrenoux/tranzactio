@@ -10,16 +10,16 @@ import zio.{Scope, ZLayer}
 /** This is a test where you check you business methods, using stub queries. */
 object SomeTest extends ZIOSpec[TestEnvironment with Database with PersonQueries] {
   type Env = TestEnvironment with Database with PersonQueries
-  type Spec = ZSpec[Env, Any]
+  type MySpec = Spec[Env, Any]
 
   /** Using a 'none' Database, because we're not actually using it */
-  override def layer: ZLayer[Scope, Any, Env] = testEnvironment ++ PersonQueries.test ++ Database.none
+  override def bootstrap: ZLayer[Scope, Any, Env] = testEnvironment ++ PersonQueries.test ++ Database.none
 
-  override def spec: Spec = suite("My tests with Doobie")(
+  override def spec: MySpec = suite("My tests with Doobie")(
     myTest
   )
 
-  val myTest: Spec = test("some test on a method")(
+  val myTest: MySpec = test("some test on a method")(
     for {
       h <- Database.transaction(PersonQueries.list)
       // do something with that result
