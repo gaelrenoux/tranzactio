@@ -1,11 +1,11 @@
-[TravisCI-Link]: https://travis-ci.org/gaelrenoux/tranzactio
-[TravisCI-Badge]: https://travis-ci.org/gaelrenoux/tranzactio.svg?branch=master
+[CI-Badge]: https://github.com/gaelrenoux/tranzactio/actions/workflows/ci.yml/badge.svg
+[CI-Link]: https://github.com/gaelrenoux/tranzactio/actions?query=branch%3Amaster
 [SonatypeReleases-Link]: https://oss.sonatype.org/content/repositories/releases/io/github/gaelrenoux/tranzactio_2.13/
 [SonatypeReleases-Badge]: https://img.shields.io/nexus/r/https/oss.sonatype.org/io.github.gaelrenoux/tranzactio_2.13.svg
 
 # TranzactIO
 
-[![Build Status][TravisCI-Badge]][TravisCI-Link]
+[![CI][CI-Badge]][CI-Link]
 [![Releases][SonatypeReleases-Badge]][SonatypeReleases-Link]
 
 
