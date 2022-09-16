@@ -7,9 +7,10 @@ description := "ZIO wrapper for Scala DB libraries (e.g. Doobie)"
 
 val scala212Version = "2.12.15"
 val scala213Version = "2.13.8"
-val supportedScalaVersions = List(scala212Version, scala213Version)
+val scala3Version = "3.1.3"
+val supportedScalaVersions = List(scala212Version, scala213Version, scala3Version)
 
-scalaVersion := scala213Version
+scalaVersion := scala3Version
 crossScalaVersions := supportedScalaVersions
 
 
@@ -30,10 +31,11 @@ val allVersionsOption = Seq(
   "-feature", // Emit warning and location for usages of features that should be imported explicitly.
   "-language:existentials", // Existential types (besides wildcard types) can be written and inferred
   "-language:higherKinds", // Allow higher-kinded types
-  "-language:implicitConversions", // Allow definition of implicit functions called views
+  "-language:implicitConversions" // Allow definition of implicit functions called views
+)
 
+val scala2allVersionsOption = Seq(
   "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
-
   "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
   "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
   "-Xlint:delayedinit-select", // Selecting member of DelayedInit.
@@ -45,10 +47,10 @@ val allVersionsOption = Seq(
   "-Xlint:poly-implicit-overload", // Parameterized overloaded implicit methods are not visible as view bounds.
   "-Xlint:private-shadow", //  A private field (or class parameter) shadows a superclass field.
   "-Xlint:stars-align", // Pattern sequence wildcard must align with sequence component.
-  "-Xlint:type-parameter-shadow", // A local type parameter shadows a type already in scope.
+  "-Xlint:type-parameter-shadow" // A local type parameter shadows a type already in scope.
 )
 
-val scala213Options = Seq(
+val scala213Options = scala2allVersionsOption ++ Seq(
   "-Ymacro-annotations",
 
   "-Wdead-code", // Warn when dead code is identified.
@@ -71,10 +73,10 @@ val scala213Options = Seq(
   "-Xlint:nonlocal-return", // A return statement used an exception for flow control.
   "-Xlint:serial", // @SerialVersionUID on traits and non-serializable classes.
   "-Xlint:unused", // Enable -Ywarn-unused:imports,privates,locals,implicits.
-  "-Xlint:valpattern", // Enable pattern checks in val definitions.
+  "-Xlint:valpattern" // Enable pattern checks in val definitions.
 )
 
-val scala212Options = Seq(
+val scala212Options = scala2allVersionsOption ++ Seq(
   "-language:experimental.macros", // Allow macro definition (besides implementation and application)
   "-Ypartial-unification", // Enable partial unification in type constructor inference
 
@@ -94,7 +96,7 @@ val scala212Options = Seq(
   "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
 
   // "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`. // false positives in 2.12
-  "-Xlint:unsound-match", // Pattern match may not be typesafe.
+  "-Xlint:unsound-match" // Pattern match may not be typesafe.
 )
 
 scalacOptions ++= allVersionsOption ++ {
@@ -106,11 +108,11 @@ scalacOptions ++= allVersionsOption ++ {
 }
 
 
-val ZioVersion = "2.0.0"
+val ZioVersion = "2.0.2"
 val ZioCatsVersion = "3.3.0"
 val DoobieVersion = "1.0.0-RC2"
-val AnormVersion = "2.6.10"
-val H2Version = "1.4.200"
+val AnormVersion = "2.7.0"
+val H2Version = "2.1.214"
 
 libraryDependencies ++= Seq(
   /* ZIO */

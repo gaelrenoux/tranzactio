@@ -19,7 +19,7 @@ package object anorm extends Wrapper {
   override final def tzio[A](q: => Query[A])(implicit trace: Trace): TranzactIO[A] =
     ZIO.serviceWithZIO[Connection] { c =>
       attemptBlocking(q(c))
-    }.mapError(DbException.Wrapped)
+    }.mapError(DbException.Wrapped.apply)
 
   /** Database for the Anorm wrapper */
   object Database
@@ -36,7 +36,7 @@ package object anorm extends Wrapper {
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
     override final def fromConnectionSource(implicit trace: Trace): ZLayer[ConnectionSource, Nothing, Database] =
-      ZLayer.fromFunction { cs: ConnectionSource =>
+      ZLayer.fromFunction { (cs: ConnectionSource) =>
         new DatabaseServiceBase[Connection](cs) {
           override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] =
             self.connectionFromJdbc(connection)

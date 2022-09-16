@@ -21,7 +21,7 @@ object AnormIT extends ITSpec {
   val connectionCountQuery: TranzactIO[Int] = tzio(implicit c => SQL(connectionCountSql).as(SqlParser.int(1).single))
 
   private def wrap[E, A](z: ZIO[Database with PersonQueries, E, A]): ZIO[Scope, E, A] =
-    z.provideSome(myLayer)
+    z.provideSome[Scope](myLayer)
 
   def spec: MySpec = suite("Anorm Integration Tests")(
     testDataCommittedOnTransactionSuccess,

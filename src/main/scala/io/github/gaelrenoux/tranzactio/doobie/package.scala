@@ -27,13 +27,13 @@ package object doobie extends Wrapper {
   override final def tzio[A](q: => Query[A])(implicit trace: Trace): TranzactIO[A] =
     ZIO.serviceWithZIO[Connection] { c =>
       c.trans.apply(q)
-    }.mapError(DbException.Wrapped)
+    }.mapError(DbException.Wrapped.apply)
 
   /** Converts a Doobie stream to a ZStream. Note that you can provide a queue size, default value is the same as in ZIO. */
   final def tzioStream[A](q: => fs2.Stream[Query, A], queueSize: => Int = DefaultStreamQueueSize)(implicit trace: Trace): TranzactIOStream[A] =
     ZStream.serviceWithStream[Connection] { c =>
       c.transP.apply(q).toZStream(queueSize)
-    }.mapError(DbException.Wrapped)
+    }.mapError(DbException.Wrapped.apply)
 
   /** Database for the Doobie wrapper */
   object Database
@@ -55,7 +55,7 @@ package object doobie extends Wrapper {
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
     override final def fromConnectionSource(implicit trace: Trace): ZLayer[ConnectionSource, Nothing, Database] =
-      ZLayer.fromFunction { cs: ConnectionSource =>
+      ZLayer.fromFunction { (cs: ConnectionSource) =>
         new DatabaseServiceBase[Connection](cs) {
           override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] =
             self.connectionFromJdbc(connection)
