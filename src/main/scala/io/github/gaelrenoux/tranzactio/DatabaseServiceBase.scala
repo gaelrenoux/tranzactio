@@ -16,7 +16,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
   override def transaction[R, E, A](zio: => ZIO[Connection with R, E, A], commitOnFailure: => Boolean = false)
     (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
     ZIO.environmentWithZIO[R] { r =>
-      runTransaction({ c: JdbcConnection =>
+      runTransaction({ (c: JdbcConnection) =>
         connectionFromJdbc(c)
           .map(r ++ ZEnvironment(_))
           .flatMap(zio.provideEnvironment(_))
@@ -26,7 +26,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
   override def autoCommit[R, E, A](zio: => ZIO[Connection with R, E, A])
     (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
     ZIO.environmentWithZIO[R] { r =>
-      runAutoCommit { c: JdbcConnection =>
+      runAutoCommit { (c: JdbcConnection) =>
         connectionFromJdbc(c)
           .map(r ++ ZEnvironment(_))
           .flatMap(zio.provideEnvironment(_))

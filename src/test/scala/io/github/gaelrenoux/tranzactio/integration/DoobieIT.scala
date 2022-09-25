@@ -24,7 +24,7 @@ object DoobieIT extends ITSpec {
   val connectionCountQuery: TranzactIO[Int] = tzio(Fragment.const(connectionCountSql).query[Int].unique)
 
   private def wrap[E, A](z: ZIO[Database with PersonQueries, E, A]): ZIO[Scope, E, A] =
-    z.provideSome(myLayer)
+    z.provideSome[Scope](myLayer)
 
   def spec: MySpec = suite("Doobie Integration Tests")(
     testDataCommittedOnTransactionSuccess,

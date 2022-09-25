@@ -28,7 +28,7 @@ object ConnectionSource {
 
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] = {
-      ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { c: Connection =>
+      ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { (c: Connection) =>
         setAutoCommit(c, autoCommit = false)
           .mapError(Left(_))
           .zipRight(task(c).mapError(Right(_)))
@@ -41,7 +41,7 @@ object ConnectionSource {
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
-      ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { c: Connection =>
+      ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { (c: Connection) =>
         setAutoCommit(c, autoCommit = true)
           .mapError(Left(_))
           .zipRight {
