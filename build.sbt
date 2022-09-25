@@ -34,7 +34,7 @@ val allVersionsOption = Seq(
   "-language:implicitConversions" // Allow definition of implicit functions called views
 )
 
-val scala2allVersionsOption = Seq(
+val scala2AllVersionsOptions = Seq(
   "-Xcheckinit", // Wrap field accessors to throw an exception on uninitialized access.
   "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
   "-Xlint:constant", // Evaluation of a constant arithmetic expression results in an error.
@@ -50,7 +50,7 @@ val scala2allVersionsOption = Seq(
   "-Xlint:type-parameter-shadow" // A local type parameter shadows a type already in scope.
 )
 
-val scala213Options = scala2allVersionsOption ++ Seq(
+val scala213Options = scala2AllVersionsOptions ++ Seq(
   "-Ymacro-annotations",
 
   "-Wdead-code", // Warn when dead code is identified.
@@ -76,7 +76,7 @@ val scala213Options = scala2allVersionsOption ++ Seq(
   "-Xlint:valpattern" // Enable pattern checks in val definitions.
 )
 
-val scala212Options = scala2allVersionsOption ++ Seq(
+val scala212Options = scala2AllVersionsOptions ++ Seq(
   "-language:experimental.macros", // Allow macro definition (besides implementation and application)
   "-Ypartial-unification", // Enable partial unification in type constructor inference
 
@@ -99,10 +99,15 @@ val scala212Options = scala2allVersionsOption ++ Seq(
   "-Xlint:unsound-match" // Pattern match may not be typesafe.
 )
 
+val scala3Options = Seq(
+  "-Ysafe-init", // Check for uninitialized access.
+)
+
 scalacOptions ++= allVersionsOption ++ {
   CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => scala213Options
     case Some((2, 12)) => scala212Options
+    case Some((3, _)) => scala3Options
     case _ => Nil
   }
 }
