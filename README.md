@@ -45,15 +45,11 @@ That's where TranzactIO comes from. I wanted a way to use ZIO everywhere, and ru
 
 TranzactIO is available on the Sonatype Central Repository (see the Nexus badge on top of this README to get the version number). In your build.sbt:
 ```sbt
-libraryDependencies += "io.github.gaelrenoux" %% "tranzactio" % TranzactIOVersion
+// Add this if you use doobie:
+libraryDependencies += "io.github.gaelrenoux" %% "tranzactio-doobie" % TranzactIOVersion
+// Or this if you use anorm:
+libraryDependencies += "io.github.gaelrenoux" %% "tranzactio-anorm" % TranzactIOVersion
 ```
-
-In addition, you will need to declare the database access library you are using. For instance, with Doobie:
-```sbt
-libraryDependencies += "org.tpolecat" %% "doobie-core" % DoobieVersion
-```
-
-
 
 ### Imports
 
