@@ -2,8 +2,8 @@ package samples.anorm.test
 
 import io.github.gaelrenoux.tranzactio.anorm._
 import samples.anorm.PersonQueries
+import zio.ZLayer
 import zio.test._
-import zio.{Scope, ZLayer}
 
 
 /** This is a test where you check you business methods, using stub queries. */
@@ -12,7 +12,7 @@ object SomeTest extends ZIOSpec[TestEnvironment with Database with PersonQueries
   type MySpec = Spec[Env, Any]
 
   /** Using a 'none' Database, because we're not actually using it */
-  override def bootstrap: ZLayer[Scope, Any, Env] = testEnvironment ++ PersonQueries.test ++ Database.none
+  override def bootstrap: ZLayer[Any, Any, Env] = testEnvironment ++ PersonQueries.test ++ Database.none
 
   override def spec: MySpec = suite("My tests with Anorm")(
     myTest

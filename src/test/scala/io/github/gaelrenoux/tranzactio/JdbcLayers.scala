@@ -2,7 +2,7 @@ package io.github.gaelrenoux.tranzactio
 
 import org.h2.jdbcx.JdbcDataSource
 import zio.test.testEnvironment
-import zio.{Scope, ZIO, ZLayer}
+import zio.{ZIO, ZLayer}
 
 import java.sql.{Connection, DriverManager}
 import java.util.UUID
@@ -30,7 +30,7 @@ object JdbcLayers {
     }
   )
 
-  def datasourceU: ZLayer[Scope, Nothing, DataSource] = testEnvironment >>> datasource.orDie
+  def datasourceU: ZLayer[Any, Nothing, DataSource] = testEnvironment >>> datasource.orDie
 
   /** Generates a layer providing a single connection. Connection will not be closed until you close the JVM. */
   def connection: ZLayer[Any, Throwable, Connection] = ZLayer.fromZIO {
@@ -40,6 +40,6 @@ object JdbcLayers {
     }
   }
 
-  def connectionU: ZLayer[Scope, Nothing, Connection] = testEnvironment >>> connection.orDie
+  def connectionU: ZLayer[Any, Nothing, Connection] = testEnvironment >>> connection.orDie
 
 }

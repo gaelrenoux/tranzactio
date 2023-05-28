@@ -13,9 +13,9 @@ object SingleConnectionSourceTest extends ZIOSpec[TestEnvironment with Connectio
 
   // TODO add aspect to timeout tests to 5 seconds
 
-  override def bootstrap: ZLayer[Scope, Any, Env] = csLayer ++ testEnvironment
+  override def bootstrap: ZLayer[Any, Any, Env] = csLayer ++ testEnvironment
 
-  lazy val csLayer: ZLayer[Scope, Nothing, ConnectionSource] = (JdbcLayers.connectionU ++ testEnvironment) >>> ConnectionSource.fromConnection
+  lazy val csLayer: ZLayer[Any, Nothing, ConnectionSource] = (JdbcLayers.connectionU ++ testEnvironment) >>> ConnectionSource.fromConnection
 
   val connectionCountSql = "select count(*) from information_schema.sessions"
 
