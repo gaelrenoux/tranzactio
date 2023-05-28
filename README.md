@@ -383,6 +383,13 @@ See https://github.com/zio/zio/pull/6455.
 
 
 
+### I'm getting NoClassDefFoundError on cats/FlatMapArityFunctions
+
+Check that your project has `org.typelevel:cats-core` as a dependency.
+See https://github.com/zio/interop-cats/issues/669 for more details about this issue.
+
+
+
 ### When will tranzactio work with <insert DB library here>?
 
 I want to add wrappers around more database access libraries.
