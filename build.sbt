@@ -2,12 +2,13 @@ import BuildHelper._
 
 lazy val root = (project in file(".")).settings(
   name := "tranzactio-root",
+  description := "ZIO wrapper for Scala DB libraries (e.g. Doobie, Anorm)",
   publish / skip := true,
 ).aggregate(core, anorm, doobie, examples)
 
 lazy val core = project.settings(
-  name := "tranzactio",
-  description := "ZIO wrapper for Scala DB libraries (e.g. Doobie, Anorm)",
+  name := "tranzactio-core",
+  description := "Core classes for Tranzactio",
   stdSettings,
   publishSettings,
   libraryDependencies ++= coreDeps,
