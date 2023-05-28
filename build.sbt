@@ -131,15 +131,15 @@ libraryDependencies ++= Seq(
   "org.playframework.anorm" %% "anorm" % AnormVersion % "optional",
 
   /* ZIO test */
-  "dev.zio" %% "zio-test" % ZioVersion % "test",
-  "dev.zio" %% "zio-test-sbt" % ZioVersion % "test",
-  "dev.zio" %% "zio-test-magnolia" % ZioVersion % "test",
+  "dev.zio" %% "zio-test" % ZioVersion % Test,
+  "dev.zio" %% "zio-test-sbt" % ZioVersion % Test,
+  "dev.zio" %% "zio-test-magnolia" % ZioVersion % Test,
 
-  /* Cats for tests */
-  "org.typelevel" %% "cats-core" % CatsVersion % "test",
+  /* Cats for tests. Needed since zio-interop-cats doesn't pull it. */
+  "org.typelevel" %% "cats-core" % CatsVersion % Test,
 
   /* H2 for tests */
-  "com.h2database" % "h2" % H2Version % "test"
+  "com.h2database" % "h2" % H2Version % Test
 )
 
 
