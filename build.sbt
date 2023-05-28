@@ -115,6 +115,7 @@ scalacOptions ++= allVersionsOption ++ {
 
 val ZioVersion = "2.0.13"
 val ZioCatsVersion = "23.0.0.5"
+val CatsVersion = "2.9.0"
 val DoobieVersion = "1.0.0-RC2"
 val AnormVersion = "2.7.0"
 val H2Version = "2.1.214"
@@ -133,6 +134,9 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio-test" % ZioVersion % "test",
   "dev.zio" %% "zio-test-sbt" % ZioVersion % "test",
   "dev.zio" %% "zio-test-magnolia" % ZioVersion % "test",
+
+  /* Cats for tests */
+  "org.typelevel" %% "cats-core" % CatsVersion % "test",
 
   /* H2 for tests */
   "com.h2database" % "h2" % H2Version % "test"
