@@ -7,7 +7,7 @@ description := "ZIO wrapper for Scala DB libraries (e.g. Doobie)"
 
 val scala212Version = "2.12.15"
 val scala213Version = "2.13.8"
-val scala3Version = "3.1.3"
+val scala3Version = "3.2.2"
 val supportedScalaVersions = List(scala212Version, scala213Version, scala3Version)
 
 scalaVersion := scala3Version
