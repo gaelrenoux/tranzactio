@@ -16,15 +16,10 @@ object BuildHelper {
     val scala3 = "3.2.2"
   }
   
-  private val dependencies = Seq(
+  val coreDeps: Seq[ModuleID] = Seq(
     /* ZIO */
     "dev.zio" %% "zio" % V.zio,
     "dev.zio" %% "zio-streams" % V.zio,
-    "dev.zio" %% "zio-interop-cats" % V.zioCats,
-
-    /* Doobie */
-    "org.tpolecat" %% "doobie-core" % V.doobie % Optional,
-    "org.playframework.anorm" %% "anorm" % V.anorm % Optional,
 
     /* ZIO test */
     "dev.zio" %% "zio-test" % V.zio % Test,
@@ -37,12 +32,18 @@ object BuildHelper {
     /* H2 for tests */
     "com.h2database" % "h2" % V.h2 % Test
   )
-  
+  val anormDeps: Seq[ModuleID] = Seq(
+    "org.playframework.anorm" %% "anorm" % V.anorm,
+  )
+  val doobieDeps: Seq[ModuleID] = Seq(
+    "dev.zio" %% "zio-interop-cats" % V.zioCats,
+    "org.tpolecat" %% "doobie-core" % V.doobie,
+  )
+
   val stdSettings: Seq[Setting[_]] = Seq(
     scalaVersion := V.scala3,
     crossScalaVersions := Seq(V.scala212, V.scala213, V.scala3),
     scalacOptions ++= scalaVersion(ScalacOptions(_)).value,
-    libraryDependencies ++= dependencies,
     Test / fork := true,
     Test / testForkedParallel := true, // run tests in parallel on the forked JVM
     Test / testOptions += Tests.Argument("-oD"), // show test duration

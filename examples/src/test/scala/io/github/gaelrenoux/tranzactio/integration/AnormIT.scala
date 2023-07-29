@@ -9,7 +9,7 @@ import zio.test.Assertion._
 import zio.test._
 import zio.{Scope, ZIO, ZLayer}
 
-/** Integration tests for Doobie */
+/** Integration tests for Anorm */
 object AnormIT extends ITSpec {
 
   /** Layer is recreated on each test, to have a different database every time. */
