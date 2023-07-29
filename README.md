@@ -395,3 +395,21 @@ but I'm completely unfamiliar with it.
 Slick, however, is a problem. I know it quite well, tried to implement a TranzactIO module for it, and couldn't.
 Transactions cannot be handled externally using Slick.
 I don't think it's doable until this ticket is done: https://github.com/slick/slick/issues/1563
+
+
+
+### How do I migrate to 5.x?
+
+Versions starting at 5.0.0 have split artifacts for Anorm and Doobie. If you were using a 4.x version or below, you need
+to update your project's dependencies.
+
+```sbt
+// Before
+// libraryDependencies += "io.github.gaelrenoux" %% "tranzactio" % TranzactIOVersion
+
+// For Doobie
+libraryDependencies += "io.github.gaelrenoux" %% "tranzactio-doobie" % TranzactIOVersion
+
+// For Anorm
+libraryDependencies += "io.github.gaelrenoux" %% "tranzactio-anorm" % TranzactIOVersion
+```
