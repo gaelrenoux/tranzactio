@@ -1,13 +1,15 @@
 package io.github.gaelrenoux.tranzactio
 
 import _root_.doobie.free.KleisliInterpreter
+import _root_.doobie.LogHandler
 import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
 import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
+import io.github.gaelrenoux.tranzactio.test.NoopJdbcConnection
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
-import zio.{Tag, Task, ZIO, ZLayer, Trace}
+import zio.{Tag, Task, Trace, ZIO, ZLayer}
 
 import java.sql.{Connection => JdbcConnection}
 
@@ -22,7 +24,17 @@ package object doobie extends Wrapper {
   private[tranzactio] val connectionTag = implicitly[Tag[Connection]]
 
   /** Default queue size when converting from FS2 streams. Same default value as in FS2RIOStreamSyntax.toZStream. */
-  final val DefaultStreamQueueSize = 16
+  private final val DefaultStreamQueueSize = 16
+
+  /** How to provide a Connection for the module, given a JDBC connection and some environment. */
+  private final def connectionFromJdbc(connection: => JdbcConnection, dbContext: DbContext)(implicit trace: Trace): ZIO[Any, Nothing, Connection] = {
+    ZIO.succeed {
+      val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
+      val interp = KleisliInterpreter[Task](dbContext.logHandler).ConnectionInterpreter
+      val tran = Transactor(connection, connect, interp, Strategy.void)
+      tran
+    }
+  }
 
   override final def tzio[A](q: => Query[A])(implicit trace: Trace): TranzactIO[A] =
     ZIO.serviceWithZIO[Connection] { c =>
@@ -37,30 +49,31 @@ package object doobie extends Wrapper {
 
   /** Database for the Doobie wrapper */
   object Database
-    extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]]
-      with DatabaseModuleTestOps[Connection] {
+    extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection], DbContext]
+      with DatabaseModuleTestOps[Connection, DbContext] {
     self =>
 
     private[tranzactio] override implicit val connectionTag: Tag[Connection] = doobie.connectionTag
 
-    /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-    override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] = {
-      ZIO.succeed {
-        val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
-        val interp = KleisliInterpreter[Task].ConnectionInterpreter
-        val tran = Transactor(connection, connect, interp, Strategy.void)
-        tran
-      }
-    }
+    override def noConnection(implicit trace: Trace): ZIO[Any, Nothing, Transactor[Task]] =
+      connectionFromJdbc(NoopJdbcConnection, DbContext.Default)
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
-    override final def fromConnectionSource(implicit trace: Trace): ZLayer[ConnectionSource, Nothing, Database] =
-      ZLayer.fromFunction { (cs: ConnectionSource) =>
-        new DatabaseServiceBase[Connection](cs) {
-          override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] =
-            self.connectionFromJdbc(connection)
-        }
-      }
+    override final def fromConnectionSource(implicit dbContext: DbContext, trace: Trace): ZLayer[ConnectionSource, Nothing, Database] =
+      ZLayer.fromFunction { (cs: ConnectionSource) => new DatabaseService(cs, dbContext) }
+  }
+
+  private class DatabaseService(cs: ConnectionSource, val dbContext: DbContext) extends DatabaseServiceBase[Connection](cs) {
+    override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Transactor[Task]] =
+      doobie.connectionFromJdbc(connection, dbContext)
+  }
+
+  case class DbContext(
+      logHandler: LogHandler[Task]
+  )
+
+  object DbContext {
+    implicit val Default: DbContext = DbContext(LogHandler.noop[Task])
   }
 
 }

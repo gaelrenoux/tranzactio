@@ -1,5 +1,7 @@
 package samples.doobie
 
+import zio.interop.catz._
+import doobie.util.log.LogHandler
 import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategiesRef}
 import samples.{Conf, ConnectionPool, Person}
@@ -13,6 +15,8 @@ object LayeredApp extends zio.ZIOAppDefault {
   private val conf = Conf.live("samble-doobie-app")
   private val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery)
   private val datasource = conf >>> ConnectionPool.live
+  // The DoobieDbContext is optional, default is to have the noop LogHandler
+  implicit val doobieContext: DbContext = DbContext(logHandler = LogHandler.jdkLogHandler[Task])
   private val database = (datasource ++ dbRecoveryConf) >>> Database.fromDatasourceAndErrorStrategies
   private val personQueries = PersonQueries.live
 

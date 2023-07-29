@@ -14,6 +14,9 @@ trait Wrapper {
 
   val Database: DatabaseOps.ModuleOps[Connection, _ <: DatabaseOps.ServiceOps[Connection]] // scalastyle:ignore field.name
 
+  /** Contextual information for the DB, its content depending on the underlying library. */
+  type DbContext
+
   /** The specific type used in the wrapped library to represent an SQL query. */
   type Query[A]
 
