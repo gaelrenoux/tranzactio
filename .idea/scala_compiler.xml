@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="tranzactio_8488" />
-    <profile name="sbt 2" modules="tranzactio">
+    <profile name="sbt 1" modules="tranzactio-root,tranzactio_8488" />
+    <profile name="sbt 2" modules="examples,tranzactio,tranzactio-anorm,tranzactio-core,tranzactio-doobie">
       <option name="implicitConversions" value="true" />
       <option name="higherKinds" value="true" />
       <option name="existentials" value="true" />
