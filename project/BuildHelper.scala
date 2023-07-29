@@ -5,7 +5,7 @@ import xerial.sbt.Sonatype.autoImport._
 
 object BuildHelper {
   object V {
-    val zio = "2.0.14"
+    val zio = "2.0.15"
     val zioCats = "23.0.0.8"
     val cats = "2.9.0"
     val doobie = "1.0.0-RC2"
@@ -13,7 +13,7 @@ object BuildHelper {
     val h2 = "2.2.220"
     val scala212 = "2.12.18"
     val scala213 = "2.13.11"
-    val scala3 = "3.2.2"
+    val scala3 = "3.3.0"
   }
   
   val coreDeps: Seq[ModuleID] = Seq(
