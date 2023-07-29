@@ -27,7 +27,7 @@ package object doobie extends Wrapper {
   private final val DefaultStreamQueueSize = 16
 
   /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-  private final def connectionFromJdbc(connection: => JdbcConnection, dbContext: DbContext)(implicit trace: Trace): ZIO[Any, Nothing, Connection] = {
+  private final def transactorFromJdbcConnection(connection: => JdbcConnection, dbContext: DbContext)(implicit trace: Trace): ZIO[Any, Nothing, Connection] = {
     ZIO.succeed {
       val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
       val interp = KleisliInterpreter[Task](dbContext.logHandler).ConnectionInterpreter
@@ -56,7 +56,7 @@ package object doobie extends Wrapper {
     private[tranzactio] override implicit val connectionTag: Tag[Connection] = doobie.connectionTag
 
     override def noConnection(implicit trace: Trace): ZIO[Any, Nothing, Transactor[Task]] =
-      connectionFromJdbc(NoopJdbcConnection, DbContext.Default)
+      transactorFromJdbcConnection(NoopJdbcConnection, DbContext.Default)
 
     /** Creates a Database Layer which requires an existing ConnectionSource. */
     override final def fromConnectionSource(implicit dbContext: DbContext, trace: Trace): ZLayer[ConnectionSource, Nothing, Database] =
@@ -65,7 +65,7 @@ package object doobie extends Wrapper {
 
   private class DatabaseService(cs: ConnectionSource, val dbContext: DbContext) extends DatabaseServiceBase[Connection](cs) {
     override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Transactor[Task]] =
-      doobie.connectionFromJdbc(connection, dbContext)
+      transactorFromJdbcConnection(connection, dbContext)
   }
 
   case class DbContext(

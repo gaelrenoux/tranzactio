@@ -17,11 +17,6 @@ package object anorm extends Wrapper {
 
   private[tranzactio] val connectionTag = implicitly[Tag[Connection]]
 
-  /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-  private final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] = {
-    ZIO.succeed(connection)
-  }
-
   override final def tzio[A](q: => Query[A])(implicit trace: Trace): TranzactIO[A] =
     ZIO.serviceWithZIO[Connection] { c =>
       attemptBlocking(q(c))
@@ -44,6 +39,6 @@ package object anorm extends Wrapper {
 
   private class DatabaseService(cs: ConnectionSource) extends DatabaseServiceBase[Connection](cs) {
     override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] =
-      anorm.connectionFromJdbc(connection)
+      ZIO.succeed(connection)
   }
 }
