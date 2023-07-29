@@ -10,9 +10,9 @@ object BuildHelper {
     val cats = "2.9.0"
     val doobie = "1.0.0-RC2"
     val anorm = "2.7.0"
-    val h2 = "2.1.214"
-    val scala212 = "2.12.17"
-    val scala213 = "2.13.10"
+    val h2 = "2.2.220"
+    val scala212 = "2.12.18"
+    val scala213 = "2.13.11"
     val scala3 = "3.2.2"
   }
   
