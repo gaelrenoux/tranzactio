@@ -1,12 +1,11 @@
 package samples.doobie
 
-import zio.interop.catz._
 import doobie.util.log.LogHandler
 import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategiesRef}
 import samples.{Conf, ConnectionPool, Person}
 import zio._
-import zio.Console
+import zio.interop.catz._
 
 /** A sample app where all modules are linked through ZLayer. Should run as is (make sure you have com.h2database:h2 in
  * your dependencies). */
