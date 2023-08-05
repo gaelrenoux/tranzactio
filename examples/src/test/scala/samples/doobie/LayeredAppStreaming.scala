@@ -5,7 +5,6 @@ import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategiesRef}
 import samples.{Conf, ConnectionPool, Person}
 import zio._
 import zio.stream._
-import zio.Console
 
 /** Same as LayeredApp, but using Doobie's stream (converted into ZIO strem). */
 // scalastyle:off magic.number

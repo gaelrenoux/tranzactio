@@ -8,7 +8,7 @@ object BuildHelper {
     val zio = "2.0.15"
     val zioCats = "23.0.0.8"
     val cats = "2.9.0"
-    val doobie = "1.0.0-RC2"
+    val doobie = "1.0.0-RC4"
     val anorm = "2.7.0"
     val h2 = "2.2.220"
     val scala212 = "2.12.18"

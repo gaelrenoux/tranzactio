@@ -4,7 +4,7 @@ import io.github.gaelrenoux.tranzactio._
 import zio.{Tag, ZEnvironment, ZIO, ZLayer, Trace}
 
 /** Testing utilities on the Database module. */
-trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection]] {
+trait DatabaseModuleTestOps[Connection, DbContext] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection], DbContext] {
 
   type AnyDatabase = DatabaseOps.ServiceOps[Connection]
 
@@ -12,7 +12,7 @@ trait DatabaseModuleTestOps[Connection] extends DatabaseModuleBase[Connection, D
 
   /** A Connection which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
-  def noConnection(implicit trace: Trace): ZIO[Any, Nothing, Connection] = connectionFromJdbc(NoopJdbcConnection)
+  def noConnection(implicit trace: Trace): ZIO[Any, Nothing, Connection]
 
   /** A Database which is incapable of running anything, to use when unit testing (and the queries are actually stubbed,
    * so they do not need a Database). Trying to run actual queries against it will fail. */
