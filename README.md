@@ -1,7 +1,7 @@
 [CI-Badge]: https://github.com/gaelrenoux/tranzactio/actions/workflows/ci.yml/badge.svg
 [CI-Link]: https://github.com/gaelrenoux/tranzactio/actions?query=branch%3Amaster
-[SonatypeReleases-Link]: https://oss.sonatype.org/content/repositories/releases/io/github/gaelrenoux/tranzactio_2.13/
-[SonatypeReleases-Badge]: https://img.shields.io/nexus/r/https/oss.sonatype.org/io.github.gaelrenoux/tranzactio_2.13.svg
+[SonatypeReleases-Link]: https://oss.sonatype.org/content/repositories/releases/io/github/gaelrenoux/tranzactio-core_3/
+[SonatypeReleases-Badge]: https://img.shields.io/nexus/r/https/oss.sonatype.org/io.github.gaelrenoux/tranzactio-core_3.svg
 
 # TranzactIO
 
@@ -177,26 +177,27 @@ Find more in `src/main/samples`, or look below for some details.
 The table below indicates for each version of TranzactIO, the versions of ZIO or libraries it's been built with.
 Check the backward compatibility information on those libraries to check which versions TranzactIO can support.
 
-| TranzactIO | Scala       | ZIO          | Doobie       | Anorm        |
-|------------|-------------|--------------|--------------|--------------|
-| 0.1.0      |      2.13   | 1.0.0-RC17   | 0.8.6        | -            |
-| 0.2.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6        | -            |
-| 0.3.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6        | 2.6.5        |
-| 0.4.0      |      2.13   | 1.0.0-RC19-2 | 0.9.0        | 2.6.5        |
-| 0.5.0      |      2.13   | 1.0.0-RC20   | 0.9.0        | 2.6.5        |
-| 0.6.0      |      2.13   | 1.0.0-RC21-1 | 0.9.0        | 2.6.5        |
-| 1.0.0      |      2.13   | 1.0.0        | 0.9.0        | 2.6.7        |
-| 1.0.1      |      2.13   | 1.0.0        | 0.9.0        | 2.6.7        |
-| 1.1.0      |      2.13   | 1.0.3        | 0.9.2        | 2.6.7        |
-| 1.2.0      |      2.13   | 1.0.3        | 0.9.2        | 2.6.7        |
-| 1.3.0      |      2.13   | 1.0.5        | 0.9.4        | 2.6.10       |
-| 2.0.0      |      2.13   | 1.0.5        | 0.12.1       | 2.6.10       |
-| 2.1.0      | 2.12 2.13   | 1.0.9        | 0.13.4       | 2.6.10       |
-| 3.0.0      | 2.12 2.13   | 1.0.11       | 1.0.0-RC2    | 2.6.10       |
-| 4.0.0      | 2.12 2.13   | 2.0.0        | 1.0.0-RC2    | 2.6.10       |
-| 4.1.0      | 2.12 2.13 3 | 2.0.2        | 1.0.0-RC2    | 2.7.0        |
-| 4.2.0      | 2.12 2.13 3 | 2.0.13       | 1.0.0-RC2    | 2.7.0        |
-| master     | 2.12 2.13 3 | 2.0.13       | 1.0.0-RC2    | 2.7.0        |
+| TranzactIO | Scala       | ZIO          | Doobie    | Anorm        |
+|------------|-------------|--------------|-----------|--------------|
+| 0.1.0      |      2.13   | 1.0.0-RC17   | 0.8.6     | -            |
+| 0.2.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6     | -            |
+| 0.3.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6     | 2.6.5        |
+| 0.4.0      |      2.13   | 1.0.0-RC19-2 | 0.9.0     | 2.6.5        |
+| 0.5.0      |      2.13   | 1.0.0-RC20   | 0.9.0     | 2.6.5        |
+| 0.6.0      |      2.13   | 1.0.0-RC21-1 | 0.9.0     | 2.6.5        |
+| 1.0.0      |      2.13   | 1.0.0        | 0.9.0     | 2.6.7        |
+| 1.0.1      |      2.13   | 1.0.0        | 0.9.0     | 2.6.7        |
+| 1.1.0      |      2.13   | 1.0.3        | 0.9.2     | 2.6.7        |
+| 1.2.0      |      2.13   | 1.0.3        | 0.9.2     | 2.6.7        |
+| 1.3.0      |      2.13   | 1.0.5        | 0.9.4     | 2.6.10       |
+| 2.0.0      |      2.13   | 1.0.5        | 0.12.1    | 2.6.10       |
+| 2.1.0      | 2.12 2.13   | 1.0.9        | 0.13.4    | 2.6.10       |
+| 3.0.0      | 2.12 2.13   | 1.0.11       | 1.0.0-RC2 | 2.6.10       |
+| 4.0.0      | 2.12 2.13   | 2.0.0        | 1.0.0-RC2 | 2.6.10       |
+| 4.1.0      | 2.12 2.13 3 | 2.0.2        | 1.0.0-RC2 | 2.7.0        |
+| 4.2.0      | 2.12 2.13 3 | 2.0.13       | 1.0.0-RC2 | 2.7.0        |
+| 5.0.1      | 2.12 2.13 3 | 2.0.15       | 1.0.0-RC4 | 2.7.0        |
+| master     | 2.12 2.13 3 | 2.0.15       | 1.0.0-RC4 | 2.7.0        |
 
 
 
