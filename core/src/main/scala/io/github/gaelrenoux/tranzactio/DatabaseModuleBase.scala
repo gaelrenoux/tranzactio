@@ -2,8 +2,9 @@ package io.github.gaelrenoux.tranzactio
 
 
 import zio.{Tag, Trace, ZIO, ZLayer}
-
 import javax.sql.DataSource
+
+import zio.stream.ZStream
 
 /** Template implementing the commodity methods for a Db module. */
 abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps[Connection] : Tag, DbContext]
@@ -20,11 +21,28 @@ abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps
     }
   }
 
+  override def transactionStream[R, E, A](
+      stream: => ZStream[Connection with R, E, A],
+      commitOnFailure: => Boolean = false
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[Database with R, Either[DbException, E], A] = {
+    ZStream.serviceWithStream[Database] { db =>
+      db.transactionStream[R, E, A](stream, commitOnFailure)
+    }
+  }
+
   override def autoCommit[R, E, A](
       zio: => ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[Database with R, Either[DbException, E], A] = {
     ZIO.serviceWithZIO[Database] { db =>
       db.autoCommit[R, E, A](zio)
+    }
+  }
+
+  override def autoCommitStream[R, E, A](
+      stream: => ZStream[Connection with R, E, A]
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[Database with R, Either[DbException, E], A] = {
+    ZStream.serviceWithStream[Database] { db =>
+      db.autoCommitStream[R, E, A](stream)
     }
   }
 
