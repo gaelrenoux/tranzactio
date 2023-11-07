@@ -1,7 +1,9 @@
 package io.github.gaelrenoux.tranzactio.test
 
+import zio.stream.ZStream
+
 import io.github.gaelrenoux.tranzactio._
-import zio.{Tag, ZEnvironment, ZIO, ZLayer, Trace}
+import zio.{Tag, Trace, ZEnvironment, ZIO, ZLayer}
 
 /** Testing utilities on the Database module. */
 trait DatabaseModuleTestOps[Connection, DbContext] extends DatabaseModuleBase[Connection, DatabaseOps.ServiceOps[Connection], DbContext] {
@@ -32,11 +34,27 @@ trait DatabaseModuleTestOps[Connection, DbContext] extends DatabaseModuleBase[Co
               .mapError(Right(_))
           }
 
+        override def transactionStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean = false)
+          (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] = {
+          ZStream.fromZIO(noConnection).flatMap { c =>
+            ZStream.environmentWith[R](_ ++ ZEnvironment(c))
+              .flatMap(stream.provideEnvironment(_)).mapError(Right(_))
+          }
+        }
+
         override def autoCommit[R, E, A](zio: => ZIO[Connection with R, E, A])
           (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
           noConnection.flatMap { c =>
             ZIO.environmentWith[R](_ ++ ZEnvironment(c))
               .flatMap(zio.provideEnvironment(_))
+              .mapError(Right(_))
+          }
+
+        override def autoCommitStream[R, E, A](stream: => ZStream[Connection with R, E, A])
+          (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
+          ZStream.fromZIO(noConnection).flatMap { c =>
+            ZStream.environmentWith[R](_ ++ ZEnvironment(c))
+              .flatMap(stream.provideEnvironment(_))
               .mapError(Right(_))
           }
       }
