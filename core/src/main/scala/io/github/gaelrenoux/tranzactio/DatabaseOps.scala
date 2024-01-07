@@ -164,6 +164,7 @@ object DatabaseOps {
   /** API for commodity methods needing a Database. */
   trait ModuleOps[Connection, Database <: ServiceOps[Connection]] extends DatabaseOps[Connection, Database]
 
+  // TODO Migrate to using mapErrorCause (same as transactionOrDieStream)
   private def dieOnLeft[E](e: Either[DbException, E])(implicit trace: Trace): UIO[E] = e match {
     case Right(appError) => ZIO.succeed(appError)
     case Left(dbError) => ZIO.die(dbError)
