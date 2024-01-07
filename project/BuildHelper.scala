@@ -5,15 +5,15 @@ import xerial.sbt.Sonatype.autoImport._
 
 object BuildHelper {
   object V {
-    val zio = "2.0.15"
-    val zioCats = "23.0.0.8"
-    val cats = "2.9.0"
+    val zio = "2.0.21"
+    val zioCats = "23.1.0.0"
+    val cats = "2.10.0"
     val doobie = "1.0.0-RC5"
     val anorm = "2.7.0"
-    val h2 = "2.2.220"
+    val h2 = "2.2.224"
     val scala212 = "2.12.18"
-    val scala213 = "2.13.11"
-    val scala3 = "3.3.0"
+    val scala213 = "2.13.12"
+    val scala3 = "3.3.1"
   }
   
   val coreDeps: Seq[ModuleID] = Seq(
@@ -26,9 +26,6 @@ object BuildHelper {
     "dev.zio" %% "zio-test-sbt" % V.zio % Test,
     "dev.zio" %% "zio-test-magnolia" % V.zio % Test,
 
-    /* Cats for tests. Needed since zio-interop-cats doesn't pull it. */
-    "org.typelevel" %% "cats-core" % V.cats % Test,
-
     /* H2 for tests */
     "com.h2database" % "h2" % V.h2 % Test
   )
@@ -37,6 +34,7 @@ object BuildHelper {
   )
   val doobieDeps: Seq[ModuleID] = Seq(
     "dev.zio" %% "zio-interop-cats" % V.zioCats,
+    "org.typelevel" %% "cats-core" % V.cats,
     "org.tpolecat" %% "doobie-core" % V.doobie,
   )
 

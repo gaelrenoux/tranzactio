@@ -197,7 +197,7 @@ Check the backward compatibility information on those libraries to check which v
 | 4.1.0      | 2.12 2.13 3 | 2.0.2        | 1.0.0-RC2 | 2.7.0        |
 | 4.2.0      | 2.12 2.13 3 | 2.0.13       | 1.0.0-RC2 | 2.7.0        |
 | 5.0.1      | 2.12 2.13 3 | 2.0.15       | 1.0.0-RC4 | 2.7.0        |
-| master     | 2.12 2.13 3 | 2.0.15       | 1.0.0-RC4 | 2.7.0        |
+| master     | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC5 | 2.7.0        |
 
 
 
