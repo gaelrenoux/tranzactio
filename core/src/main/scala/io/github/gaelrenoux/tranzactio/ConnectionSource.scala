@@ -2,10 +2,10 @@ package io.github.gaelrenoux.tranzactio
 
 import zio.ZIO.attemptBlocking
 import zio._
+import zio.stream.ZStream
+
 import java.sql.Connection
 import javax.sql.DataSource
-
-import zio.stream.ZStream
 
 /** A module able to provide and manage connections. They typically come from a connection pool. */
 object ConnectionSource {
@@ -47,20 +47,22 @@ object ConnectionSource {
     }
 
     def runTransactionStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
-       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] = {
-
-      ZStream.acquireReleaseWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).mapError(Left(_)))
-        { c => commitConnection(c).tapEither(_ => closeConnection(c)).orDie }
-        .flatMap(c => task(c).mapError(Right(_))
-          .tapError(_ => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).mapError(Left(_))))
-        .catchSomeCause { case Cause.Die(error: DbException, _) => ZStream.fail(Left(error)) }
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] = {
+      ZStream
+        .acquireReleaseWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).mapError(Left(_)))(c => commitConnection(c).tapEither(_ => closeConnection(c)).orDie)
+        .flatMap { (c: Connection) =>
+          task(c).mapError(Right(_))
+            .tapError(_ => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).mapError(Left(_)))
+        }
+        .catchSomeCause {
+          case Cause.Die(error: DbException, _) => ZStream.fail(Left(error))
+        }
     }
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
       ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { (c: Connection) =>
-        setAutoCommit(c, autoCommit = true)
-          .mapError(Left(_))
+        setAutoCommit(c, autoCommit = true).mapError(Left(_))
           .zipRight {
             task(c).mapError(Right(_))
           }
@@ -68,10 +70,14 @@ object ConnectionSource {
 
     def runAutoCommitStream[R, E, A](task: Connection => ZStream[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
-      ZStream.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie).flatMap { (c: Connection) =>
-        ZStream.fromZIO(setAutoCommit(c, autoCommit = true).mapError(Left(_)))
-          .zipRight {task(c).mapError(Right(_))}
-      }
+      ZStream
+        .acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie)
+        .flatMap { (c: Connection) =>
+          ZStream.fromZIO(setAutoCommit(c, autoCommit = true).mapError(Left(_)))
+            .zipRight {
+              task(c).mapError(Right(_))
+            }
+        }
 
     // TODO handle error reporting when retrying
 
