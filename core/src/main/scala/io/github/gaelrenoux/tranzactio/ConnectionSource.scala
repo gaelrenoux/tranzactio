@@ -74,7 +74,7 @@ object ConnectionSource {
         .acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie)
         .flatMap { (c: Connection) =>
           ZStream.fromZIO(setAutoCommit(c, autoCommit = true).mapError(Left(_)))
-            .zipRight {
+            .crossRight {
               task(c).mapError(Right(_))
             }
         }
