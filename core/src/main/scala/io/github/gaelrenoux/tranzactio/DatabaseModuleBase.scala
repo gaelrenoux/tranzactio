@@ -1,10 +1,10 @@
 package io.github.gaelrenoux.tranzactio
 
 
-import zio.{Tag, Trace, ZIO, ZLayer}
-import javax.sql.DataSource
-
 import zio.stream.ZStream
+import zio.{Tag, Trace, ZIO, ZLayer}
+
+import javax.sql.DataSource
 
 /** Template implementing the commodity methods for a Db module. */
 abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps[Connection] : Tag, DbContext]

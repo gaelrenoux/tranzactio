@@ -30,6 +30,10 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, Either[DbException, E], A] =
     transaction[R, E, A](zio, commitOnFailure)
 
+  /** As `transaction`, for ZStream instances instead of ZIO instances.
+   *
+   * This method should be implemented by subclasses, to provide the connection.
+   */
   def transactionStream[R <: Any, E, A](
       stream: => ZStream[Connection with R, E, A],
       commitOnFailure: => Boolean = false
@@ -50,10 +54,11 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     transactionOrWiden[R, E, A](zio, commitOnFailure)
 
+  /** As `transactionOrWiden`, for ZStream instances instead of ZIO instances. */
   final def transactionOrWidenStream[R, E >: DbException, A](
       stream: => ZStream[Connection with R, E, A],
       commitOnFailure: => Boolean = false
-    )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
     transactionStream[R, E, A](stream, commitOnFailure).mapError(_.fold(identity, identity))
 
   /** As `transaction`, but errors when handling the connections are treated as defects instead of failures. */
@@ -70,16 +75,17 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     transactionOrDie[R, E, A](zio, commitOnFailure)
 
+  /** As `transactionOrDie`, for ZStream instances instead of ZIO instances. */
   final def transactionOrDieStream[R, E, A](
       stream: => ZStream[Connection with R, E, A],
       commitOnFailure: => Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
     transactionStream[R, E, A](stream, commitOnFailure)
       .mapErrorCause { cause =>
-          cause.flatMap {
-            case Left(dbError) => Cause.die(dbError, cause.trace)
-            case Right(error) => Cause.fail(error, cause.trace)
-          }
+        cause.flatMap {
+          case Left(dbError) => Cause.die(dbError, cause.trace)
+          case Right(error) => Cause.fail(error, cause.trace)
+        }
       }
 
   /** Provides that ZIO with a Connection. All DB action in the ZIO will be auto-committed. Failures in the initial
@@ -98,6 +104,10 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, Either[DbException, E], A] =
     autoCommit[R, E, A](zio)
 
+  /** As `autoCommit`, for ZStream instances instead of ZIO instances.
+   *
+   * This method should be implemented by subclasses, to provide the connection.
+   */
   def autoCommitStream[R, E, A](
       stream: => ZStream[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, Either[DbException, E], A]
@@ -115,6 +125,7 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     autoCommitOrWiden[R, E, A](zio)
 
+  /** As `autoCommitOrWiden`, for ZStream instances instead of ZIO instances. */
   final def autoCommitOrWidenStream[R, E >: DbException, A](
       stream: => ZStream[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
@@ -132,15 +143,16 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     autoCommitOrDie[R, E, A](zio)
 
+  /** As `autoCommitOrDie`, for ZStream instances instead of ZIO instances. */
   final def autoCommitOrDieStream[R, E, A](
       stream: => ZStream[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
-    autoCommitStream[R, E, A](stream).mapErrorCause {  cause => cause.flatMap{
+    autoCommitStream[R, E, A](stream).mapErrorCause { cause =>
+      cause.flatMap {
         case Left(dbError) => Cause.die(dbError, cause.trace)
         case Right(error) => Cause.fail(error, cause.trace)
       }
     }
-
 
 }
 

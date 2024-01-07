@@ -1,9 +1,9 @@
 package io.github.gaelrenoux.tranzactio
 
-import java.sql.{Connection => JdbcConnection}
-
 import zio.stream.ZStream
 import zio.{Tag, Trace, ZEnvironment, ZIO}
+
+import java.sql.{Connection => JdbcConnection}
 
 
 /** Template implementing a default transactional mechanism, based on a ConnectionSource. */
@@ -25,7 +25,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
     }
 
   override def transactionStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean = false)
-                                         (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
+    (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
     ZStream.environmentWithStream[R] { r =>
       runTransactionStream({ (c: JdbcConnection) =>
         ZStream.fromZIO(connectionFromJdbc(c))
@@ -45,7 +45,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
     }
 
   override def autoCommitStream[R, E, A](stream: => ZStream[Connection with R, E, A])
-                                  (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
+    (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
     ZStream.environmentWithStream[R] { r =>
       runAutoCommitStream { (c: JdbcConnection) =>
         ZStream.fromZIO(connectionFromJdbc(c))
