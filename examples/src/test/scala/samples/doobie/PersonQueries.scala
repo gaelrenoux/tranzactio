@@ -19,6 +19,8 @@ object PersonQueries {
     def insert(p: Person): TranzactIO[Unit]
 
     val failing: TranzactIO[Unit]
+
+    val failingStream: TranzactIOStream[Unit]
   }
 
   val live: ULayer[PersonQueries] = ZLayer.succeed(new Service {
@@ -50,6 +52,10 @@ object PersonQueries {
       sql"""INSERT INTO nonexisting (stuff) VALUES (1)"""
         .update.run.map(_ => ())
     }
+
+    val failingStream: TranzactIOStream[Unit] = tzioStream {
+      sql"""SELECT * FROM nonexisting""".query[Unit].stream
+    }
   })
 
   val test: ULayer[PersonQueries] = ZLayer.succeed(new Service {
@@ -63,6 +69,8 @@ object PersonQueries {
     def insert(p: Person): TranzactIO[Unit] = ZIO.succeed(())
 
     val failing: TranzactIO[Unit] = ZIO.fail(DbException.Wrapped(new RuntimeException))
+
+    val failingStream: TranzactIOStream[Unit] = ZStream.fail(DbException.Wrapped(new RuntimeException))
   })
 
   def setup: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.serviceWithZIO[PersonQueries](_.setup)
@@ -74,6 +82,8 @@ object PersonQueries {
   def insert(p: Person): ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.serviceWithZIO[PersonQueries](_.insert(p))
 
   val failing: ZIO[PersonQueries with Connection, DbException, Unit] = ZIO.serviceWithZIO[PersonQueries](_.failing)
+
+  val failingStream: ZStream[PersonQueries with Connection, DbException, Unit] = ZStream.serviceWithStream[PersonQueries](_.failingStream)
 
 }
 

@@ -6,12 +6,14 @@ import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{ConnectionSource, JdbcLayers}
 import samples.Person
 import samples.doobie.PersonQueries
+import zio.stream.ZStream
 import zio.test._
 import zio.{Chunk, Scope, ZIO, ZLayer}
 
 
 /** Integration tests for Doobie */
-object DoobieIT extends ITSpec {
+// scalastyle:off magic.number
+object DoobieStreamIT extends ITSpec {
 
   /** Layer is recreated on each test, to have a different database every time. */
   def myLayer: ZLayer[Scope, Nothing, Database with PersonQueries] =
@@ -20,17 +22,23 @@ object DoobieIT extends ITSpec {
   val buffy: Person = Person("Buffy", "Summers")
   val giles: Person = Person("Rupert", "Giles")
 
+  def stream[R, E, A](zio: ZIO[R, E, A], num: Int = 1): ZStream[R, E, A] =
+    if (num == 0) ZStream.never
+    else if (num == 1) ZStream.fromZIO(zio)
+    else ZStream.fromZIO(zio).forever.take(num)
+
   val connectionCountQuery: TranzactIO[Int] = tzio(Fragment.const(connectionCountSql).query[Int].unique)
 
   private def wrap[E, A](z: ZIO[Database with PersonQueries, E, A]): ZIO[Scope, E, A] =
     z.provideSome[Scope](myLayer)
 
-  def spec: MySpec = suite("Doobie Integration Tests")(
+  def spec: MySpec = suite("Doobie-Stream Integration Tests")(
     testDataCommittedOnTransactionSuccess,
     testConnectionClosedOnTransactionSuccess,
     testDataRollbackedOnTransactionFailure,
     testDataCommittedOnTransactionFailure,
     testConnectionClosedOnTransactionFailure,
+    testMultipleTransactions,
     testDataCommittedOnAutoCommitSuccess,
     testConnectionClosedOnAutoCommitSuccess,
     testDataRollbackedOnAutoCommitFailure,
@@ -42,9 +50,9 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transaction(PersonQueries.insert(buffy))
-        persons <- Database.transaction(PersonQueries.list)
-      } yield assertTrue(persons == List(buffy))
+        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 3)).runDrain
+        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
+      } yield assertTrue(persons == Chunk(buffy, buffy, buffy))
     }
   }
 
@@ -52,7 +60,7 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transaction(PersonQueries.insert(buffy))
+        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 3)).runDrain
         connectionCount <- Database.transaction(connectionCountQuery)
       } yield assertTrue(connectionCount == 1) // only the current connection
     }
@@ -62,8 +70,8 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transaction(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
-        persons <- Database.transaction(PersonQueries.list)
+        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
+        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
       } yield assertTrue(persons.isEmpty)
     }
   }
@@ -72,9 +80,9 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transaction(PersonQueries.insert(buffy) <*> PersonQueries.failing, commitOnFailure = true).flip
-        persons <- Database.transaction(PersonQueries.list)
-      } yield assertTrue(persons == List(buffy))
+        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2), commitOnFailure = true).runDrain.flip
+        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
+      } yield assertTrue(persons == Chunk(buffy, buffy))
     }
   }
 
@@ -82,9 +90,24 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transaction(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
+        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
         connectionCount <- Database.transaction(connectionCountQuery)
       } yield assertTrue(connectionCount == 1) // only the current connection
+    }
+  }
+
+  private val testMultipleTransactions: MySpec = test("multiple transactions") {
+    wrap {
+      for {
+        _ <- Database.transaction(PersonQueries.setup)
+        _ <- {
+          val stream1 = Database.transactionStream(stream(PersonQueries.insert(buffy), 2))
+          val stream2 = Database.transactionStream(PersonQueries.failingStream)
+          val stream3 = Database.transactionStream(stream(PersonQueries.insert(giles), 2))
+          (stream1 ++ stream2 ++ stream3).runDrain.flip
+        }
+        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
+      } yield assertTrue(persons == Chunk(buffy, buffy))
     }
   }
 
@@ -92,9 +115,9 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
-        _ <- Database.autoCommit(PersonQueries.insert(buffy))
-        persons <- Database.autoCommit(PersonQueries.list)
-      } yield assertTrue(persons == List(buffy))
+        _ <- Database.autoCommitStream(stream(PersonQueries.insert(buffy), 3)).runDrain
+        persons <- Database.autoCommitStream(PersonQueries.listStream).runCollect
+      } yield assertTrue(persons == Chunk(buffy, buffy, buffy))
     }
   }
 
@@ -102,7 +125,7 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
-        _ <- Database.autoCommit(PersonQueries.insert(buffy))
+        _ <- Database.autoCommitStream(stream(PersonQueries.insert(buffy), 3)).runDrain
         connectionCount <- Database.autoCommit(connectionCountQuery)
       } yield assertTrue(connectionCount == 1) // only the current connection
     }
@@ -112,9 +135,9 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
-        _ <- Database.autoCommit(PersonQueries.insert(buffy) <*> PersonQueries.failing).flip
-        persons <- Database.autoCommit(PersonQueries.list)
-      } yield assertTrue(persons == List(buffy))
+        _ <- Database.autoCommitStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
+        persons <- Database.autoCommitStream(PersonQueries.listStream).runCollect
+      } yield assertTrue(persons == Chunk(buffy, buffy))
     }
   }
 
@@ -122,13 +145,13 @@ object DoobieIT extends ITSpec {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
-        _ <- Database.autoCommit(PersonQueries.insert(buffy))
+        _ <- Database.autoCommitStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
         connectionCount <- Database.autoCommit(connectionCountQuery)
       } yield assertTrue(connectionCount == 1) // only the current connection
     }
   }
 
-  private val testStreamDoesNotLoadAllValues: MySpec = test("stream does not load all values") {
+  private val testStreamDoesNotLoadAllValues: MySpec = test("stream does not load all values when reading") {
     wrap {
       for {
         _ <- Database.autoCommit(PersonQueries.setup)
@@ -142,8 +165,8 @@ object DoobieIT extends ITSpec {
               else p
             }
         }
-        zio = failingOnSecondStream.take(1).runCollect // only keep one
-        result <- Database.autoCommit(zio)
+        dbStream = Database.autoCommitStream(failingOnSecondStream).take(1) // only keep one
+        result <- dbStream.runCollect
       } yield assertTrue(result == Chunk(buffy))
     }
   }
