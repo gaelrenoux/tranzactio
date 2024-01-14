@@ -1,5 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
+import zio.stream.ZStream
 import zio.test._
 import zio.{test => _, _}
 
@@ -31,6 +32,9 @@ object ConnectionSourceTest extends ZIOSpec[TestEnvironment] {
     }
   }
 
+  def connectionCountQueryStream(c: Connection): ZStream[Any, Throwable, Int] =
+    ZStream.fromZIO(connectionCountQuery(c))
+
   def spec: MySpec = suite("Single connection ConnectionSource Tests")(
     testRunTransactionFailureOnOpen,
     testRunTransactionFailureOnAutoCommit,
@@ -40,7 +44,13 @@ object ConnectionSourceTest extends ZIOSpec[TestEnvironment] {
     testRunTransactionFailureOnClose,
     testRunAutoCommitFailureOnOpen,
     testRunAutoCommitFailureOnAutoCommit,
-    testRunAutoCommitFailureOnClose
+    testRunAutoCommitFailureOnClose,
+    testRunTransactionStreamFailureOnOpen,
+    testRunTransactionStreamFailureOnAutoCommit,
+    testRunTransactionStreamFailureOnClose,
+    testRunAutoCommitStreamFailureOnOpen,
+    testRunAutoCommitStreamFailureOnAutoCommit,
+    testRunAutoCommitStreamFailureOnClose
   )
 
   private val testRunTransactionFailureOnOpen = test("runTransaction failure > on open") {
@@ -119,6 +129,54 @@ object ConnectionSourceTest extends ZIOSpec[TestEnvironment] {
     val cs = new FailingConnectionSource(errorStrategies)(failOnClose = true)
     val zio: ZIO[Any, Either[DbException, Throwable], Int] = cs.runAutoCommit(connectionCountQuery)
     zio.cause.map {
+      case Cause.Die(ex, _) => assertTrue(ex == DbException.Wrapped(FailingConnectionSource.CloseException))
+    }
+  }
+
+  private val testRunTransactionStreamFailureOnOpen = test("runTransactionStream failure > on open") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnOpen = true)
+    val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runTransactionStream(connectionCountQueryStream)
+    zio.runCollect.flip.map { e =>
+      assertTrue(e == Left(DbException.Wrapped(FailingConnectionSource.OpenException)))
+    }
+  }
+
+  private val testRunTransactionStreamFailureOnAutoCommit = test("runTransactionStream failure > on auto-commit") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnAutoCommit = true)
+    val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runTransactionStream(connectionCountQueryStream)
+    zio.runCollect.flip.map { e =>
+      assertTrue(e == Left(DbException.Wrapped(FailingConnectionSource.AutoCommitException)))
+    }
+  }
+
+  private val testRunTransactionStreamFailureOnClose = test("runTransactionStream failure > on close") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnClose = true)
+    val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runTransactionStream(connectionCountQueryStream)
+    zio.runCollect.cause.map {
+      case Cause.Die(ex, _) => assertTrue(ex == DbException.Wrapped(FailingConnectionSource.CloseException))
+    }
+  }
+
+  private val testRunAutoCommitStreamFailureOnOpen = test("runAutoCommitStream failure > on open") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnOpen = true)
+    val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runAutoCommitStream(connectionCountQueryStream)
+    zio.runCollect.flip.map { e =>
+      assertTrue(e == Left(DbException.Wrapped(FailingConnectionSource.OpenException)))
+    }
+  }
+
+  private val testRunAutoCommitStreamFailureOnAutoCommit = test("runAutoCommitStream failure > on auto-commit") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnAutoCommit = true)
+    val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runAutoCommitStream(connectionCountQueryStream)
+    zio.runCollect.flip.map { e =>
+      assertTrue(e == Left(DbException.Wrapped(FailingConnectionSource.AutoCommitException)))
+    }
+  }
+
+  private val testRunAutoCommitStreamFailureOnClose = test("runAutoCommitStream failure > on close") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnClose = true)
+    val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runAutoCommitStream(connectionCountQueryStream)
+    zio.runCollect.cause.map {
       case Cause.Die(ex, _) => assertTrue(ex == DbException.Wrapped(FailingConnectionSource.CloseException))
     }
   }
