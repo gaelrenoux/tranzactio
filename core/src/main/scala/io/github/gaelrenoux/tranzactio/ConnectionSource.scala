@@ -33,7 +33,7 @@ object ConnectionSource {
           .zipRight(task(c).mapError(Right(_)))
           .tapErrorCause { (queryCause: Cause[Either[DbException, E]]) =>
             (if (commitOnFailure) commitConnection(c) else rollbackConnection(c))
-              .mapErrorCause { rollbackCause => rollbackCause.map(Left(_)) && queryCause }
+              .mapErrorCause { rollbackCause => queryCause ++ rollbackCause.map(Left(_)) }
           }
           .zipLeft(commitConnection(c).mapError(Left(_)))
       }

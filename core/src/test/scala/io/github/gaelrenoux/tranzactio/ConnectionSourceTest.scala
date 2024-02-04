@@ -71,10 +71,10 @@ object ConnectionSourceTest extends ZIOSpec[TestEnvironment] {
     val cs = new FailingConnectionSource(errorStrategies)(failOnCommit = true)
     val zio: ZIO[Any, Either[DbException, String], Int] = cs.runTransaction(_ => ZIO.fail("Not a good query"), commitOnFailure = true)
     zio.cause.map {
-      case Cause.Both(Cause.Fail(left, _), Cause.Fail(right, _)) =>
+      case Cause.Then(Cause.Fail(firstError, _), Cause.Fail(secondError, _)) =>
         assertTrue(
-          left == Left(DbException.Wrapped(FailingConnectionSource.CommitException)),
-          right == Right("Not a good query")
+          firstError == Right("Not a good query"),
+          secondError == Left(DbException.Wrapped(FailingConnectionSource.CommitException))
         )
     }
   }
@@ -83,10 +83,10 @@ object ConnectionSourceTest extends ZIOSpec[TestEnvironment] {
     val cs = new FailingConnectionSource(errorStrategies)(failOnRollback = true)
     val zio: ZIO[Any, Either[DbException, String], Int] = cs.runTransaction(_ => ZIO.fail("Not a good query"))
     zio.cause.map {
-      case Cause.Both(Cause.Fail(left, _), Cause.Fail(right, _)) =>
+      case Cause.Then(Cause.Fail(firstError, _), Cause.Fail(secondError, _)) =>
         assertTrue(
-          left == Left(DbException.Wrapped(FailingConnectionSource.RollbackException)),
-          right == Right("Not a good query")
+          firstError == Right("Not a good query"),
+          secondError == Left(DbException.Wrapped(FailingConnectionSource.RollbackException))
         )
     }
   }
