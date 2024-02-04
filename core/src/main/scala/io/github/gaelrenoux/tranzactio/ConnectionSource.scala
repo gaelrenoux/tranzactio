@@ -10,6 +10,8 @@ import javax.sql.DataSource
 /** A module able to provide and manage connections. They typically come from a connection pool. */
 object ConnectionSource {
 
+  private final case class Recoverable(wrapped: DbException) extends Exception
+
   trait Service {
 
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
@@ -46,19 +48,25 @@ object ConnectionSource {
       }
     }
 
+    /** Note: unlike on runTransaction, errors happening on rollback (or commiting on failure) will override the previously
+     * existing error. */
     def runTransactionStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] = {
       ZStream
-        .acquireReleaseExitWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).mapError(Left(_))) {
-          case (c, Exit.Success(_)) => commitConnection(c).tapEither(_ => closeConnection(c)).orDie
-          case (c, Exit.Failure(cause)) if cause.isDie => closeConnection(c).orDie // No commit, no rollback in case of a defect, just close the connection
-          case (c, Exit.Failure(_)) => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).tapEither(_ => closeConnection(c)).orDie
-        }
+        .acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie)
         .flatMap { (c: Connection) =>
-          task(c).mapError(Right(_))
+          ZStream
+            .acquireReleaseExitWith(setAutoCommit(c, autoCommit = false).mapError(Left(_))) {
+              case (_, Exit.Success(_)) => commitConnection(c).mapError(Recoverable.apply).orDie
+              case (_, Exit.Failure(cause)) if cause.isDie => ZIO.unit // Do nothing in case of a defect, no commit, no rollback
+              case (_, Exit.Failure(_)) => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).mapError(Recoverable.apply).orDie
+            }
+            .crossRight {
+              task(c).mapError(Right(_))
+            }
         }
         .catchSomeCause {
-          case Cause.Die(ex: DbException, stack) => ZStream.failCause(Cause.Fail(Left(ex), stack)) // TODO This is not working, streams die anyway
+          case Cause.Die(Recoverable(ex), stack) => ZStream.failCause(Cause.Fail(Left(ex), stack)) // TODO This is not working, streams die anyway
         }
     }
 
