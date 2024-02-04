@@ -29,13 +29,13 @@ object ConnectionSource {
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] = {
       ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { (c: Connection) =>
-        setAutoCommit(c, autoCommit = false)
-          .mapError(Left(_))
+        setAutoCommit(c, autoCommit = false).mapError(Left(_))
           .zipRight(task(c).mapError(Right(_)))
-          .tapBoth(
-            _ => if (commitOnFailure) commitConnection(c).mapError(Left(_)) else rollbackConnection(c).mapError(Left(_)),
-            _ => commitConnection(c).mapError(Left(_))
-          )
+          .tapErrorCause { (queryCause: Cause[Either[DbException, E]]) =>
+            (if (commitOnFailure) commitConnection(c) else rollbackConnection(c))
+              .mapErrorCause { rollbackCause => rollbackCause.map(Left(_)) && queryCause }
+          }
+          .zipLeft(commitConnection(c).mapError(Left(_)))
       }
     }
 
