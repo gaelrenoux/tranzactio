@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.{UIO, ZIO, Trace}
+import zio.{Cause, Trace, ZIO}
 
 /** Operations for a Database, based on a few atomic operations. Can be used both by the actual DB service, or by the DB
  * component where a Database is required in the resulting ZIO.
@@ -49,7 +49,7 @@ trait DatabaseOps[Connection, R0] {
       zio: => ZIO[Connection with R, E, A],
       commitOnFailure: => Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
-    transaction[R, E, A](zio, commitOnFailure).flatMapError(dieOnLeft)
+    transaction[R, E, A](zio, commitOnFailure).mapErrorCause(dieOnLeft)
 
   @deprecated("Use transactionOrDie instead.", since = "4.0.0")
   final def transactionOrDieR[R, E, A](
@@ -91,7 +91,7 @@ trait DatabaseOps[Connection, R0] {
   final def autoCommitOrDie[R, E, A](
       zio: => ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
-    autoCommit[R, E, A](zio).flatMapError(dieOnLeft)
+    autoCommit[R, E, A](zio).mapErrorCause(dieOnLeft)
 
   @deprecated("Use autoCommitOrDie instead.", since = "4.0.0")
   final def autoCommitOrDieR[R, E, A](
@@ -109,9 +109,10 @@ object DatabaseOps {
   /** API for commodity methods needing a Database. */
   trait ModuleOps[Connection, Database <: ServiceOps[Connection]] extends DatabaseOps[Connection, Database]
 
-  private def dieOnLeft[E](e: Either[DbException, E])(implicit trace: Trace): UIO[E] = e match {
-    case Right(appError) => ZIO.succeed(appError)
-    case Left(dbError) => ZIO.die(dbError)
-  }
+  private def dieOnLeft[E](cause: Cause[Either[DbException, E]]): Cause[E] =
+    cause.flatMap {
+      case Left(dbError) => Cause.die(dbError, cause.trace)
+      case Right(appError) => Cause.fail(appError, cause.trace)
+    }
 
 }
