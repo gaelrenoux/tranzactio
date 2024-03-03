@@ -55,7 +55,7 @@ object ConnectionSource {
             .tapError(_ => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).mapError(Left(_)))
         }
         .catchSomeCause {
-          case Cause.Die(error: DbException, _) => ZStream.fail(Left(error))
+          case Cause.Die(ex: DbException, stack) => ZStream.failCause(Cause.Fail(Left(ex), stack)) // TODO This is not working, streams die anyway
         }
     }
 
