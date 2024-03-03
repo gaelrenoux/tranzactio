@@ -49,10 +49,13 @@ object ConnectionSource {
     def runTransactionStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] = {
       ZStream
-        .acquireReleaseWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).mapError(Left(_)))(c => commitConnection(c).tapEither(_ => closeConnection(c)).orDie)
+        .acquireReleaseExitWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).mapError(Left(_))) {
+          case (c, Exit.Success(_)) => commitConnection(c).tapEither(_ => closeConnection(c)).orDie
+          case (c, Exit.Failure(cause)) if cause.isDie => closeConnection(c).orDie // No commit, no rollback in case of a defect, just close the connection
+          case (c, Exit.Failure(_)) => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).tapEither(_ => closeConnection(c)).orDie
+        }
         .flatMap { (c: Connection) =>
           task(c).mapError(Right(_))
-            .tapError(_ => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).mapError(Left(_)))
         }
         .catchSomeCause {
           case Cause.Die(ex: DbException, stack) => ZStream.failCause(Cause.Fail(Left(ex), stack)) // TODO This is not working, streams die anyway
