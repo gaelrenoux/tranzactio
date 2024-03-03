@@ -47,6 +47,9 @@ object ConnectionSourceTest extends ZIOSpec[TestEnvironment] {
     testRunAutoCommitFailureOnClose,
     testRunTransactionStreamFailureOnOpen,
     testRunTransactionStreamFailureOnAutoCommit,
+    testRunTransactionStreamFailureOnCommit,
+    testRunTransactionStreamFailureOnCommitAfterFailure,
+    testRunTransactionStreamFailureOnRollback,
     testRunTransactionStreamFailureOnClose,
     testRunAutoCommitStreamFailureOnOpen,
     testRunAutoCommitStreamFailureOnAutoCommit,
@@ -146,6 +149,38 @@ object ConnectionSourceTest extends ZIOSpec[TestEnvironment] {
     val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runTransactionStream(connectionCountQueryStream)
     zio.runCollect.flip.map { e =>
       assertTrue(e == Left(DbException.Wrapped(FailingConnectionSource.AutoCommitException)))
+    }
+  }
+
+  private val testRunTransactionStreamFailureOnCommit = test("runTransactionStream failure > on commit (after success)") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnCommit = true)
+    val zio: ZStream[Any, Either[DbException, Throwable], Int] = cs.runTransactionStream(connectionCountQueryStream)
+    zio.runCollect.flip.map { e =>
+      assertTrue(e == Left(DbException.Wrapped(FailingConnectionSource.CommitException)))
+    }
+  }
+
+  private val testRunTransactionStreamFailureOnCommitAfterFailure = test("runTransactionStream failure > on commit (after failure)") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnCommit = true)
+    val zio: ZStream[Any, Either[DbException, String], Int] = cs.runTransactionStream(_ => ZStream.fail("Not a good query"), commitOnFailure = true)
+    zio.runCollect.cause.map {
+      case Cause.Then(Cause.Fail(firstError, _), Cause.Fail(secondError, _)) =>
+        assertTrue(
+          firstError == Right("Not a good query"),
+          secondError == Left(DbException.Wrapped(FailingConnectionSource.CommitException))
+        )
+    }
+  }
+
+  private val testRunTransactionStreamFailureOnRollback = test("runTransactionStream failure > on rollback") {
+    val cs = new FailingConnectionSource(errorStrategies)(failOnRollback = true)
+    val zio: ZStream[Any, Either[DbException, String], Int] = cs.runTransactionStream(_ => ZStream.fail("Not a good query"))
+    zio.runCollect.cause.map {
+      case Cause.Then(Cause.Fail(firstError, _), Cause.Fail(secondError, _)) =>
+        assertTrue(
+          firstError == Right("Not a good query"),
+          secondError == Left(DbException.Wrapped(FailingConnectionSource.RollbackException))
+        )
     }
   }
 
