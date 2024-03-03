@@ -328,6 +328,29 @@ val es: ErrorStrategies =
 
 
 
+### Streams (Doobie only)
+
+Doobie allows you to stream data from the DB, generating an FS2 stream.
+Convert that stream into a `ZStream` using `tzioStream`.
+Just like with a ZIO, you can then use methods on the `Database` to run the stream in a transaction, or an autocommit.
+
+```scala
+import zio._
+import zio.stream._
+import doobie.implicits._
+import io.github.gaelrenoux.tranzactio.DbException
+import io.github.gaelrenoux.tranzactio.doobie._
+
+val queryStream: ZStream[Connection, DbException, A] = tzioStream { sql"SELECT name FROM users".query[String].stream }
+val effectStream: ZStream[Database, Either[DbException, DbException], String] = Database.transactionStream(queryStream)
+```
+
+Note that for technical reasons, connection error handling is slightly different when using a `Database.transactionStream` than when using `Database.transaction`.
+Issues when getting a new connection will still be reported as a `Left` in the error channel.
+However, errors on commit, rollback or closing the connection will TODO TODO TODO TODO TODO TODO
+
+
+
 ### Single-connection Database
 
 In some cases, you might want to have a `Database` module representing a single connection.
