@@ -30,15 +30,6 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, Either[DbException, E], A] =
     transaction[R, E, A](zio, commitOnFailure)
 
-  /** As `transaction`, for ZStream instances instead of ZIO instances.
-   *
-   * This method should be implemented by subclasses, to provide the connection.
-   */
-  def transactionStream[R <: Any, E, A](
-      stream: => ZStream[Connection with R, E, A],
-      commitOnFailure: => Boolean = false
-  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, Either[DbException, E], A]
-
   /** As `transaction`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
   final def transactionOrWiden[R, E >: DbException, A](
@@ -53,13 +44,6 @@ trait DatabaseOps[Connection, R0] {
       commitOnFailure: => Boolean = false
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     transactionOrWiden[R, E, A](zio, commitOnFailure)
-
-  /** As `transactionOrWiden`, for ZStream instances instead of ZIO instances. */
-  final def transactionOrWidenStream[R, E >: DbException, A](
-      stream: => ZStream[Connection with R, E, A],
-      commitOnFailure: => Boolean = false
-  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
-    transactionStream[R, E, A](stream, commitOnFailure).mapError(_.fold(identity, identity))
 
   /** As `transaction`, but errors when handling the connections are treated as defects instead of failures. */
   final def transactionOrDie[R, E, A](
@@ -76,17 +60,10 @@ trait DatabaseOps[Connection, R0] {
     transactionOrDie[R, E, A](zio, commitOnFailure)
 
   /** As `transactionOrDie`, for ZStream instances instead of ZIO instances. */
-  final def transactionOrDieStream[R, E, A](
+  def transactionOrDieStream[R <: Any, E, A](
       stream: => ZStream[Connection with R, E, A],
       commitOnFailure: => Boolean = false
-  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
-    transactionStream[R, E, A](stream, commitOnFailure)
-      .mapErrorCause { cause =>
-        cause.flatMap {
-          case Left(dbError) => Cause.die(dbError, cause.trace)
-          case Right(error) => Cause.fail(error, cause.trace)
-        }
-      }
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A]
 
   /** Provides that ZIO with a Connection. All DB action in the ZIO will be auto-committed. Failures in the initial
    * ZIO will be wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a

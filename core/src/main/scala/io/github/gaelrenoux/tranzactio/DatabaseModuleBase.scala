@@ -21,12 +21,12 @@ abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps
     }
   }
 
-  override def transactionStream[R, E, A](
+  override def transactionOrDieStream[R, E, A](
       stream: => ZStream[Connection with R, E, A],
       commitOnFailure: => Boolean = false
-  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[Database with R, Either[DbException, E], A] = {
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[Database with R, E, A] = {
     ZStream.serviceWithStream[Database] { db =>
-      db.transactionStream[R, E, A](stream, commitOnFailure)
+      db.transactionOrDieStream[R, E, A](stream, commitOnFailure)
     }
   }
 

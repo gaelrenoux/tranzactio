@@ -50,8 +50,8 @@ object DoobieStreamIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 3)).runDrain
-        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
+        _ <- Database.transactionOrDieStream(stream(PersonQueries.insert(buffy), 3)).runDrain
+        persons <- Database.transactionOrDieStream(PersonQueries.listStream).runCollect
       } yield assertTrue(persons == Chunk(buffy, buffy, buffy))
     }
   }
@@ -60,7 +60,7 @@ object DoobieStreamIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 3)).runDrain
+        _ <- Database.transactionOrDieStream(stream(PersonQueries.insert(buffy), 3)).runDrain
         connectionCount <- Database.transaction(connectionCountQuery)
       } yield assertTrue(connectionCount == 1) // only the current connection
     }
@@ -70,8 +70,8 @@ object DoobieStreamIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
-        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
+        _ <- Database.transactionOrDieStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
+        persons <- Database.transactionOrDieStream(PersonQueries.listStream).runCollect
       } yield assertTrue(persons.isEmpty)
     }
   }
@@ -80,8 +80,8 @@ object DoobieStreamIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2), commitOnFailure = true).runDrain.flip
-        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
+        _ <- Database.transactionOrDieStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2), commitOnFailure = true).runDrain.flip
+        persons <- Database.transactionOrDieStream(PersonQueries.listStream).runCollect
       } yield assertTrue(persons == Chunk(buffy, buffy))
     }
   }
@@ -90,7 +90,7 @@ object DoobieStreamIT extends ITSpec {
     wrap {
       for {
         _ <- Database.transaction(PersonQueries.setup)
-        _ <- Database.transactionStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
+        _ <- Database.transactionOrDieStream(stream(PersonQueries.insert(buffy), 2) ++ PersonQueries.failingStream ++ stream(PersonQueries.insert(buffy), 2)).runDrain.flip
         connectionCount <- Database.transaction(connectionCountQuery)
       } yield assertTrue(connectionCount == 1) // only the current connection
     }
@@ -101,12 +101,12 @@ object DoobieStreamIT extends ITSpec {
       for {
         _ <- Database.transaction(PersonQueries.setup)
         _ <- {
-          val stream1 = Database.transactionStream(stream(PersonQueries.insert(buffy), 2))
-          val stream2 = Database.transactionStream(PersonQueries.failingStream)
-          val stream3 = Database.transactionStream(stream(PersonQueries.insert(giles), 2))
+          val stream1 = Database.transactionOrDieStream(stream(PersonQueries.insert(buffy), 2))
+          val stream2 = Database.transactionOrDieStream(PersonQueries.failingStream)
+          val stream3 = Database.transactionOrDieStream(stream(PersonQueries.insert(giles), 2))
           (stream1 ++ stream2 ++ stream3).runDrain.flip
         }
-        persons <- Database.transactionStream(PersonQueries.listStream).runCollect
+        persons <- Database.transactionOrDieStream(PersonQueries.listStream).runCollect
       } yield assertTrue(persons == Chunk(buffy, buffy))
     }
   }

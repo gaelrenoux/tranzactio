@@ -34,11 +34,11 @@ trait DatabaseModuleTestOps[Connection, DbContext] extends DatabaseModuleBase[Co
               .mapError(Right(_))
           }
 
-        override def transactionStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean = false)
-          (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] = {
+        override def transactionOrDieStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean = false)
+          (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A] = {
           ZStream.fromZIO(noConnection).flatMap { c =>
             ZStream.environmentWith[R](_ ++ ZEnvironment(c))
-              .flatMap(stream.provideEnvironment(_)).mapError(Right(_))
+              .flatMap(stream.provideEnvironment(_))
           }
         }
 
