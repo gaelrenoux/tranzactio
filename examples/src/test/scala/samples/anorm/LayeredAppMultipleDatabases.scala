@@ -1,11 +1,12 @@
-package samples.doobie
+package samples.anorm
 
 import io.github.gaelrenoux.tranzactio.DbException
-import io.github.gaelrenoux.tranzactio.doobie._
+import io.github.gaelrenoux.tranzactio.anorm._
 import samples.{Conf, ConnectionPool, Person}
 import zio._
 
-/** A sample app with two databases for different set of queries. */
+/** A sample app where all modules are linked through ZLayer. Should run as is (make sure you have com.h2database:h2 in
+ * your dependencies). */
 object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
 
   /** Marker trait for the first DB */
@@ -16,7 +17,7 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
 
   private val database1: ZLayer[Any, Any, DatabaseT[Db1]] = {
     // Fresh calls are required so that the confs and datasource aren't conflated with the other one
-    val conf = Conf.live("samble-doobie-app-1").fresh
+    val conf = Conf.live("samble-anorm-app-1").fresh
     val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
     val datasource = conf >>> ConnectionPool.live.fresh
     (datasource ++ dbRecoveryConf) >>> DatabaseT[Db1].fromDatasourceAndErrorStrategies
@@ -24,7 +25,7 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
 
   private val database2: ZLayer[Any, Any, DatabaseT[Db2]] = {
     // Fresh calls are required so that the confs and datasource aren't conflated with the other one
-    val conf = Conf.live("samble-doobie-app-2").fresh
+    val conf = Conf.live("samble-anorm-app-2").fresh
     val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
     val datasource = conf >>> ConnectionPool.live.fresh
     (datasource ++ dbRecoveryConf) >>> DatabaseT[Db2].fromDatasourceAndErrorStrategies

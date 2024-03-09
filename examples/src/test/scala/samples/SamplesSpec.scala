@@ -13,8 +13,9 @@ object SamplesSpec extends ZIOSpecDefault {
     suite("SamplesSpec")(
       testApp("Doobie", doobie.LayeredApp),
       testApp("Doobie-Streaming", doobie.LayeredAppStreaming),
+      testAppMultipleDatabases("Doobie", doobie.LayeredAppMultipleDatabases),
       testApp("Anorm", anorm.LayeredApp),
-      testAppMultipleDatabases("Doobie", doobie.LayeredAppMultipleDatabases)
+      testAppMultipleDatabases("Anorm", anorm.LayeredAppMultipleDatabases)
     )
 
   private def testApp(name: String, app: ZIOAppDefault): MySpec =
@@ -34,7 +35,7 @@ object SamplesSpec extends ZIOSpecDefault {
 
   private def testAppMultipleDatabases(name: String, app: ZIOAppDefault): MySpec =
 
-    test(s"$name LayeredAppMultipleDatabases prints its progress for the trio, then its progress for the mentor") {
+    test(s"$name LayeredAppMultipleDatabases prints its progress for the trio, then its progress for the mentor, then the team") {
       for {
         _ <- app.run.provide(ignoredAppArgs ++ Scope.default)
         output <- TestConsole.output

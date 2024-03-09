@@ -1,11 +1,10 @@
 package io.github.gaelrenoux.tranzactio
 
-import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.LogHandler
+import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
-import io.github.gaelrenoux.tranzactio.test.DatabaseModuleTestOps
-import io.github.gaelrenoux.tranzactio.test.NoopJdbcConnection
+import io.github.gaelrenoux.tranzactio.test.{DatabaseModuleTestOps, NoopJdbcConnection}
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
@@ -74,6 +73,12 @@ package object doobie extends Wrapper {
 
   object DbContext {
     implicit val Default: DbContext = DbContext(LogHandler.noop[Task])
+  }
+
+  override final type DatabaseT[M] = DatabaseTBase[M, Connection]
+
+  object DatabaseT extends DatabaseTBase.Companion[Connection, DbContext] {
+    def apply[M: Tag]: Module[M] = new Module[M](Database)
   }
 
 }

@@ -41,4 +41,10 @@ package object anorm extends Wrapper {
     override final def connectionFromJdbc(connection: => JdbcConnection)(implicit trace: Trace): ZIO[Any, Nothing, Connection] =
       ZIO.succeed(connection)
   }
+
+  override final type DatabaseT[M] = DatabaseTBase[M, Connection]
+
+  object DatabaseT extends DatabaseTBase.Companion[Connection, DbContext] {
+    def apply[M: Tag]: Module[M] = new Module[M](Database)
+  }
 }
