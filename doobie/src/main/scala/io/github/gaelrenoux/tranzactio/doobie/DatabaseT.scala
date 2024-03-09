@@ -5,8 +5,11 @@ import io.github.gaelrenoux.tranzactio.{ConnectionSource, DatabaseModuleBase, Db
 import izumi.reflect.Tag
 import zio.{Task, Trace, ZEnvironment, ZIO, ZLayer}
 
-/** @tparam M is a marker type to differentiate custom databases. */
-class DatabaseCustom[M: Tag](underlying: Database) extends Database {
+/**
+ * This is a type database, to use when you have multiple databases in your application. Simply provide a marker type,
+ * and ZIO will be able to differentiate between multiple DatabaseT[_] types in your environment.
+ * @tparam M Marker type, no instances */
+class DatabaseT[M: Tag](underlying: Database) extends Database {
 
   override def transaction[R, E, A](task: => ZIO[Connection with R, E, A], commitOnFailure: => Boolean)
     (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R with Any, Either[DbException, E], A] =
@@ -19,10 +22,10 @@ class DatabaseCustom[M: Tag](underlying: Database) extends Database {
 
 }
 
-object DatabaseCustom {
-  class Module[M: Tag] extends DatabaseModuleBase[Connection, DatabaseCustom[M], DbContext] {
-    override def fromConnectionSource(implicit dbContext: DbContext, trace: Trace): ZLayer[ConnectionSource, Nothing, DatabaseCustom[M]] =
-      Database.fromConnectionSource.map(env => ZEnvironment(new DatabaseCustom[M](env.get)))
+object DatabaseT {
+  class Module[M: Tag] extends DatabaseModuleBase[Connection, DatabaseT[M], DbContext] {
+    override def fromConnectionSource(implicit dbContext: DbContext, trace: Trace): ZLayer[ConnectionSource, Nothing, DatabaseT[M]] =
+      Database.fromConnectionSource.map(env => ZEnvironment(new DatabaseT[M](env.get)))
   }
 
   def apply[M: Tag]: Module[M] = new Module[M]

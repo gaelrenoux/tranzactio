@@ -14,25 +14,25 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
   /** Marker trait for the second DB */
   trait Db2
 
-  private val database1: ZLayer[Any, Any, DatabaseCustom[Db1]] = {
+  private val database1: ZLayer[Any, Any, DatabaseT[Db1]] = {
     // Fresh calls are required so that the confs and datasource aren't conflated with the other one
     val conf = Conf.live("samble-doobie-app-1").fresh
     val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
     val datasource = conf >>> ConnectionPool.live.fresh
-    (datasource ++ dbRecoveryConf) >>> DatabaseCustom[Db1].fromDatasourceAndErrorStrategies
+    (datasource ++ dbRecoveryConf) >>> DatabaseT[Db1].fromDatasourceAndErrorStrategies
   }
 
-  private val database2: ZLayer[Any, Any, DatabaseCustom[Db2]] = {
+  private val database2: ZLayer[Any, Any, DatabaseT[Db2]] = {
     // Fresh calls are required so that the confs and datasource aren't conflated with the other one
     val conf = Conf.live("samble-doobie-app-2").fresh
     val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
     val datasource = conf >>> ConnectionPool.live.fresh
-    (datasource ++ dbRecoveryConf) >>> DatabaseCustom[Db2].fromDatasourceAndErrorStrategies
+    (datasource ++ dbRecoveryConf) >>> DatabaseT[Db2].fromDatasourceAndErrorStrategies
   }
 
   private val personQueries = PersonQueries.live
 
-  type AppEnv = DatabaseCustom[Db1] with DatabaseCustom[Db2] with PersonQueries
+  type AppEnv = DatabaseT[Db1] with DatabaseT[Db2] with PersonQueries
   private val appEnv = database1 ++ database2 ++ personQueries
 
   override def run: ZIO[ZIOAppArgs with Scope, Any, Any] =
@@ -43,7 +43,7 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
     } yield ExitCode(0)
 
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
-  def myApp(): ZIO[PersonQueries with DatabaseCustom[Db2] with DatabaseCustom[Db1], DbException, List[Person]] = {
+  def myApp(): ZIO[PersonQueries with DatabaseT[Db2] with DatabaseT[Db1], DbException, List[Person]] = {
     val queries1: ZIO[PersonQueries with Connection, DbException, List[Person]] = for {
       _ <- Console.printLine("Creating the table").orDie
       _ <- PersonQueries.setup
@@ -64,8 +64,8 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
       mentor <- PersonQueries.list
     } yield mentor
 
-    val zTrio: ZIO[PersonQueries with DatabaseCustom[Db1], DbException, List[Person]] = DatabaseCustom[Db1].transactionOrWiden(queries1)
-    val zMentor: ZIO[PersonQueries with DatabaseCustom[Db2], DbException, List[Person]] = DatabaseCustom[Db2].transactionOrWiden(queries2)
+    val zTrio: ZIO[PersonQueries with DatabaseT[Db1], DbException, List[Person]] = DatabaseT[Db1].transactionOrWiden(queries1)
+    val zMentor: ZIO[PersonQueries with DatabaseT[Db2], DbException, List[Person]] = DatabaseT[Db2].transactionOrWiden(queries2)
 
     for {
       trio <- zTrio
