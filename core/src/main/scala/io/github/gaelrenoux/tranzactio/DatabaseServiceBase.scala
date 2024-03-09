@@ -24,10 +24,10 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
       }, commitOnFailure)
     }
 
-  override def transactionStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean = false)
-    (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
+  override def transactionOrDieStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean = false)
+    (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A] =
     ZStream.environmentWithStream[R] { r =>
-      runTransactionStream({ (c: JdbcConnection) =>
+      runTransactionOrDieStream({ (c: JdbcConnection) =>
         ZStream.fromZIO(connectionFromJdbc(c))
           .map(r ++ ZEnvironment(_))
           .flatMap(stream.provideEnvironment(_))

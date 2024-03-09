@@ -15,8 +15,8 @@ object ConnectionSource {
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A]
 
-    def runTransactionStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
-      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A]
+    def runTransactionOrDieStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A]
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A]
@@ -46,17 +46,15 @@ object ConnectionSource {
       }
     }
 
-    def runTransactionStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
-      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] = {
+    def runTransactionOrDieStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A] = {
       ZStream
-        .acquireReleaseWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).mapError(Left(_)))(c => commitConnection(c).tapEither(_ => closeConnection(c)).orDie)
-        .flatMap { (c: Connection) =>
-          task(c).mapError(Right(_))
-            .tapError(_ => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).mapError(Left(_)))
+        .acquireReleaseExitWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).orDie) {
+          case (c, Exit.Success(_)) => commitConnection(c).tapEither(_ => closeConnection(c)).orDie
+          case (c, Exit.Failure(cause)) if cause.isDie => closeConnection(c).orDie // No commit, no rollback in case of a defect, just close the connection
+          case (c, Exit.Failure(_)) => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).tapEither(_ => closeConnection(c)).orDie
         }
-        .catchSomeCause {
-          case Cause.Die(error: DbException, _) => ZStream.fail(Left(error))
-        }
+        .flatMap { (c: Connection) => task(c) }
     }
 
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
@@ -145,6 +143,10 @@ object ConnectionSource {
       semaphore.withPermit {
         super.runTransaction(task, commitOnFailure)
       }
+
+    override def runTransactionOrDieStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A] =
+      ??? // TODO
 
     override def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
