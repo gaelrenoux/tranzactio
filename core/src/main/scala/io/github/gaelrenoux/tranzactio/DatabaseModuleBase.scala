@@ -36,16 +36,16 @@ abstract class DatabaseModuleBase[Connection, Database <: DatabaseOps.ServiceOps
    *
    * When no implicit ErrorStrategies is available, the default ErrorStrategies will be used.
    */
-  final def fromDatasource(implicit dbContext: DbContext, trace: Trace): ZLayer[DataSource, Nothing, Database] =
+  def fromDatasource(implicit dbContext: DbContext, trace: Trace): ZLayer[DataSource, Nothing, Database] =
     ConnectionSource.fromDatasource >>> fromConnectionSource
 
   /** As `fromDatasource`, but provides a default ErrorStrategiesRef. When a method is called with no available implicit
    * ErrorStrategiesRef, the ErrorStrategiesRef in argument will be used. */
-  final def fromDatasource(errorStrategies: ErrorStrategiesRef)(implicit dbContext: DbContext, trace: Trace): ZLayer[DataSource, Nothing, Database] =
+  def fromDatasource(errorStrategies: ErrorStrategiesRef)(implicit dbContext: DbContext, trace: Trace): ZLayer[DataSource, Nothing, Database] =
     ConnectionSource.fromDatasource(errorStrategies) >>> fromConnectionSource
 
   /** As `fromDatasource(ErrorStrategiesRef)`, but an `ErrorStrategies` is provided through a layer instead of as a parameter. */
-  final def fromDatasourceAndErrorStrategies(implicit dbContext: DbContext, trace: Trace): ZLayer[DataSource with ErrorStrategies, Nothing, Database] =
+  def fromDatasourceAndErrorStrategies(implicit dbContext: DbContext, trace: Trace): ZLayer[DataSource with ErrorStrategies, Nothing, Database] =
     ConnectionSource.fromDatasourceAndErrorStrategies >>> fromConnectionSource
 
 }
