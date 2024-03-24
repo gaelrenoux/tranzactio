@@ -329,6 +329,36 @@ val es: ErrorStrategies =
 
 
 
+### Multiple Databases
+
+Some applications use multiple databases.
+In that case, it is necessary to have them be different types in the ZIO environment.
+
+Tranzactio offers a typed database class, called `DatabaseT[_]`.
+You only need to provide a different marker type for each database you use.
+
+```scala
+import io.github.gaelrenoux.tranzactio.doobie._
+import javax.sql.DataSource
+import zio._
+
+trait Db1
+trait Db2
+
+val db1Layer: ZLayer[Any, Nothing, DatabaseT[Db1]] = datasource1Layer >>> Database[Db1].fromDatasource
+val db2Layer: ZLayer[Any, Nothing, DatabaseT[Db2]] = datasource2Layer >>> Database[Db2].fromDatasource
+
+val queries1: ZIO[Connection, DbException, List[String]] = ???
+val zio1: ZIO[DatabaseT[Db1], DbException, List[Person]] = DatabaseT[Db1].transactionOrWiden(queries1)
+val zio2: ZIO[DatabaseT[Db2], DbException, List[Person]] = DatabaseT[Db2].transactionOrWiden(queries1)
+```
+
+When creating the layers for the datasources, don't forget to use `.fresh` when you have sub-layers of the same type on both sides!
+
+You can see a full example in the `examples` submodule (in `LayeredAppMultipleDatabases`).
+
+
+
 ### Single-connection Database
 
 In some cases, you might want to have a `Database` module representing a single connection.

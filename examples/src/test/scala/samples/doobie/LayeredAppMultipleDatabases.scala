@@ -1,9 +1,11 @@
 package samples.doobie
 
-import io.github.gaelrenoux.tranzactio.DbException
+import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategies}
 import io.github.gaelrenoux.tranzactio.doobie._
 import samples.{Conf, ConnectionPool, Person}
 import zio._
+
+import javax.sql.DataSource
 
 /** A sample app with two databases for different set of queries. */
 object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
@@ -14,19 +16,19 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
   /** Marker trait for the second DB */
   trait Db2
 
-  private val database1: ZLayer[Any, Any, DatabaseT[Db1]] = {
+  private val database1: ZLayer[Any, Throwable, DatabaseT[Db1]] = {
     // Fresh calls are required so that the confs and datasource aren't conflated with the other layer's
     val conf = Conf.live("samble-doobie-app-1").fresh
-    val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
-    val datasource = conf >>> ConnectionPool.live.fresh
+    val dbRecoveryConf: ZLayer[Any, Nothing, ErrorStrategies] = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
+    val datasource: ZLayer[Any, Throwable, DataSource] = conf >>> ConnectionPool.live.fresh
     (datasource ++ dbRecoveryConf) >>> DatabaseT[Db1].fromDatasourceAndErrorStrategies
   }
 
-  private val database2: ZLayer[Any, Any, DatabaseT[Db2]] = {
+  private val database2: ZLayer[Any, Throwable, DatabaseT[Db2]] = {
     // Fresh calls are required so that the confs and datasource aren't conflated with the other layer's
     val conf = Conf.live("samble-doobie-app-2").fresh
-    val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
-    val datasource = conf >>> ConnectionPool.live.fresh
+    val dbRecoveryConf: ZLayer[Any, Nothing, ErrorStrategies] = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
+    val datasource: ZLayer[Any, Throwable, DataSource] = conf >>> ConnectionPool.live.fresh
     (datasource ++ dbRecoveryConf) >>> DatabaseT[Db2].fromDatasourceAndErrorStrategies
   }
 
