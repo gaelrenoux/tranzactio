@@ -158,7 +158,7 @@ import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
 import zio._
 
-val dbLayer: ZLayer[Has[DataSource], Nothing, Database] = Database.fromDatasource
+val dbLayer: ZLayer[DataSource, Nothing, Database] = Database.fromDatasource
 ```
 
 
@@ -290,7 +290,7 @@ Database.transaction(???) // es is passed implicitly to the method
 
 ```scala
 val es: ErrorStrategies = ErrorStrategies.retryForeverFixed(10.seconds)
-val dbLayerFromDatasource: ZLayer[Has[DataSource], Nothing, Database] = Database.fromDatasource(es)
+val dbLayerFromDatasource: ZLayer[DataSource, Nothing, Database] = Database.fromDatasource(es)
 ```
 
 #### Defining an ErrorStrategies instance
@@ -382,7 +382,7 @@ import zio._
 import zio.interop.catz._
 
 implicit val doobieContext: DbContext = DbContext(logHandler = LogHandler.jdkLogHandler[Task])
-val dbLayer: ZLayer[Has[DataSource], Nothing, Database] = Database.fromDatasource
+val dbLayer: ZLayer[DataSource, Nothing, Database] = Database.fromDatasource
 ```
 
 
@@ -403,7 +403,7 @@ See https://github.com/zio/interop-cats/issues/669 for more details about this i
 
 
 
-### When will tranzactio work with <insert DB library here>?
+### When will tranzactio work with …?
 
 I want to add wrappers around more database access libraries.
 Anorm was the second one I did, next should probably be Quill (based on the popularity of the project on GitHub),
