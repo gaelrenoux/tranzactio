@@ -3,9 +3,9 @@ package io.github.gaelrenoux.tranzactio
 import zio.{Trace, ZEnvironment, ZIO, ZLayer, Tag}
 
 /**
- * This is a type database, to use when you have multiple databases in your application. Simply provide a marker type,
+ * This is a typed database, to use when you have multiple databases in your application. Simply provide a marker type,
  * and ZIO will be able to differentiate between multiple DatabaseT[_] types in your environment.
- * @tparam M Marker type, no instances */
+ * @tparam M Marker type, no instances. */
 class DatabaseTBase[M: Tag, Connection](underlying: DatabaseOps.ServiceOps[Connection]) extends DatabaseOps.ServiceOps[Connection] {
 
   override def transaction[R, E, A](task: => ZIO[Connection with R, E, A], commitOnFailure: => Boolean)

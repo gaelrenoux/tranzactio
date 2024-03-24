@@ -20,7 +20,7 @@ object SamplesSpec extends ZIOSpecDefault {
 
   private def testApp(name: String, app: ZIOAppDefault): MySpec =
 
-    test(s"$name LayeredApp prints its progress then the trio") {
+    test(s"$name App prints its progress then the trio") {
       for {
         _ <- app.run.provide(ignoredAppArgs ++ Scope.default)
         output <- TestConsole.output
@@ -35,7 +35,7 @@ object SamplesSpec extends ZIOSpecDefault {
 
   private def testAppMultipleDatabases(name: String, app: ZIOAppDefault): MySpec =
 
-    test(s"$name LayeredAppMultipleDatabases prints its progress for the trio, then its progress for the mentor, then the team") {
+    test(s"$name App prints its progress for the trio, then its progress for the mentor, then prints the full team") {
       for {
         _ <- app.run.provide(ignoredAppArgs ++ Scope.default)
         output <- TestConsole.output

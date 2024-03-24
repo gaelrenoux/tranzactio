@@ -15,7 +15,7 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
   trait Db2
 
   private val database1: ZLayer[Any, Any, DatabaseT[Db1]] = {
-    // Fresh calls are required so that the confs and datasource aren't conflated with the other one
+    // Fresh calls are required so that the confs and datasource aren't conflated with the other layer's
     val conf = Conf.live("samble-doobie-app-1").fresh
     val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
     val datasource = conf >>> ConnectionPool.live.fresh
@@ -23,7 +23,7 @@ object LayeredAppMultipleDatabases extends zio.ZIOAppDefault {
   }
 
   private val database2: ZLayer[Any, Any, DatabaseT[Db2]] = {
-    // Fresh calls are required so that the confs and datasource aren't conflated with the other one
+    // Fresh calls are required so that the confs and datasource aren't conflated with the other layer's
     val conf = Conf.live("samble-doobie-app-2").fresh
     val dbRecoveryConf = conf >>> ZLayer.fromFunction((_: Conf).dbRecovery).fresh
     val datasource = conf >>> ConnectionPool.live.fresh
