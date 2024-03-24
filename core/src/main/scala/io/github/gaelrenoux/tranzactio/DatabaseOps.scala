@@ -1,5 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
+import zio.stream.ZStream
 import zio.{Cause, Trace, ZIO}
 
 /** Operations for a Database, based on a few atomic operations. Can be used both by the actual DB service, or by the DB
@@ -58,6 +59,12 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     transactionOrDie[R, E, A](zio, commitOnFailure)
 
+  /** As `transactionOrDie`, for ZStream instances instead of ZIO instances. */
+  def transactionOrDieStream[R <: Any, E, A](
+      stream: => ZStream[Connection with R, E, A],
+      commitOnFailure: => Boolean = false
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A]
+
   /** Provides that ZIO with a Connection. All DB action in the ZIO will be auto-committed. Failures in the initial
    * ZIO will be wrapped in a Right in the error case of the resulting ZIO, with connection errors resulting in a
    * failure with the exception wrapped in a Left.
@@ -74,6 +81,14 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, Either[DbException, E], A] =
     autoCommit[R, E, A](zio)
 
+  /** As `autoCommit`, for ZStream instances instead of ZIO instances.
+   *
+   * This method should be implemented by subclasses, to provide the connection.
+   */
+  def autoCommitStream[R, E, A](
+      stream: => ZStream[Connection with R, E, A]
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, Either[DbException, E], A]
+
   /** As `autoCommit`, but exceptions are simply widened to a common failure type. The resulting failure type is a
    * superclass of both DbException and the error type of the inital ZIO. */
   final def autoCommitOrWiden[R, E >: DbException, A](
@@ -87,6 +102,12 @@ trait DatabaseOps[Connection, R0] {
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     autoCommitOrWiden[R, E, A](zio)
 
+  /** As `autoCommitOrWiden`, for ZStream instances instead of ZIO instances. */
+  final def autoCommitOrWidenStream[R, E >: DbException, A](
+      stream: => ZStream[Connection with R, E, A]
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
+    autoCommitStream[R, E, A](stream).mapError(_.merge)
+
   /** As `autoCommit`, but errors when handling the connections are treated as defects instead of failures. */
   final def autoCommitOrDie[R, E, A](
       zio: => ZIO[Connection with R, E, A]
@@ -98,6 +119,17 @@ trait DatabaseOps[Connection, R0] {
       zio: => ZIO[Connection with R, E, A]
   )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZIO[R with R0, E, A] =
     autoCommitOrDie[R, E, A](zio)
+
+  /** As `autoCommitOrDie`, for ZStream instances instead of ZIO instances. */
+  final def autoCommitOrDieStream[R, E, A](
+      stream: => ZStream[Connection with R, E, A]
+  )(implicit errorStrategies: ErrorStrategiesRef = ErrorStrategies.Parent, trace: Trace): ZStream[R with R0, E, A] =
+    autoCommitStream[R, E, A](stream).mapErrorCause { cause =>
+      cause.flatMap {
+        case Left(dbError) => Cause.die(dbError, cause.trace)
+        case Right(error) => Cause.fail(error, cause.trace)
+      }
+    }
 
 }
 

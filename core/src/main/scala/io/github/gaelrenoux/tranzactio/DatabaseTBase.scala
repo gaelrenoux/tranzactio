@@ -1,6 +1,7 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.{Trace, ZEnvironment, ZIO, ZLayer, Tag}
+import zio.stream.ZStream
+import zio.{Tag, Trace, ZEnvironment, ZIO, ZLayer}
 
 /**
  * This is a typed database, to use when you have multiple databases in your application. Simply provide a marker type,
@@ -12,11 +13,17 @@ class DatabaseTBase[M: Tag, Connection](underlying: DatabaseOps.ServiceOps[Conne
     (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R with Any, Either[DbException, E], A] =
     underlying.transaction[R, E, A](task, commitOnFailure = commitOnFailure)
 
+  override def transactionOrDieStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean)
+    (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R with Any, E, A] =
+    underlying.transactionOrDieStream[R, E, A](stream, commitOnFailure = commitOnFailure)
 
   override def autoCommit[R, E, A](task: => ZIO[Connection with R, E, A])
     (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R with Any, Either[DbException, E], A] =
     underlying.autoCommit[R, E, A](task)
 
+  override def autoCommitStream[R, E, A](stream: => ZStream[Connection with R, E, A])
+    (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R with Any, Either[DbException, E], A] =
+    underlying.autoCommitStream[R, E, A](stream)
 }
 
 object DatabaseTBase {

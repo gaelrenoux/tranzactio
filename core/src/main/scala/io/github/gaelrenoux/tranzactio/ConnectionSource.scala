@@ -2,6 +2,7 @@ package io.github.gaelrenoux.tranzactio
 
 import zio.ZIO.attemptBlocking
 import zio._
+import zio.stream.ZStream
 
 import java.sql.Connection
 import javax.sql.DataSource
@@ -14,8 +15,14 @@ object ConnectionSource {
     def runTransaction[R, E, A](task: Connection => ZIO[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A]
 
+    def runTransactionOrDieStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A]
+
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A]
+
+    def runAutoCommitStream[R, E, A](task: Connection => ZStream[R, E, A])
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A]
   }
 
   /** ConnectionSource with standard behavior. Children class need to implement `getConnection`. */
@@ -39,15 +46,36 @@ object ConnectionSource {
       }
     }
 
+    def runTransactionOrDieStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A] = {
+      ZStream
+        .acquireReleaseExitWith(openConnection.tap(c => setAutoCommit(c, autoCommit = false)).orDie) {
+          case (c, Exit.Success(_)) => commitConnection(c).tapEither(_ => closeConnection(c)).orDie
+          case (c, Exit.Failure(cause)) if cause.isDie => closeConnection(c).orDie // No commit, no rollback in case of a defect, just close the connection
+          case (c, Exit.Failure(_)) => (if (commitOnFailure) commitConnection(c) else rollbackConnection(c)).tapEither(_ => closeConnection(c)).orDie
+        }
+        .flatMap { (c: Connection) => task(c) }
+    }
+
     def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
       ZIO.acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie) { (c: Connection) =>
-        setAutoCommit(c, autoCommit = true)
-          .mapError(Left(_))
+        setAutoCommit(c, autoCommit = true).mapError(Left(_))
           .zipRight {
             task(c).mapError(Right(_))
           }
       }
+
+    def runAutoCommitStream[R, E, A](task: Connection => ZStream[R, E, A])
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, Either[DbException, E], A] =
+      ZStream
+        .acquireReleaseWith(openConnection.mapError(Left(_)))(closeConnection(_).orDie)
+        .flatMap { (c: Connection) =>
+          ZStream.fromZIO(setAutoCommit(c, autoCommit = true).mapError(Left(_)))
+            .crossRight {
+              task(c).mapError(Right(_))
+            }
+        }
 
     // TODO handle error reporting when retrying
 
@@ -115,6 +143,10 @@ object ConnectionSource {
       semaphore.withPermit {
         super.runTransaction(task, commitOnFailure)
       }
+
+    override def runTransactionOrDieStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
+      (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A] =
+      super.runTransactionOrDieStream(task, commitOnFailure) // TODO Could not find a way to use the semaphore here
 
     override def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =

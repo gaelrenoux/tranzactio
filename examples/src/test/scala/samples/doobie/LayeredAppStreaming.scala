@@ -6,7 +6,7 @@ import samples.{Conf, ConnectionPool, Person}
 import zio._
 import zio.stream._
 
-/** Same as LayeredApp, but using Doobie's stream (converted into ZIO strem). */
+/** Same as LayeredApp, but using Doobie's stream (converted into ZIO stream). */
 // scalastyle:off magic.number
 object LayeredAppStreaming extends zio.ZIOAppDefault {
 
@@ -28,7 +28,7 @@ object LayeredAppStreaming extends zio.ZIOAppDefault {
 
   /** Main code for the application. Results in a big ZIO depending on the AppEnv. */
   def myApp(): ZIO[AppEnv, DbException, List[Person]] = {
-    val queries: ZIO[Connection with AppEnv, DbException, List[Person]] = for {
+    val initQueries: ZIO[Connection with AppEnv, DbException, Unit] = for {
       _ <- Console.printLine("Creating the table").orDie
       _ <- PersonQueries.setup
       _ <- Console.printLine("Inserting the trio").orDie
@@ -37,17 +37,20 @@ object LayeredAppStreaming extends zio.ZIOAppDefault {
       _ <- PersonQueries.insert(Person("Alexander", "Harris"))
       _ <- PersonQueries.insert(Person("Rupert", "Giles")) // insert one more!
       _ <- Console.printLine("Reading the trio").orDie
-      trio <- {
-        val stream: ZStream[PersonQueries with Connection, DbException, Person] = PersonQueries.listStream.take(3)
-        stream.run(ZSink.foldLeft(List[Person]()) { (ps, p) => p :: ps })
-      }
-    } yield trio.reverse
+    } yield ()
+
+    val resultQueryStream: ZStream[Connection with AppEnv, DbException, Person] = PersonQueries.listStream.take(3) // take only the first 3
 
     ZIO.serviceWithZIO[Conf] { conf =>
       // if this implicit is not provided, tranzactio will use Conf.dbRecovery instead
       implicit val errorRecovery: ErrorStrategiesRef = conf.alternateDbRecovery
-      Database.transactionOrWiden(queries)
+      val init: ZIO[Database with AppEnv, DbException, Unit] = Database.transactionOrWiden(initQueries)
+      val resultsStream: ZStream[Database with AppEnv, DbException, Person] = Database.transactionOrDieStream(resultQueryStream)
+      val results: ZIO[Database with AppEnv, DbException, List[Person]] = resultsStream.runCollect.map(_.toList)
+      init *> results
     }
+
+
   }
 
 }

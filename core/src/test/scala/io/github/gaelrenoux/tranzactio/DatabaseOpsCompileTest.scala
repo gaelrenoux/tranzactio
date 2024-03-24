@@ -1,6 +1,7 @@
 package io.github.gaelrenoux.tranzactio
 
 import zio.ZIO
+import zio.stream.ZStream
 
 /** This is not a runnable test. It is here to check the type inference produces the expected types. */
 trait DatabaseOpsCompileTest {
@@ -8,6 +9,8 @@ trait DatabaseOpsCompileTest {
   import DatabaseOpsCompileTest._
 
   def z[R, E]: ZIO[R, E, Int] = ZIO.succeed(42)
+
+  def zs[R, E]: ZStream[R, E, Int] = ZStream.succeed(42)
 
   val serviceOperations: DatabaseOps.ServiceOps[Connection]
 
@@ -57,7 +60,7 @@ trait DatabaseOpsCompileTest {
         serviceOperations.transactionOrDie(z[Connection, String], commitOnFailure = true)
     }
 
-    object AutoCommitR {
+    object AutoCommit {
       val a: ZIO[Environment, Either[DbException, String], Int] =
         serviceOperations.autoCommit(z[Connection with Environment, String])
 
@@ -83,6 +86,46 @@ trait DatabaseOpsCompileTest {
 
       val b: ZIO[Any, String, Int] =
         serviceOperations.autoCommitOrDie(z[Connection, String])
+    }
+
+    object TransactionOrDieStream {
+      val a: ZStream[Environment, String, Int] =
+        serviceOperations.transactionOrDieStream(zs[Connection with Environment, String])
+      val b: ZStream[Environment, String, Int] =
+        serviceOperations.transactionOrDieStream(zs[Connection with Environment, String], commitOnFailure = true)
+
+      val c: ZStream[Any, String, Int] =
+        serviceOperations.transactionOrDieStream(zs[Connection, String])
+      val d: ZStream[Any, String, Int] =
+        serviceOperations.transactionOrDieStream(zs[Connection, String], commitOnFailure = true)
+    }
+
+    object AutoCommitStream {
+      val a: ZStream[Environment, Either[DbException, String], Int] =
+        serviceOperations.autoCommitStream(zs[Connection with Environment, String])
+
+      val b: ZStream[Any, Either[DbException, String], Int] =
+        serviceOperations.autoCommitStream(zs[Connection, String])
+    }
+
+    object AutoCommitOrWidenStream {
+      val a: ZStream[Environment, Exception, Int] =
+        serviceOperations.autoCommitOrWidenStream(zs[Connection with Environment, IllegalArgumentException])
+      val b: ZStream[Environment, DbException, Int] =
+        serviceOperations.autoCommitOrWidenStream(zs[Connection with Environment, DbException])
+
+      val c: ZStream[Any, Exception, Int] =
+        serviceOperations.autoCommitOrWidenStream(zs[Connection, IllegalArgumentException])
+      val d: ZStream[Any, DbException, Int] =
+        serviceOperations.autoCommitOrWidenStream(zs[Connection, DbException])
+    }
+
+    object AutoCommitOrDieStream {
+      val a: ZStream[Environment, String, Int] =
+        serviceOperations.autoCommitOrDieStream(zs[Connection with Environment, String])
+
+      val b: ZStream[Any, String, Int] =
+        serviceOperations.autoCommitOrDieStream(zs[Connection, String])
     }
 
   }
@@ -146,6 +189,42 @@ trait DatabaseOpsCompileTest {
 
       val b: ZIO[Database, String, Int] =
         moduleOperations.autoCommitOrDie(z[Connection, String])
+    }
+
+    object TransactionOrDieStream {
+      val a: ZStream[Database with Environment, String, Int] =
+        moduleOperations.transactionOrDieStream(zs[Connection with Environment, String])
+
+      val b: ZStream[Database, String, Int] =
+        moduleOperations.transactionOrDieStream(zs[Connection, String])
+    }
+
+    object AutoCommitStream {
+      val a: ZStream[Database with Environment, Either[DbException, String], Int] =
+        moduleOperations.autoCommitStream(zs[Connection with Environment, String])
+
+      val b: ZStream[Database, Either[DbException, String], Int] =
+        moduleOperations.autoCommitStream(zs[Connection, String])
+    }
+
+    object AutoCommitOrWidenStream {
+      val a: ZStream[Database with Environment, Exception, Int] =
+        moduleOperations.autoCommitOrWidenStream(zs[Connection with Environment, IllegalArgumentException])
+      val b: ZStream[Database with Environment, DbException, Int] =
+        moduleOperations.autoCommitOrWidenStream(zs[Connection with Environment, DbException])
+
+      val c: ZStream[Database, Exception, Int] =
+        moduleOperations.autoCommitOrWidenStream(zs[Connection, IllegalArgumentException])
+      val d: ZStream[Database, DbException, Int] =
+        moduleOperations.autoCommitOrWidenStream(zs[Connection, DbException])
+    }
+
+    object AutoCommitOrDieStream {
+      val a: ZStream[Database with Environment, String, Int] =
+        moduleOperations.autoCommitOrDieStream(zs[Connection with Environment, String])
+
+      val b: ZStream[Database, String, Int] =
+        moduleOperations.autoCommitOrDieStream(zs[Connection, String])
     }
 
   }
