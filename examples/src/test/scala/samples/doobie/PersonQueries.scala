@@ -27,7 +27,6 @@ object PersonQueries {
 
     val setup: TranzactIO[Unit] = tzio {
       sql"""
-        DROP TABLE IF EXISTS person;
         CREATE TABLE person (
           given_name VARCHAR NOT NULL,
           family_name VARCHAR NOT NULL
