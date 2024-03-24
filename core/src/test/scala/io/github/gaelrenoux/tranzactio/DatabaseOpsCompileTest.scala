@@ -229,6 +229,26 @@ trait DatabaseOpsCompileTest {
 
   }
 
+
+  val typedServiceOperations: DatabaseTBase[Marker, Connection]
+  val typedModuleOperations: DatabaseTBase.Module[Marker, Connection, DatabaseService]
+
+  object DatabaseTChecks {
+
+    val a: ZIO[Environment, Either[DbException, String], Int] =
+      typedServiceOperations.transaction(z[Connection with Environment, String])
+
+    val b: ZIO[Any, Either[DbException, String], Int] =
+      typedServiceOperations.transaction(z[Connection, String])
+
+    val c: ZIO[DatabaseT[Marker] with Environment, Either[DbException, String], Int] =
+      typedModuleOperations.transaction(z[Connection with Environment, String])
+
+    val d: ZIO[DatabaseT[Marker], Either[DbException, String], Int] =
+      typedModuleOperations.transaction(z[Connection, String])
+
+  }
+
 }
 
 object DatabaseOpsCompileTest {
@@ -239,5 +259,9 @@ object DatabaseOpsCompileTest {
 
   type Database = DatabaseService
 
+  type DatabaseT[M] = DatabaseTBase[M, Connection]
+
   trait Environment
+
+  trait Marker
 }
