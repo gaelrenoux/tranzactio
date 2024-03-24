@@ -329,6 +329,26 @@ val es: ErrorStrategies =
 
 
 
+### Streaming
+
+When the wrapped framework handle streaming, you can convert the framework's stream to a `ZStream` using `tzioStream`.
+To provide a `Connection` to the ZIO stream, you can either consume the stream into a ZIO first (then use the same functions as above), or use the `Database`'s streaming methods.
+
+The methods `transactionOrDieStream` and `autoCommitStream` work in the same way as the similar, non-stream method.
+Note that for transactions, only the `OrDie` variant exists: this is because ZIO's acquire-release mechanism for stream does not allow to pass errors that occur during the acquire-release phase in the error channel.
+Defects in the stream due to connection errors can only be caught after the `ZStream` has been consumed into a `ZIO`. 
+
+```scala
+import io.github.gaelrenoux.tranzactio.doobie._
+import zio._
+val queryStream: ZStream[Connection, Error, Person] = tzioStream { sql"""SELECT given_name, family_name FROM person""".query[Person].stream }.mapError(transform)
+val zStream: ZStream[Database, DbException, Person] = Database.transactionOrDieStream(queryStream)
+```
+
+You can see a full example in the `examples` submodule (in `LayeredAppStreaming`).
+
+
+
 ### Multiple Databases
 
 Some applications use multiple databases.
@@ -339,7 +359,6 @@ You only need to provide a different marker type for each database you use.
 
 ```scala
 import io.github.gaelrenoux.tranzactio.doobie._
-import javax.sql.DataSource
 import zio._
 
 trait Db1
