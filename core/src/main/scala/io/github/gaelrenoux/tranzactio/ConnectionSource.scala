@@ -146,7 +146,7 @@ object ConnectionSource {
 
     override def runTransactionOrDieStream[R, E, A](task: Connection => ZStream[R, E, A], commitOnFailure: => Boolean = false)
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZStream[R, E, A] =
-      ??? // TODO
+      super.runTransactionOrDieStream(task, commitOnFailure) // TODO Could not find a way to use the semaphore here
 
     override def runAutoCommit[R, E, A](task: Connection => ZIO[R, E, A])
       (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
