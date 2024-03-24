@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.{Tag, Trace}
+import zio.Trace
 
 
 /** A specific wrapper package for one specific library (e.g. Doobie). */
