@@ -1,6 +1,6 @@
 package io.github.gaelrenoux.tranzactio
 
-import zio.Trace
+import zio.{Tag, Trace}
 
 
 /** A specific wrapper package for one specific library (e.g. Doobie). */
@@ -30,5 +30,11 @@ trait Wrapper {
 
   /** Wraps a library-specific query into a TranzactIO. */
   def tzio[A](q: => Query[A])(implicit trace: Trace): TranzactIO[A]
+
+  /** Parameterized type for databases, allowing for multiple databases to be handled */
+  type DatabaseT[M]
+
+  val DatabaseT: DatabaseTBase.Companion[Connection, DbContext] // scalastyle:ignore field.name
+
 
 }

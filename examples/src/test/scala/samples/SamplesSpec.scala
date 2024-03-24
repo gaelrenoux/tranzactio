@@ -13,12 +13,14 @@ object SamplesSpec extends ZIOSpecDefault {
     suite("SamplesSpec")(
       testApp("Doobie", doobie.LayeredApp),
       testApp("Doobie-Streaming", doobie.LayeredAppStreaming),
-      testApp("Anorm", anorm.LayeredApp)
+      testAppMultipleDatabases("Doobie", doobie.LayeredAppMultipleDatabases),
+      testApp("Anorm", anorm.LayeredApp),
+      testAppMultipleDatabases("Anorm", anorm.LayeredAppMultipleDatabases)
     )
 
   private def testApp(name: String, app: ZIOAppDefault): MySpec =
 
-    test(s"$name LayeredApp prints its progress then the trio") {
+    test(s"$name App prints its progress then the trio") {
       for {
         _ <- app.run.provide(ignoredAppArgs ++ Scope.default)
         output <- TestConsole.output
@@ -28,6 +30,24 @@ object SamplesSpec extends ZIOSpecDefault {
         "Inserting the trio\n",
         "Reading the trio\n",
         "Buffy Summers, Willow Rosenberg, Alexander Harris\n"
+      ))
+    }
+
+  private def testAppMultipleDatabases(name: String, app: ZIOAppDefault): MySpec =
+
+    test(s"$name App prints its progress for the trio, then its progress for the mentor, then prints the full team") {
+      for {
+        _ <- app.run.provide(ignoredAppArgs ++ Scope.default)
+        output <- TestConsole.output
+      } yield assertTrue(output == Vector(
+        "Starting the app\n",
+        "Creating the table\n",
+        "Inserting the trio\n",
+        "Reading the trio\n",
+        "Creating the table\n",
+        "Inserting the mentor\n",
+        "Reading the mentor\n",
+        "Buffy Summers, Willow Rosenberg, Alexander Harris, Rupert Giles\n"
       ))
     }
 

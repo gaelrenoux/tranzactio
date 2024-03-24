@@ -158,7 +158,7 @@ import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
 import zio._
 
-val dbLayer: ZLayer[Has[DataSource], Nothing, Database] = Database.fromDatasource
+val dbLayer: ZLayer[DataSource, Nothing, Database] = Database.fromDatasource
 ```
 
 
@@ -290,7 +290,7 @@ Database.transaction(???) // es is passed implicitly to the method
 
 ```scala
 val es: ErrorStrategies = ErrorStrategies.retryForeverFixed(10.seconds)
-val dbLayerFromDatasource: ZLayer[Has[DataSource], Nothing, Database] = Database.fromDatasource(es)
+val dbLayerFromDatasource: ZLayer[DataSource, Nothing, Database] = Database.fromDatasource(es)
 ```
 
 #### Defining an ErrorStrategies instance
@@ -326,6 +326,36 @@ val es: ErrorStrategies =
   ErrorStrategies.timeout(3.seconds).retryForeverFixed(1.second)
     .copy(openConnection = ErrorStrategy.timeout(3.seconds).retryForeverFixed(1.second))
 ```
+
+
+
+### Multiple Databases
+
+Some applications use multiple databases.
+In that case, it is necessary to have them be different types in the ZIO environment.
+
+Tranzactio offers a typed database class, called `DatabaseT[_]`.
+You only need to provide a different marker type for each database you use.
+
+```scala
+import io.github.gaelrenoux.tranzactio.doobie._
+import javax.sql.DataSource
+import zio._
+
+trait Db1
+trait Db2
+
+val db1Layer: ZLayer[Any, Nothing, DatabaseT[Db1]] = datasource1Layer >>> Database[Db1].fromDatasource
+val db2Layer: ZLayer[Any, Nothing, DatabaseT[Db2]] = datasource2Layer >>> Database[Db2].fromDatasource
+
+val queries1: ZIO[Connection, DbException, List[String]] = ???
+val zio1: ZIO[DatabaseT[Db1], DbException, List[Person]] = DatabaseT[Db1].transactionOrWiden(queries1)
+val zio2: ZIO[DatabaseT[Db2], DbException, List[Person]] = DatabaseT[Db2].transactionOrWiden(queries1)
+```
+
+When creating the layers for the datasources, don't forget to use `.fresh` when you have sub-layers of the same type on both sides!
+
+You can see a full example in the `examples` submodule (in `LayeredAppMultipleDatabases`).
 
 
 
@@ -382,7 +412,7 @@ import zio._
 import zio.interop.catz._
 
 implicit val doobieContext: DbContext = DbContext(logHandler = LogHandler.jdkLogHandler[Task])
-val dbLayer: ZLayer[Has[DataSource], Nothing, Database] = Database.fromDatasource
+val dbLayer: ZLayer[DataSource, Nothing, Database] = Database.fromDatasource
 ```
 
 
@@ -403,7 +433,7 @@ See https://github.com/zio/interop-cats/issues/669 for more details about this i
 
 
 
-### When will tranzactio work with <insert DB library here>?
+### When will tranzactio work with …?
 
 I want to add wrappers around more database access libraries.
 Anorm was the second one I did, next should probably be Quill (based on the popularity of the project on GitHub),
