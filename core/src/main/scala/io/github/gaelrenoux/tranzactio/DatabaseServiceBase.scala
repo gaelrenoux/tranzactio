@@ -18,7 +18,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
     (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
     runTransaction({ (c: JdbcConnection) =>
       connectionFromJdbc(c)
-        .flatMap(connection => zio.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)))
+        .flatMap { connection => zio.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)) }
     }, commitOnFailure)
 
   override def transactionOrDieStream[R, E, A](stream: => ZStream[Connection with R, E, A], commitOnFailure: => Boolean = false)
@@ -26,14 +26,14 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
     runTransactionOrDieStream({ (c: JdbcConnection) =>
       ZStream
         .fromZIO(connectionFromJdbc(c))
-        .flatMap(connection => stream.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)))
+        .flatMap { connection => stream.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)) }
     }, commitOnFailure)
 
   override def autoCommit[R, E, A](zio: => ZIO[Connection with R, E, A])
     (implicit errorStrategies: ErrorStrategiesRef, trace: Trace): ZIO[R, Either[DbException, E], A] =
     runAutoCommit { (c: JdbcConnection) =>
       connectionFromJdbc(c)
-        .flatMap(connection => zio.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)))
+        .flatMap { connection => zio.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)) }
     }
 
   override def autoCommitStream[R, E, A](stream: => ZStream[Connection with R, E, A])
@@ -41,7 +41,7 @@ abstract class DatabaseServiceBase[Connection: Tag](connectionSource: Connection
     runAutoCommitStream { (c: JdbcConnection) =>
       ZStream
         .fromZIO(connectionFromJdbc(c))
-        .flatMap(connection => stream.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)))
+        .flatMap { connection => stream.provideSomeEnvironment[R](_ ++ ZEnvironment(connection)) }
     }
 
 }
