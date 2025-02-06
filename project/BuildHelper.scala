@@ -6,9 +6,9 @@ import xerial.sbt.Sonatype.autoImport._
 object BuildHelper {
   object V {
     val zio = "2.0.21"
-    val zioCats = "23.1.0.0"
+    val zioCats = "22.0.0.0"
     val cats = "2.10.0"
-    val doobie = "1.0.0-RC8"
+    val doobie = "0.13.4"
     val anorm = "2.7.0"
     val h2 = "2.2.224"
     val scala212 = "2.12.18"
