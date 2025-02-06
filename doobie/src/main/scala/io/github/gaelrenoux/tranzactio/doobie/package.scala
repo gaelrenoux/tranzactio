@@ -1,14 +1,16 @@
 package io.github.gaelrenoux.tranzactio
 
 import _root_.doobie.LogHandler
+import _root_.doobie.util.log.LogHandler.nop
 import _root_.doobie.free.KleisliInterpreter
 import _root_.doobie.util.transactor.{Strategy, Transactor}
-import cats.effect.Resource
+import cats.effect.{Blocker, Resource}
 import io.github.gaelrenoux.tranzactio.test.{DatabaseModuleTestOps, NoopJdbcConnection}
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
 import zio.{Tag, Task, Trace, ZIO, ZLayer}
+import zio.interop.catz._
 
 import java.sql.{Connection => JdbcConnection}
 
@@ -26,14 +28,14 @@ package object doobie extends Wrapper {
   private final val DefaultStreamQueueSize = 16
 
   /** How to provide a Connection for the module, given a JDBC connection and some environment. */
-  private final def transactorFromJdbcConnection(connection: => JdbcConnection, dbContext: DbContext)(implicit trace: Trace): ZIO[Any, Nothing, Connection] = {
-    ZIO.succeed {
-      val connect = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
-      val interp = KleisliInterpreter[Task](dbContext.logHandler).ConnectionInterpreter
-      val tran = Transactor(connection, connect, interp, Strategy.void)
-      tran
-    }
-  }
+  private final def transactorFromJdbcConnection(connection: => JdbcConnection, dbContext: DbContext)(implicit trace: Trace): ZIO[Any, Nothing, Connection] =
+    for {
+      blocking <- ZIO.blockingExecutor
+      connectEC = blocking.asExecutionContext
+      connect   = (c: JdbcConnection) => Resource.pure[Task, JdbcConnection](c)
+      interp    = KleisliInterpreter[Task](Blocker.liftExecutionContext(connectEC)).ConnectionInterpreter
+      tran      = Transactor(connection, connect, interp, Strategy.void)
+    } yield tran
 
   override final def tzio[A](q: => Query[A])(implicit trace: Trace): TranzactIO[A] =
     ZIO.serviceWithZIO[Connection] { c =>
@@ -68,11 +70,11 @@ package object doobie extends Wrapper {
   }
 
   case class DbContext(
-      logHandler: LogHandler[Task]
-  )
+                        logHandler: LogHandler
+                      )
 
   object DbContext {
-    implicit val Default: DbContext = DbContext(LogHandler.noop[Task])
+    implicit val Default: DbContext = DbContext(nop)
   }
 
   override final type DatabaseT[M] = DatabaseTBase[M, Connection]
