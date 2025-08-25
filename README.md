@@ -178,30 +178,30 @@ The table below indicates for each version of TranzactIO, the versions of ZIO or
 Check the backward compatibility information on those libraries to check which versions TranzactIO can support.
 
 | TranzactIO | Scala       | ZIO          | Doobie    | Anorm        |
-|------------|-------------|--------------|-----------|--------------|
-| 0.1.0      |      2.13   | 1.0.0-RC17   | 0.8.6     | -            |
-| 0.2.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6     | -            |
-| 0.3.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6     | 2.6.5        |
-| 0.4.0      |      2.13   | 1.0.0-RC19-2 | 0.9.0     | 2.6.5        |
-| 0.5.0      |      2.13   | 1.0.0-RC20   | 0.9.0     | 2.6.5        |
-| 0.6.0      |      2.13   | 1.0.0-RC21-1 | 0.9.0     | 2.6.5        |
-| 1.0.0      |      2.13   | 1.0.0        | 0.9.0     | 2.6.7        |
-| 1.0.1      |      2.13   | 1.0.0        | 0.9.0     | 2.6.7        |
-| 1.1.0      |      2.13   | 1.0.3        | 0.9.2     | 2.6.7        |
-| 1.2.0      |      2.13   | 1.0.3        | 0.9.2     | 2.6.7        |
-| 1.3.0      |      2.13   | 1.0.5        | 0.9.4     | 2.6.10       |
-| 2.0.0      |      2.13   | 1.0.5        | 0.12.1    | 2.6.10       |
-| 2.1.0      | 2.12 2.13   | 1.0.9        | 0.13.4    | 2.6.10       |
-| 3.0.0      | 2.12 2.13   | 1.0.11       | 1.0.0-RC2 | 2.6.10       |
-| 4.0.0      | 2.12 2.13   | 2.0.0        | 1.0.0-RC2 | 2.6.10       |
-| 4.1.0      | 2.12 2.13 3 | 2.0.2        | 1.0.0-RC2 | 2.7.0        |
-| 4.2.0      | 2.12 2.13 3 | 2.0.13       | 1.0.0-RC2 | 2.7.0        |
-| 5.0.1      | 2.12 2.13 3 | 2.0.15       | 1.0.0-RC4 | 2.7.0        |
-| 5.1.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC5 | 2.7.0        |
-| 5.2.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC5 | 2.7.0        |
-| 5.3.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC8 | 2.7.0        |
-| 5.4.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC9 | 2.7.0        |
-| master     | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC9 | 2.7.0        |
+|------------|-------------|--------------|------------|--------------|
+| 0.1.0      |      2.13   | 1.0.0-RC17   | 0.8.6      | -            |
+| 0.2.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6      | -            |
+| 0.3.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6      | 2.6.5        |
+| 0.4.0      |      2.13   | 1.0.0-RC19-2 | 0.9.0      | 2.6.5        |
+| 0.5.0      |      2.13   | 1.0.0-RC20   | 0.9.0      | 2.6.5        |
+| 0.6.0      |      2.13   | 1.0.0-RC21-1 | 0.9.0      | 2.6.5        |
+| 1.0.0      |      2.13   | 1.0.0        | 0.9.0      | 2.6.7        |
+| 1.0.1      |      2.13   | 1.0.0        | 0.9.0      | 2.6.7        |
+| 1.1.0      |      2.13   | 1.0.3        | 0.9.2      | 2.6.7        |
+| 1.2.0      |      2.13   | 1.0.3        | 0.9.2      | 2.6.7        |
+| 1.3.0      |      2.13   | 1.0.5        | 0.9.4      | 2.6.10       |
+| 2.0.0      |      2.13   | 1.0.5        | 0.12.1     | 2.6.10       |
+| 2.1.0      | 2.12 2.13   | 1.0.9        | 0.13.4     | 2.6.10       |
+| 3.0.0      | 2.12 2.13   | 1.0.11       | 1.0.0-RC2  | 2.6.10       |
+| 4.0.0      | 2.12 2.13   | 2.0.0        | 1.0.0-RC2  | 2.6.10       |
+| 4.1.0      | 2.12 2.13 3 | 2.0.2        | 1.0.0-RC2  | 2.7.0        |
+| 4.2.0      | 2.12 2.13 3 | 2.0.13       | 1.0.0-RC2  | 2.7.0        |
+| 5.0.1      | 2.12 2.13 3 | 2.0.15       | 1.0.0-RC4  | 2.7.0        |
+| 5.1.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC5  | 2.7.0        |
+| 5.2.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC5  | 2.7.0        |
+| 5.3.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC8  | 2.7.0        |
+| 5.4.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC9  | 2.7.0        |
+| master     | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC10 | 2.7.0        |
 
 
 
@@ -219,7 +219,7 @@ Those are the specific operations handled by Tranzactio, that are necessary to i
 
 They correspond to specific methods in the `ConnectionSource` service.
 You would not usually address that service directly, going through `Database` instead.
-    
+
 #### Error kinds
 
 In TranzactIO, we recognize two kinds of errors relating to the DB: query errors, and connection errors:
@@ -251,7 +251,7 @@ val result2: ZIO[Database, E, A] = Database.transactionOrDie(zio)
 // assuming E extends Exception:
 val result3: ZIO[Database, Exception, A] = Database.transactionOrWiden(zio)
 ```
- 
+
 A frequent case is to have an additional environment on your ZIO monad, e.g.: `ZIO[ZEnv with Connection, E, A]`.
 All methods mentioned above will carry over the additional environment:
 ```scala
@@ -339,7 +339,7 @@ To provide a `Connection` to the ZIO stream, you can either consume the stream i
 
 The methods `transactionOrDieStream` and `autoCommitStream` work in the same way as the similar, non-stream method.
 Note that for transactions, only the `OrDie` variant exists: this is because ZIO's acquire-release mechanism for stream does not allow to pass errors that occur during the acquire-release phase in the error channel.
-Defects in the stream due to connection errors can only be caught after the `ZStream` has been consumed into a `ZIO`. 
+Defects in the stream due to connection errors can only be caught after the `ZStream` has been consumed into a `ZIO`.
 
 ```scala
 import io.github.gaelrenoux.tranzactio.doobie._
