@@ -50,9 +50,22 @@ object BuildHelper {
 
   val publishSettings: Seq[Setting[_]] = Seq(
     organization := "io.github.gaelrenoux",
-    licenses := Seq ("APL2" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
-    sonatypeProjectHosting := Some(GitHubHosting("gaelrenoux", "tranzactio", "gael.renoux@gmail.com")),
-    publishTo := sonatypePublishTo.value,
+    licenses := Seq(License.Apache2),
+    scmInfo := Some(ScmInfo(
+      url("https://github.com/gaelrenoux/tranzactio"),
+      "scm:git@github.com:gaelrenoux/tranzactio.git"
+    )),
+    homepage := Some(url("https://github.com/gaelrenoux/tranzactio")),
+    developers := List(
+      Developer(
+        id = "gaelrenoux",
+        name = "Gaël Renoux",
+        email = "gael.renoux@gmail.com",
+        url = url("https://github.com/gaelrenoux")
+      )
+    ),
+    publishTo := sonatypePublishToBundle.value,
+    sonatypeCredentialHost := sonatypeCentralHost
   )
 
 }
