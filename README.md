@@ -177,7 +177,7 @@ Find more in `src/main/samples`, or look below for some details.
 The table below indicates for each version of TranzactIO, the versions of ZIO or libraries it's been built with.
 Check the backward compatibility information on those libraries to check which versions TranzactIO can support.
 
-| TranzactIO | Scala       | ZIO          | Doobie    | Anorm        |
+| TranzactIO | Scala       | ZIO          | Doobie     | Anorm        |
 |------------|-------------|--------------|------------|--------------|
 | 0.1.0      |      2.13   | 1.0.0-RC17   | 0.8.6      | -            |
 | 0.2.0      |      2.13   | 1.0.0-RC18-2 | 0.8.6      | -            |
@@ -201,6 +201,7 @@ Check the backward compatibility information on those libraries to check which v
 | 5.2.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC5  | 2.7.0        |
 | 5.3.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC8  | 2.7.0        |
 | 5.4.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC9  | 2.7.0        |
+| 5.5.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC10 | 2.7.0        |
 | master     | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC10 | 2.7.0        |
 
 
