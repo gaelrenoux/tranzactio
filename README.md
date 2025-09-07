@@ -43,7 +43,7 @@ That's where TranzactIO comes from. I wanted a way to use ZIO everywhere, and ru
 
 ### Sbt setup
 
-TranzactIO is available on the Sonatype Central Repository (see the Nexus badge on top of this README to get the version number). In your build.sbt:
+TranzactIO is available on Maven Central (see the badge on top of this README to get the latest version). In your build.sbt:
 ```sbt
 // Add this if you use doobie:
 libraryDependencies += "io.github.gaelrenoux" %% "tranzactio-doobie" % TranzactIOVersion
