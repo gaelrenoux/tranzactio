@@ -110,33 +110,33 @@ The code for Anorm is identical, except it has a different import: `io.github.ga
 ```scala
 import io.github.gaelrenoux.tranzactio._
 import io.github.gaelrenoux.tranzactio.doobie._
-import zio._
-import zio.console.Console
+import query._
+import query.console.Console
 
 // Let's start with a very simple one. Connection exceptions are transformed into defects.
-val zio: ZIO[Connection, String, Long] = ???
-val simple: ZIO[Database, String, Long] = Database.transactionOrDie(zio)
+val query: ZIO[Connection, String, Long] = ???
+val tran: ZIO[Database, String, Long] = Database.transactionOrDie(query)
 
 // If you have an additional environment, it would end up on the resulting effect as well.
-val zioEnv: ZIO[Connection with Console, String, Long] = ???
-val withEnv: ZIO[Database with Console, String, Long] = Database.transactionOrDie(zioEnv)
+val queryWithEnv: ZIO[Connection with Console, String, Long] = ???
+val tranWithEnv: ZIO[Database with Console, String, Long] = Database.transactionOrDie(queryWithEnv)
 
 // Do you want to handle connection errors yourself? They will appear on the Left side of the Either.
-val withSeparateErrors: ZIO[Database, Either[DbException, String], Long] = Database.transaction(zio)
+val tranWithSeparateErrors: ZIO[Database, Either[DbException, String], Long] = Database.transaction(query)
 
 // Are you only expecting errors coming from the DB ? Let's handle all of them at the same time.
-val zioDbEx: ZIO[Connection, DbException, Long] = ???
-val withDbEx: ZIO[Database, DbException, Long] = Database.transactionOrWiden(zioDbEx)
+val queryWithDbEx: ZIO[Connection, DbException, Long] = ???
+val tranWithDbEx: ZIO[Database, DbException, Long] = Database.transactionOrWiden(queryWithDbEx)
 
 // Or maybe you're just grouping all errors together as exceptions.
-val zioEx: ZIO[Connection, java.io.IOException, Long] = ???
-val withEx: ZIO[Database, Exception, Long] = Database.transactionOrWiden(zioEx)
+val queryWithEx: ZIO[Connection, java.io.IOException, Long] = ???
+val tranWithEx: ZIO[Database, Exception, Long] = Database.transactionOrWiden(queryWithEx)
 
 // You can also commit even on a failure (only rollbacking on a defect). Useful if you're using the failure channel for short-circuiting!
-val commitOnFailure: ZIO[Database, String, Long] = Database.transactionOrDie(zio, commitOnFailure = true)
+val tranCommitOnFailure: ZIO[Database, String, Long] = Database.transactionOrDie(query, tranCommitOnFailure = true)
 
 // And if you're actually not interested in a transaction, you can just auto-commit all queries.
-val zioAutoCommit: ZIO[Database, String, Long] = Database.autoCommitOrDie(zio)
+val autoCommit: ZIO[Database, String, Long] = Database.autoCommitOrDie(query)
 ```
 
 
@@ -247,21 +247,22 @@ I'll only describe `transaction` here, keep in mind that there's an identical se
 - With `transactionOrWiden`, the resulting error type will be the closest supertype of the query error type and `DbException`, and the error in the result may be a query error or a connection error. This is especially useful if your query error type is already `DbException` or directly `Exception`, as in the example below.
 
 ```scala
-val zio: ZIO[Connection, E, A] = ???
-val result1: ZIO[Database, Either[DbException, E], A] = Database.transaction(zio)
-val result2: ZIO[Database, E, A] = Database.transactionOrDie(zio)
+val query: ZIO[Connection, E, A] = ???
+val result1: ZIO[Database, Either[DbException, E], A] = Database.transaction(query)
+val result2: ZIO[Database, E, A] = Database.transactionOrDie(query)
 // assuming E extends Exception:
-val result3: ZIO[Database, Exception, A] = Database.transactionOrWiden(zio)
+val result3: ZIO[Database, Exception, A] = Database.transactionOrWiden(query)
 ```
 
 A frequent case is to have an additional environment on your ZIO monad, e.g.: `ZIO[ZEnv with Connection, E, A]`.
 All methods mentioned above will carry over the additional environment:
+
 ```scala
-val zio: ZIO[ZEnv with Connection, E, A] = ???
-val result1: ZIO[Database with ZEnv, Either[DbException, E], A] = Database.transaction(zio)
-val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDie(zio)
+val query: ZIO[ZEnv with Connection, E, A] = ???
+val result1: ZIO[Database with ZEnv, Either[DbException, E], A] = Database.transaction(query)
+val result2: ZIO[Database with ZEnv, E, A] = Database.transactionOrDie(query)
 // assuming E extends Exception:
-val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWiden(zio)
+val result3: ZIO[Database with ZEnv, Exception, A] = Database.transactionOrWiden(query)
 ```
 
 All the `transaction` methods take an optional argument `commitOnFailure` (which defaults to `false`).
@@ -367,14 +368,15 @@ import io.github.gaelrenoux.tranzactio.doobie._
 import zio._
 
 trait Db1
+
 trait Db2
 
 val db1Layer: ZLayer[Any, Nothing, DatabaseT[Db1]] = datasource1Layer >>> Database[Db1].fromDatasource
 val db2Layer: ZLayer[Any, Nothing, DatabaseT[Db2]] = datasource2Layer >>> Database[Db2].fromDatasource
 
-val queries1: ZIO[Connection, DbException, List[String]] = ???
-val zio1: ZIO[DatabaseT[Db1], DbException, List[Person]] = DatabaseT[Db1].transactionOrWiden(queries1)
-val zio2: ZIO[DatabaseT[Db2], DbException, List[Person]] = DatabaseT[Db2].transactionOrWiden(queries1)
+val queries: ZIO[Connection, DbException, List[String]] = ???
+val tran1: ZIO[DatabaseT[Db1], DbException, List[Person]] = DatabaseT[Db1].transactionOrWiden(queries)
+val tran2: ZIO[DatabaseT[Db2], DbException, List[Person]] = DatabaseT[Db2].transactionOrWiden(queries)
 ```
 
 When creating the layers for the datasources, don't forget to use `.fresh` when you have sub-layers of the same type on both sides!
