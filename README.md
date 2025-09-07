@@ -202,7 +202,7 @@ Check the backward compatibility information on those libraries to check which v
 | 5.3.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC8  | 2.7.0  |
 | 5.4.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC9  | 2.7.0  |
 | 5.5.0      | 2.12 2.13 3 | 2.0.22       | 1.0.0-RC10 | 2.7.0  |
-| master     | 2.12 2.13 3 | 2.1.6        | 1.0.0-RC10 | 2.7.0  |
+| master     | 2.12 2.13 3 | 2.0.22       | 1.0.0-RC10 | 2.7.0  |
 
 
 
