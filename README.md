@@ -1,12 +1,12 @@
 [CI-Badge]: https://github.com/gaelrenoux/tranzactio/actions/workflows/ci.yml/badge.svg
 [CI-Link]: https://github.com/gaelrenoux/tranzactio/actions?query=branch%3Amaster
-[SonatypeReleases-Link]: https://oss.sonatype.org/content/repositories/releases/io/github/gaelrenoux/tranzactio-core_3/
-[SonatypeReleases-Badge]: https://img.shields.io/nexus/r/https/oss.sonatype.org/io.github.gaelrenoux/tranzactio-core_3.svg
+[MavenCentral-Link]: https://central.sonatype.com/artifact/io.github.gaelrenoux/tranzactio-core_3
+[MavenCentral-Badge]:https://img.shields.io/maven-central/v/io.github.gaelrenoux/tranzactio-core_3.svg
 
 # TranzactIO
 
 [![CI][CI-Badge]][CI-Link]
-[![Releases][SonatypeReleases-Badge]][SonatypeReleases-Link]
+[![Releases][MavenCentral-Badge]][MavenCentral-Link]
 
 
 TranzactIO is a ZIO wrapper for some Scala database access libraries (Doobie and Anorm, for now).
@@ -202,6 +202,7 @@ Check the backward compatibility information on those libraries to check which v
 | 5.3.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC8  | 2.7.0  |
 | 5.4.0      | 2.12 2.13 3 | 2.0.21       | 1.0.0-RC9  | 2.7.0  |
 | 5.5.0      | 2.12 2.13 3 | 2.0.22       | 1.0.0-RC10 | 2.7.0  |
+| 5.5.2      | 2.12 2.13 3 | 2.0.22       | 1.0.0-RC10 | 2.7.0  |
 | master     | 2.12 2.13 3 | 2.1.6        | 1.0.0-RC10 | 2.7.0  |
 
 
