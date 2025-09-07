@@ -13,7 +13,7 @@ object BuildHelper {
     val h2 = "2.3.232"
     val scala212 = "2.12.20"
     val scala213 = "2.13.16"
-    val scala3 = "3.7.2"
+    val scala3 = "3.3.6" // latest LTS version
   }
 
   val coreDeps: Seq[ModuleID] = Seq(
