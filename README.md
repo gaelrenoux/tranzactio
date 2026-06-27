@@ -205,7 +205,7 @@ Check the backward compatibility information on those libraries to check which v
 | 5.5.2      | 2.12 2.13 3 | 2.0.22       | 1.0.0-RC10 | 2.7.0  |
 | 5.6.0      | 2.12 2.13 3 | 2.1.21       | 1.0.0-RC10 | 2.7.0  |
 | 5.7.0      | 2.12 2.13 3 | 2.1.24       | 1.0.0-RC11 | 2.7.0  |
-| master     | 2.12 2.13 3 | 2.1.24       | 1.0.0-RC11 | 2.7.0  |
+| master     | 2.12 2.13 3 | 2.1.26       | 1.0.0-RC12 | 2.11.0 |
 
 
 
