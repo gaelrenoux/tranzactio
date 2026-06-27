@@ -9,9 +9,8 @@ object BuildHelper {
     val zioCats = "23.1.0.13"
     val cats = "2.13.0"
     val doobie = "1.0.0-RC13"
-    val anorm = "2.11.0"
+    val anorm = "3.1.0"
     val h2 = "2.4.240"
-    val scala212 = "2.12.21"
     val scala213 = "2.13.18"
     val scala3 = "3.3.8" // latest LTS version
   }
@@ -40,7 +39,7 @@ object BuildHelper {
 
   val stdSettings: Seq[Setting[_]] = Seq(
     scalaVersion := V.scala3,
-    crossScalaVersions := Seq(V.scala212, V.scala213, V.scala3),
+    crossScalaVersions := Seq(V.scala213, V.scala3),
     scalacOptions ++= scalaVersion(ScalacOptions(_)).value,
     Test / fork := true,
     Test / testForkedParallel := true, // run tests in parallel on the forked JVM
@@ -125,29 +124,6 @@ object ScalacOptions {
     "-Xlint:valpattern" // Enable pattern checks in val definitions.
   )
 
-  private val scala212Options = scala2AllVersionsOptions ++ Seq(
-    "-language:experimental.macros", // Allow macro definition (besides implementation and application)
-    "-Ypartial-unification", // Enable partial unification in type constructor inference
-
-    "-Yno-adapted-args", // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
-    "-Ywarn-dead-code", // Warn when dead code is identified.
-    "-Ywarn-extra-implicit", // Warn when more than one implicit parameter section is defined.
-    "-Xlint:nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Ywarn-nullary-override", // Warn when non-nullary `def f()' overrides nullary `def f'.
-    "-Ywarn-nullary-unit", // Warn when nullary methods return Unit.
-    "-Ywarn-numeric-widen", // Warn when numerics are widened.
-    "-Ywarn-unused:implicits", // Warn if an implicit parameter is unused.
-    "-Ywarn-unused:imports", // Warn if an import selector is not referenced.
-    "-Ywarn-unused:locals", // Warn if a local definition is unused.
-    "-Ywarn-unused:params", // Warn if a value parameter is unused.
-    "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
-    "-Ywarn-unused:privates", // Warn if a private member is unused.
-    "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
-
-    // "-Xlint:infer-any", // Warn when a type argument is inferred to be `Any`. // false positives in 2.12
-    "-Xlint:unsound-match" // Pattern match may not be typesafe.
-  )
-
   private val scala3Options = Seq(
     "-Ysafe-init", // Check for uninitialized access.
   )
@@ -155,7 +131,6 @@ object ScalacOptions {
   def apply(scalaVersion: String): Seq[String] = allVersionsOption ++ {
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 13)) => scala213Options
-      case Some((2, 12)) => scala212Options
       case Some((3, _)) => scala3Options
       case _ => Nil
     }
