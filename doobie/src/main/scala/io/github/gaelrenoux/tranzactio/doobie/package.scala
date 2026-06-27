@@ -1,10 +1,10 @@
 package io.github.gaelrenoux.tranzactio
 
-import _root_.doobie.LogHandler
-import _root_.doobie.free.KleisliInterpreter
-import _root_.doobie.util.transactor.{Strategy, Transactor}
 import cats.effect.Resource
 import io.github.gaelrenoux.tranzactio.test.{DatabaseModuleTestOps, NoopJdbcConnection}
+import org.typelevel.doobie.LogHandler
+import org.typelevel.doobie.free.KleisliInterpreter
+import org.typelevel.doobie.util.transactor.{Strategy, Transactor}
 import zio.interop.catz._
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
@@ -16,7 +16,7 @@ import java.sql.{Connection => JdbcConnection}
 package object doobie extends Wrapper {
   override final type Connection = Transactor[Task]
   override final type Database = Database.Service
-  override final type Query[A] = _root_.doobie.ConnectionIO[A]
+  override final type Query[A] = org.typelevel.doobie.ConnectionIO[A]
   override final type TranzactIO[A] = ZIO[Connection, DbException, A]
   final type TranzactIOStream[A] = ZStream[Connection, DbException, A]
 

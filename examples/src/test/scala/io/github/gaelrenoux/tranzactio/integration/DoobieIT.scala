@@ -1,9 +1,9 @@
 package io.github.gaelrenoux.tranzactio.integration
 
-import doobie.implicits._
-import doobie.util.fragment.Fragment
 import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{ConnectionSource, JdbcLayers}
+import org.typelevel.doobie.implicits._
+import org.typelevel.doobie.util.fragment.Fragment
 import samples.Person
 import samples.doobie.PersonQueries
 import zio.test._

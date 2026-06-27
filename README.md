@@ -73,9 +73,9 @@ Just use `tzio` to wrap your usual query type!
 
 ```scala
 import zio._
-import doobie.implicits._
 import io.github.gaelrenoux.tranzactio._
 import io.github.gaelrenoux.tranzactio.doobie._
+import org.typelevel.doobie.implicits._
 
 val list: ZIO[Connection, DbException, List[String]] = tzio {
     sql"SELECT name FROM users".query[String].to[List]
@@ -206,7 +206,7 @@ Check the backward compatibility information on those libraries to check which v
 | 5.6.0      | 2.12 2.13 3 | 2.1.21       | 1.0.0-RC10 | 2.7.0  |
 | 5.7.0      | 2.12 2.13 3 | 2.1.24       | 1.0.0-RC11 | 2.7.0  |
 | 5.8.0      | 2.12 2.13 3 | 2.1.26       | 1.0.0-RC12 | 2.11.0 |
-| master     | 2.12 2.13 3 | 2.1.26       | 1.0.0-RC12 | 2.11.0 |
+| master     | 2.12 2.13 3 | 2.1.26       | 1.0.0-RC13 | 2.11.0 |
 
 
 
@@ -410,9 +410,9 @@ However, the type signature still requires a Database, which you need to provide
 `Database.none` exists for this purpose: it satisfies the compiler, but does not provide a usable Database (so don't try to run any actual SQL queries against it).
 ```scala
 import zio._
-import doobie.implicits._
 import io.github.gaelrenoux.tranzactio.DbException
 import io.github.gaelrenoux.tranzactio.doobie._
+import org.typelevel.doobie.implicits._
 
 val liveQuery: ZIO[Connection, DbException, List[String]] = tzio { sql"SELECT name FROM users".query[String].to[List] }
 val testQuery: ZIO[Connection, DbException, List[String]] = ZIO.succeed(List("Buffy Summers"))
@@ -434,9 +434,9 @@ From Doobie RC3 and onward, the `LogHandler` is no longer passed when building t
 In TranzactIO, you can define a `LogHandler` through the `DbContext`. This context is passed implicitly when creating the Database layer, so you just need to declare your own.
 
 ```scala
-import doobie.util.log.LogHandler
 import io.github.gaelrenoux.tranzactio.doobie._
 import javax.sql.DataSource
+import org.typelevel.doobie.util.log.LogHandler
 import zio._
 import zio.interop.catz._
 

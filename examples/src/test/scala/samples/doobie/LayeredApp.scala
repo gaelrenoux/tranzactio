@@ -1,8 +1,8 @@
 package samples.doobie
 
-import doobie.util.log.LogHandler
 import io.github.gaelrenoux.tranzactio.doobie._
 import io.github.gaelrenoux.tranzactio.{DbException, ErrorStrategiesRef}
+import org.typelevel.doobie.util.log.LogHandler
 import samples.{Conf, ConnectionPool, Person}
 import zio._
 import zio.interop.catz._

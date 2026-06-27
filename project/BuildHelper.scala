@@ -8,7 +8,7 @@ object BuildHelper {
     val zio = "2.1.26"
     val zioCats = "23.1.0.13"
     val cats = "2.13.0"
-    val doobie = "1.0.0-RC12"
+    val doobie = "1.0.0-RC13"
     val anorm = "2.11.0"
     val h2 = "2.4.240"
     val scala212 = "2.12.21"
@@ -35,7 +35,7 @@ object BuildHelper {
   val doobieDeps: Seq[ModuleID] = Seq(
     "dev.zio" %% "zio-interop-cats" % V.zioCats,
     "org.typelevel" %% "cats-core" % V.cats,
-    "org.tpolecat" %% "doobie-core" % V.doobie,
+    "org.typelevel" %% "doobie-core" % V.doobie,
   )
 
   val stdSettings: Seq[Setting[_]] = Seq(

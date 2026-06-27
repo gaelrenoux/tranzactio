@@ -1,8 +1,8 @@
 package samples.doobie
 
-import doobie.implicits._
 import io.github.gaelrenoux.tranzactio.DbException
 import io.github.gaelrenoux.tranzactio.doobie._
+import org.typelevel.doobie.implicits._
 import samples.Person
 import zio.stream.ZStream
 import zio.{ULayer, ZIO, ZLayer}
